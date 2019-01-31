@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <item
+        android:id="@+id/savepart_acc"
+        android:orderInCategory="100"
+        android:title="Save transaction"
+        android:icon="@android:drawable/ic_menu_save"
+        app:showAsAction="ifRoom" />
+    <item
+        android:id="@+id/acceptancelist"
+        android:orderInCategory="100"
+        android:title="Acceptance list"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/passincident"
+        android:orderInCategory="100"
+        android:title="File incident"
+        app:showAsAction="never" />
+
+</menu>

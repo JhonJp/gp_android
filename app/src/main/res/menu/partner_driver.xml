@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <item
+        android:id="@+id/drop_sync_get"
+        android:orderInCategory="100"
+        android:title="Download data"
+        android:icon="@android:drawable/stat_sys_download"
+        app:showAsAction="ifRoom" />
+
+    <item
+        android:id="@+id/drop_sync_send"
+        android:orderInCategory="100"
+        android:title="Upload data"
+        android:icon="@drawable/sync_white"
+        app:showAsAction="ifRoom" />
+
+    <item
+        android:id="@+id/homelogout"
+        android:orderInCategory="100"
+        android:title="Logout"
+        app:showAsAction="never" />
+</menu>

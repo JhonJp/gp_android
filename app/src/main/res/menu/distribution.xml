@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <item
+        android:id="@+id/distprev"
+        android:orderInCategory="100"
+        android:title="Prev"
+        android:icon="@drawable/left"
+        app:showAsAction="ifRoom" />
+
+    <item
+        android:id="@+id/distnext"
+        android:title="@string/next"
+        android:icon="@drawable/right"
+        app:showAsAction="ifRoom" />
+
+    <item
+        android:id="@+id/action_savedistribute"
+        android:orderInCategory="100"
+        android:title="@string/save"
+        android:icon="@android:drawable/ic_menu_save"
+        app:showAsAction="ifRoom" />
+
+    <item
+        android:id="@+id/syncdist"
+        android:orderInCategory="100"
+        android:title="Sync Distribution"
+        android:icon="@drawable/sync_white"
+        app:showAsAction="ifRoom" />
+
+    <item
+        android:id="@+id/passincident"
+        android:orderInCategory="100"
+        android:title="File incident"
+        app:showAsAction="never" />
+
+</menu>

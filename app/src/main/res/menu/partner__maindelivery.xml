@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <item
+        android:id="@+id/syncdelivery"
+        android:orderInCategory="100"
+        android:title="Sync Delivery"
+        android:icon="@drawable/sync_white"
+        app:showAsAction="ifRoom" />
+
+    <item
+        android:id="@+id/passincident"
+        android:orderInCategory="100"
+        android:title="File incident"
+        app:showAsAction="never" />
+
+</menu>

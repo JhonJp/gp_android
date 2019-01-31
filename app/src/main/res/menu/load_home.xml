@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <item
+        android:id="@+id/loadfragsave"
+        android:orderInCategory="100"
+        android:icon="@android:drawable/ic_menu_save"
+        android:title="Save"
+        app:showAsAction="ifRoom" />
+
+    <item
+        android:id="@+id/unloadfragsave"
+        android:orderInCategory="100"
+        android:icon="@android:drawable/ic_menu_save"
+        android:title="Save"
+        app:showAsAction="ifRoom" />
+
+    <item
+        android:id="@+id/listloads"
+        android:orderInCategory="100"
+        android:icon="@android:drawable/ic_menu_save"
+        android:title="Loading list"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/listunloads"
+        android:orderInCategory="100"
+        android:icon="@android:drawable/ic_menu_save"
+        android:title="Unloading list"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/passincident"
+        android:orderInCategory="100"
+        android:title="File incident"
+        app:showAsAction="never" />
+
+</menu>

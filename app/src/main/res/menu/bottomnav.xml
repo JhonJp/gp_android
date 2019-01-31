@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <item
+        android:id="@+id/customer_info"
+        android:icon="@drawable/information"
+        android:title="@string/cust_info"
+        app:showAsAction="ifRoom" />
+    <item
+        android:id="@+id/payment"
+        android:icon="@drawable/box_sel"
+        android:title="Box Info"
+        app:showAsAction="ifRoom" />
+    <item
+        android:id="@+id/deposit"
+        android:icon="@drawable/pay"
+        android:title="Summary"
+        app:showAsAction="ifRoom" />
+</menu>

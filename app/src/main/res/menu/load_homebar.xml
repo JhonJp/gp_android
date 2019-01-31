@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <item
+        android:id="@+id/loadingfragment"
+        android:icon="@drawable/loading"
+        android:title="Loading"
+        app:showAsAction="ifRoom" />
+    <item
+        android:id="@+id/unloadingfragment"
+        android:icon="@drawable/unload"
+        android:title="Unloading"
+        app:showAsAction="ifRoom" />
+</menu>

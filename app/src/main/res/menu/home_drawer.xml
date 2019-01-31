@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:showIn="navigation_view">
+
+    <group android:checkableBehavior="single">
+
+        <item
+            android:id="@+id/backHome"
+            android:title="Home" />
+        <item
+            android:id="@+id/reservation"
+            android:title="Reservation" />
+        <item
+            android:id="@+id/book"
+            android:title="Booking" />
+        <item
+            android:id="@+id/load"
+            android:title="@string/home_loading" />
+        <item
+            android:id="@+id/unload"
+            android:title="@string/home_unloading" />
+
+        <item
+            android:id="@+id/distribution"
+            android:title="Distribution" />
+
+        <item
+            android:id="@+id/delivery"
+            android:title="Delivery" />
+    </group>
+
+    <item android:title="Other Menu">
+        <menu>
+
+            <item
+                android:id="@+id/sync"
+                android:title="Sync now" />
+
+            <item
+                android:id="@+id/transactions"
+                android:title="Transactions" />
+            <item
+                android:id="@+id/inventory"
+                android:title="Inventory" />
+
+            <item
+                android:id="@+id/remittance"
+                android:title="Remittance" />
+
+            <item
+                android:id="@+id/logout"
+                android:title="Logout" />
+        </menu>
+    </item>
+
+</menu>

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="colorPrimaryDark">#cf210c</color>
+    <color name="bottomNav">#cf210c</color>
+    <color name="colorPrimary">#dd4b39</color>
+    <color name="colorLightPrim">#b94f43</color>
+    <color name="colorLight">#e69287</color>
+    <color name="colorAccent">#504e4e</color>
+    <color name="calendar">#cc3b61</color>
+    <color name="textcolor">#fff</color>
+    <color name="gray">#DFD6D4</color>
+    <color name="sync_dark">#000000</color>
+    <color name="ligthgray">#e6e2e1</color>
+    <color name="darkgrey">#8b8b8b</color>
+    <color name="lightredgrey">#dab2ad</color>
+    <color name="holoblue">#0099cc</color>
+    <color name="rateColorGreen">#20b322</color>
+    <color name="lightgrey">#cfd2d6</color>
+</resources>

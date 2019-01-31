@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="35dp"
+        android:orientation="horizontal">
+
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:background="@drawable/box_style">
+
+            <TextView
+                android:id="@+id/getamount"
+                android:layout_width="1dp"
+                android:layout_height="match_parent"
+                android:layout_marginStart="-20dp"
+                android:layout_weight="0.2" />
+
+            <TextView
+                android:id="@+id/topitem"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_gravity="left"
+                android:gravity="center|start"
+                android:paddingEnd="2dp"
+                android:paddingStart="10dp"
+                android:text="topitem"
+                android:textAppearance="@android:style/TextAppearance.DeviceDefault.Large"
+                android:textColor="@color/darkgrey" />
+
+        </FrameLayout>
+
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:background="@drawable/box_style">
+
+            <TextView
+                android:id="@+id/idget"
+                android:layout_width="1dp"
+                android:layout_height="match_parent"
+                android:layout_marginStart="-20dp"
+                android:layout_weight="0.2"
+                android:visibility="invisible" />
+
+            <TextView
+                android:id="@+id/subitem"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_gravity="center"
+                android:gravity="center"
+                android:paddingEnd="2dp"
+                android:paddingStart="10dp"
+                android:text="subitem"
+                android:textAppearance="@android:style/TextAppearance.DeviceDefault.Large"
+                android:textColor="@color/darkgrey" />
+
+        </FrameLayout>
+
+    </LinearLayout>
+
+</RelativeLayout>

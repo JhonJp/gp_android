@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+
+    <item
+        android:id="@+id/loadprev"
+        android:icon="@drawable/left"
+        android:orderInCategory="100"
+        android:title="Prev"
+        app:showAsAction="ifRoom" />
+    <item
+        android:id="@+id/loadprevpay"
+        android:icon="@drawable/left"
+        android:orderInCategory="100"
+        android:title="Prev"
+        app:showAsAction="ifRoom" />
+    <item
+        android:id="@+id/btnnext"
+        android:orderInCategory="100"
+        android:title="@string/next"
+        android:icon="@drawable/right"
+        app:showAsAction="ifRoom" />
+
+    <item
+        android:id="@+id/btnnextpay"
+        android:orderInCategory="100"
+        android:title="@string/next"
+        android:icon="@drawable/right"
+        app:showAsAction="ifRoom" />
+
+    <item
+        android:id="@+id/savebooking"
+        android:orderInCategory="100"
+        android:title="@string/save"
+        android:icon="@android:drawable/ic_menu_save"
+        android:tooltipText="@string/save"
+        app:showAsAction="ifRoom" />
+
+    <item
+        android:id="@+id/passincident"
+        android:orderInCategory="100"
+        android:title="File incident"
+        app:showAsAction="never" />
+
+
+</menu>

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <item
+        android:id="@+id/inclist"
+        android:orderInCategory="100"
+        android:title="Incident lists"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/saveincident"
+        android:orderInCategory="100"
+        android:title="Save incident"
+        android:icon="@android:drawable/ic_menu_save"
+        app:showAsAction="ifRoom" />
+</menu>

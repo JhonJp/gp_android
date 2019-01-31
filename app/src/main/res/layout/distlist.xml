@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/textcolor">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:focusable="true"
+            android:focusableInTouchMode="true">
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:padding="3dp">
+
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_weight="0.1">
+
+                <android.support.design.widget.TextInputLayout
+                    android:id="@+id/search"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_marginStart="3dp">
+
+                    <AutoCompleteTextView
+                        android:id="@+id/searchableinput"
+                        android:layout_width="match_parent"
+                        android:layout_height="50dp"
+                        android:hint="Search"
+                        android:inputType="text" />
+                </android.support.design.widget.TextInputLayout>
+
+            </FrameLayout>
+
+            <ImageView
+                android:id="@+id/imageView4"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="5dp"
+                android:layout_weight="1"
+                app:srcCompat="@android:drawable/ic_search_category_default" />
+
+        </LinearLayout>
+
+        <ListView
+            android:id="@+id/lvreservelist"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_marginBottom="60dp"
+            android:divider="@color/darkgrey"
+            android:dividerHeight="0.5dp"
+            android:padding="5dp"
+            android:paddingEnd="8dp"
+            android:paddingStart="8dp">
+
+        </ListView>
+
+    </LinearLayout>
+</RelativeLayout>

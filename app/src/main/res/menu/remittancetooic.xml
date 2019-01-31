@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <item
+        android:id="@+id/remitlistview"
+        android:orderInCategory="100"
+        android:title="Remittance list "
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/passincident"
+        android:orderInCategory="100"
+        android:title="File incident"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/remitsync"
+        android:orderInCategory="100"
+        android:title="Sync remittance"
+        android:icon="@drawable/sync_white"
+        app:showAsAction="ifRoom" />
+
+</menu>

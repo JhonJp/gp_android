@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <item
+        android:id="@+id/booking_section_info"
+        android:icon="@drawable/information"
+        android:title="@string/book_info_txt"
+        app:showAsAction="ifRoom" />
+    <item
+        android:id="@+id/receiver"
+        android:icon="@drawable/unload"
+        android:title="Receiver Info"
+        app:showAsAction="ifRoom" />
+    <item
+        android:id="@+id/box_info"
+        android:icon="@drawable/box_sel"
+        android:title="Payment"
+        app:showAsAction="ifRoom" />
+</menu>

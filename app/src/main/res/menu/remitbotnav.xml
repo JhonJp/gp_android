@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <item
+        android:id="@+id/tooic"
+        android:icon="@drawable/information"
+        android:title="To OIC"
+        app:showAsAction="ifRoom" />
+    <item
+        android:id="@+id/tobank"
+        android:icon="@drawable/pay"
+        android:title="To Bank"
+        app:showAsAction="ifRoom" />
+</menu>
