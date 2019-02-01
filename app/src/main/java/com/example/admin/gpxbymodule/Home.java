@@ -709,6 +709,8 @@ public class Home extends AppCompatActivity
                                 String middlename = json_data.getString("middlename");
                                 String lastname = json_data.getString("lastname");
                                 String mobile = json_data.getString("mobile");
+                                String secmob = json_data.getString("secondary_number");
+                                String thrmob = json_data.getString("another_number");
                                 String phone = json_data.getString("phone");
                                 String email = json_data.getString("email");
                                 String gender = json_data.getString("gender");
@@ -728,7 +730,7 @@ public class Home extends AppCompatActivity
                                 String name = firstname + " "+ lastname;
 
                                 gendata.addCustomer(account_no,"", firstname, middlename, lastname, mobile,
-                                        phone, email, gender, birthdate, prov, city,postal,
+                                        secmob, thrmob, phone, email, gender, birthdate, prov, city,postal,
                                         barangay, openfield, type, createdby, recordstatus, name, "2");
 
                             }
@@ -1140,6 +1142,7 @@ public class Home extends AppCompatActivity
                     String remarks = c.getString(c.getColumnIndex(gendata.temp_remarks));
                     String d = c.getString(c.getColumnIndex(gendata.temp_createdate));
                     String by = c.getString(c.getColumnIndex(gendata.temp_createby));
+                    String accstat = c.getString(c.getColumnIndex(gendata.temp_acceptstat));
                     json.put("id", trans);
                     json.put("mode_of_shipment", "");
                     json.put("type", type);
@@ -1150,6 +1153,7 @@ public class Home extends AppCompatActivity
                     json.put("remarks", remarks);
                     json.put("created_date", d);
                     json.put("created_by", by);
+                    json.put("acceptance_status", accstat);
                     reserve = gendata.getDistributionsBox(trans);
                     img = getDistributionImage(trans);
                     json.put("distribution_box", reserve);
@@ -1217,6 +1221,7 @@ public class Home extends AppCompatActivity
                     String remarks = c.getString(c.getColumnIndex(ratesDB.partdist_remarks));
                     String d = c.getString(c.getColumnIndex(ratesDB.partdist_createdate));
                     String by = c.getString(c.getColumnIndex(ratesDB.partdist_createby));
+                    String accstat = c.getString(c.getColumnIndex(ratesDB.partdist_acceptstat));
                     json.put("id", trans);
                     json.put("mode_of_shipment", mode);
                     json.put("type", type);
@@ -1227,6 +1232,7 @@ public class Home extends AppCompatActivity
                     json.put("remarks", remarks);
                     json.put("created_date", d);
                     json.put("created_by", by);
+                    json.put("acceptance_status", accstat);
                     reserve = ratesDB.getDistributionsBox(trans);
                     img = getDistributionpartnerImage(trans);
                     json.put("distribution_box", reserve);
@@ -2026,6 +2032,7 @@ public class Home extends AppCompatActivity
                     json.put("unload_eta", eta);
                     json.put("createdby", by);
                     json.put("unloading_boxes", getAllUnloadBox(id));
+                    json.put("unloading_boxes_image", getUnloadImage(id));
                     unloadids.add(id);
                     finalarray.put(json);
                     c.moveToNext();
@@ -2076,6 +2083,40 @@ public class Home extends AppCompatActivity
             cursor.moveToNext();
         }
         cursor.close();
+        return resultSet;
+    }
+
+    public JSONArray getUnloadImage(String trans) {
+        SQLiteDatabase myDataBase = ratesDB.getReadableDatabase();
+        String raw = " SELECT * FROM " + ratesDB.tbname_unloadingbox_image
+                +" WHERE "+ratesDB.unbi_trans+" = '"+trans+"'";
+        Cursor cursor = myDataBase.rawQuery(raw, null);
+        JSONArray resultSet = new JSONArray();
+        cursor.moveToFirst();
+        try {
+            while (!cursor.isAfterLast()) {
+                JSONObject js = new JSONObject();
+                String tr = cursor.getString(cursor.getColumnIndex(ratesDB.unbi_trans));
+                String bnum = cursor.getString(cursor.getColumnIndex(ratesDB.unbi_boxnumber));
+                byte[] image = cursor.getBlob(cursor.getColumnIndex(ratesDB.unbi_image));
+                Bitmap bitmap = BitmapFactory.decodeByteArray(image, 0, image.length);
+                byte[] bitmapdata = getBytesFromBitmap(bitmap);
+
+                // get the base 64 string
+                String imgString = Base64.encodeToString(bitmapdata, Base64.NO_WRAP);
+
+                js.put("transaction_number", tr);
+                js.put("boxnumber", bnum);
+                js.put("image", imgString);
+                resultSet.put(js);
+                cursor.moveToNext();
+            }
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+        cursor.close();
+//Log.e("result set", resultSet.toString());
         return resultSet;
     }
 

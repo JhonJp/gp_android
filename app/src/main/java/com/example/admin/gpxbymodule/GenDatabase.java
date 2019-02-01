@@ -120,6 +120,8 @@ public class GenDatabase extends SQLiteOpenHelper {
     public final String cust_middlename = "middlename";
     public final String cust_lastname = "lastname";
     public final String cust_mobile = "mobile";
+    public final String cust_secmobile = "secondary_number";
+    public final String cust_thirdmobile = "another_number";
     public final String cust_phonenum = "phone";
     public final String cust_emailadd = "email";
     public final String cust_gender = "gender";
@@ -142,6 +144,8 @@ public class GenDatabase extends SQLiteOpenHelper {
             + cust_middlename + " TEXT, "
             + cust_lastname + " TEXT, "
             + cust_mobile + " TEXT, "
+            + cust_secmobile + " TEXT, "
+            + cust_thirdmobile + " TEXT, "
             + cust_phonenum + " TEXT, "
             + cust_emailadd + " TEXT, "
             + cust_gender + " TEXT, "
@@ -170,6 +174,7 @@ public class GenDatabase extends SQLiteOpenHelper {
     public final String temp_status = "status";
     public final String temp_createdate = "created_date";
     public final String temp_createby = "createby";
+    public final String temp_acceptstat = "acceptance_status";
     public final String temp_uploadstat = "upload_status";
     public final String createTempDist = " CREATE TABLE " + tbname_tempDist + "("
             + temp_id + " INTEGER PRIMARY KEY AUTOINCREMENT, "
@@ -181,6 +186,7 @@ public class GenDatabase extends SQLiteOpenHelper {
             + temp_status + " TEXT, "
             + temp_createdate + " TEXT, "
             + temp_createby + " TEXT, "
+            + temp_acceptstat + " INTEGER, "
             + temp_uploadstat + " TEXT )";
     public final String dropTempDist = " DROP TABLE IF EXISTS " + tbname_tempDist;
 
@@ -844,7 +850,8 @@ public class GenDatabase extends SQLiteOpenHelper {
         return total;
     }
 
-    public void addCustomer(String accntnum, String sender, String fname, String mname, String lname, String mobile, String phone,
+    public void addCustomer(String accntnum, String sender, String fname, String mname, String lname, String mobile,
+                            String anmobile, String thrmobile, String phone,
                             String email, String gender, String bday, String prov, String city, String postal, String brangay,
                             String unit, String type, String by, String stat, String fullname, String updstat) {
         SQLiteDatabase db = this.getWritableDatabase();
@@ -854,6 +861,8 @@ public class GenDatabase extends SQLiteOpenHelper {
         cv.put(cust_middlename, mname);
         cv.put(cust_lastname, lname);
         cv.put(cust_mobile, mobile);
+        cv.put(cust_secmobile, anmobile);
+        cv.put(cust_thirdmobile, thrmobile);
         cv.put(cust_phonenum, phone);
         cv.put(cust_emailadd, email);
         cv.put(cust_gender, gender);
@@ -2442,7 +2451,6 @@ public class GenDatabase extends SQLiteOpenHelper {
         db.close();
     }
 
-
     //get unloaded boxes
     public ArrayList<LinearItem> getUnloadBoxes(String transno) {
         ArrayList<LinearItem> results = new ArrayList<>();
@@ -2478,10 +2486,11 @@ public class GenDatabase extends SQLiteOpenHelper {
                 +" WHERE "+unload_con_by+" = '"+by+"'", null);
         res.moveToFirst();
         while (!res.isAfterLast()) {
-            String topitem = res.getString(res.getColumnIndex(unload_con_number));
-            String id = res.getString(res.getColumnIndex(unload_id));
             String sub = res.getString(res.getColumnIndex(unload_forward));
-            LinearItem list = new LinearItem(id, topitem, sub);
+            String topitem = sub+"("+res.getString(res.getColumnIndex(unload_con_number))+")";
+            String id = res.getString(res.getColumnIndex(unload_id));
+            String date = res.getString(res.getColumnIndex(unload_date));
+            LinearItem list = new LinearItem(id, topitem, date);
             results.add(list);
             res.moveToNext();
         }
@@ -2836,6 +2845,15 @@ public class GenDatabase extends SQLiteOpenHelper {
         cv.put(unload_box_stat, stat);
 
         db.update(tb_unloadbox, cv, unloadbox_trans+" = '"+trans+"'", null);
+        db.close();
+    }
+
+    public void updateDistById(String id){
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues cv = new ContentValues();
+        cv.put(temp_acceptstat, "1");
+        db.update(tbname_tempDist, cv, temp_transactionnumber+" = '"+id+"'", null);
+        Log.e("update_distaccepted", id);
         db.close();
     }
 

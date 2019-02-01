@@ -501,6 +501,8 @@ public class Partner_driverpage extends AppCompatActivity {
                     String middlename = json_data.getString("middlename");
                     String lastname = json_data.getString("lastname");
                     String mobile = json_data.getString("mobile");
+                    String secmob = json_data.getString("secondary_number");
+                    String thrmob = json_data.getString("another_number");
                     String phone = json_data.getString("phone");
                     String email = json_data.getString("email");
                     String gender = json_data.getString("gender");
@@ -520,7 +522,7 @@ public class Partner_driverpage extends AppCompatActivity {
                     String name = firstname + " "+ lastname;
 
                     gen.addCustomer(account_no,"", firstname, middlename, lastname, mobile,
-                            phone, email, gender, birthdate, prov, city,postal,
+                            secmob, thrmob, phone, email, gender, birthdate, prov, city,postal,
                             barangay, openfield, type, createdby, recordstatus, name, "2");
 
                 }

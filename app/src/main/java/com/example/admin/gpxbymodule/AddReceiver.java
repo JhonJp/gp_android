@@ -36,7 +36,7 @@ public class AddReceiver extends Fragment {
 
 
     EditText fname, midname, lname,
-            unit, pnum,mobnum,email, postal, sendaccount;
+            unit, pnum,mobnum,email, postal, sendaccount, secondnum, thrnum;
     TextView birthdate;
     RatesDB rates;
     AddCustomer cust;
@@ -85,6 +85,8 @@ public class AddReceiver extends Fragment {
         email = (EditText)view.findViewById(R.id.customeremailinput);
         pnum = (EditText)view.findViewById(R.id.customerphoneinput);
         mobnum = (EditText)view.findViewById(R.id.customermobileinput);
+        secondnum = (EditText)view.findViewById(R.id.sec_numberinput);
+        thrnum = (EditText)view.findViewById(R.id.an_numberinput);
 
         textChange();
         spinnerGender();
@@ -220,6 +222,8 @@ public class AddReceiver extends Fragment {
             //contacts string
             String phonenum = pnum.getText().toString();
             String mobilenum = mobnum.getText().toString();
+            String secmob = secondnum.getText().toString();
+            String anmob = thrnum.getText().toString();
             String mail = email.getText().toString();
             if (!mail.equals("")) {
                 if(!isEmailValid(mail)) {
@@ -251,7 +255,7 @@ public class AddReceiver extends Fragment {
                 //contacts string
                 String fullname = first + " " + last;
 
-                generaldb.addCustomer(accnumber, acc, first, mname, last, mobilenum, phonenum,
+                generaldb.addCustomer(accnumber, acc, first, mname, last, mobilenum,secmob, anmob, phonenum,
                         mail, gend, bday, prov, cty, post, barang, getunit, variable,
                         "" + helper.logcount(), "1", fullname, "1");
 

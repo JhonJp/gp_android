@@ -35,7 +35,7 @@ public class AddNewCustomer extends Fragment {
 
 
     EditText fname, midname, lname,
-            unit, pnum,mobnum,email, village, city, open;
+            unit, pnum,mobnum,email, village, city, open, secnum, thrnum;
     RatesDB rates;
     HomeDatabase helper;
     GenDatabase generaldb;
@@ -79,6 +79,8 @@ public class AddNewCustomer extends Fragment {
         email = (EditText)view.findViewById(R.id.customeremailinput);
         pnum = (EditText)view.findViewById(R.id.customerphoneinput);
         mobnum = (EditText)view.findViewById(R.id.customermobileinput);
+        secnum = (EditText)view.findViewById(R.id.sec_noinput);
+        thrnum = (EditText)view.findViewById(R.id.an_noinput);
 
         textChange();
         spinnerGender();
@@ -118,6 +120,8 @@ public class AddNewCustomer extends Fragment {
             //contacts string
             String phonenum = pnum.getText().toString();
             String mobilenum = mobnum.getText().toString();
+            String secmob = secnum.getText().toString();
+            String anmob = thrnum.getText().toString();
             String mail = email.getText().toString();
             if (!mail.equals("")) {
                 if(!isEmailValid(mail)) {
@@ -147,7 +151,7 @@ public class AddNewCustomer extends Fragment {
                 //contacts string
                 String fullname = first + " " + last;
 
-                generaldb.addCustomer(accnumber, "", first, mname, last, mobilenum, phonenum,
+                generaldb.addCustomer(accnumber, "", first, mname, last, mobilenum,secmob, anmob, phonenum,
                         mail, gend, bday, "", cty, "",
                         vill, getunit, variable, "" + helper.logcount(), "1", fullname, "1");
 

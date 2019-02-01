@@ -110,6 +110,42 @@
                         android:layout_height="match_parent">
 
                         <android.support.design.widget.TextInputLayout
+                            android:id="@+id/sec_no"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content">
+
+                            <EditText
+                                android:id="@+id/sec_noinput"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:hint="Secondary Number"
+                                android:inputType="text|number" />
+                        </android.support.design.widget.TextInputLayout>
+                    </FrameLayout>
+
+                    <FrameLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent">
+
+                        <android.support.design.widget.TextInputLayout
+                            android:id="@+id/an_no"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content">
+
+                            <EditText
+                                android:id="@+id/an_noinput"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:hint="Another mobile number"
+                                android:inputType="text|number" />
+                        </android.support.design.widget.TextInputLayout>
+                    </FrameLayout>
+
+                    <FrameLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent">
+
+                        <android.support.design.widget.TextInputLayout
                             android:id="@+id/customerphonenumber"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content">

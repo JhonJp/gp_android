@@ -1,6 +1,7 @@
 package com.example.admin.gpxbymodule;
 
 import android.Manifest;
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.DatePickerDialog;
 import android.app.ProgressDialog;
@@ -11,9 +12,12 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.media.Image;
 import android.os.Bundle;
 import android.os.Handler;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.NavigationView;
@@ -21,6 +25,7 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.support.v4.content.ContextCompat;
 import android.text.Editable;
+import android.text.Html;
 import android.text.TextWatcher;
 import android.util.Log;
 import android.view.Gravity;
@@ -52,6 +57,7 @@ import android.widget.Toast;
 import com.google.zxing.integration.android.IntentIntegrator;
 import com.google.zxing.integration.android.IntentResult;
 
+import java.io.ByteArrayOutputStream;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -78,6 +84,7 @@ public class Unload_main extends Fragment {
     FloatingActionButton fab;
     NavigationView navigationView;
     ProgressDialog progressBar;
+    int CAMERA_REQUEST = 500;
     LinearLayout dum;
     int error = 0;
     DatePickerFragment date;
@@ -87,6 +94,10 @@ public class Unload_main extends Fragment {
     TimePickerDialog timePickerDialog;
     TextView timestart, timeend;
     FrameLayout timeclick;
+    boolean unlimage = false;
+    String boxnumbertest = null;
+    byte[] imgtest = null;
+    ArrayList<byte[]> imagesperbox;
 
     @Nullable
     @Override
@@ -110,6 +121,7 @@ public class Unload_main extends Fragment {
         addit = (ImageButton)view.findViewById(R.id.dropload);
         loadhome = (Load_home)getActivity();
         boxes = new ArrayList<>();
+        imagesperbox = new ArrayList<>();
 
         rate = new RatesDB(getContext());
         gen = new GenDatabase(getContext());
@@ -153,20 +165,29 @@ public class Unload_main extends Fragment {
 
     public void unload () {
         try {
-            result = boxes;
-            ArrayAdapter<String> adapter = new ArrayAdapter<String>(getContext(),
-                    android.R.layout.simple_list_item_1, result);
-            lv.setAdapter(adapter);
-            total.setText("Total : " + result.size() + " box(s)");
+            final ArrayList<LinearItem> results = new ArrayList<LinearItem>();
+            final ArrayList<String> resultnums = boxes;
+            final ArrayList<byte[]> resimge = imagesperbox;
+            if (resultnums.size() != 0) {
+                for (int i = 0; i < resultnums.size(); i++) {
+                    String img = Html.fromHtml("<small>"+resimge.get(i)+"</small>").toString();
+                    LinearItem list = new LinearItem(i + "", resultnums.get(i),img);
+                    results.add(list);
+                }
+            }
+            final LinearList myAdapter = new LinearList(getContext(), results);
+            lv.setAdapter(myAdapter);
+            total.setText("Total : " + resultnums.size() + " box(s)");
             lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
                 @Override
                 public void onItemClick(AdapterView<?> parent, View view, final int position, long id) {
-                    final String ids = result.get(position);
+                    final String ids = resultnums.get(position);
                     final AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
                     builder.setTitle("Delete this data ?")
                             .setPositiveButton("Ok", new DialogInterface.OnClickListener() {
                                 public void onClick(DialogInterface dialog, int id) {
-                                    result.remove(result.get(position).indexOf(ids));
+                                    boxes.remove(resultnums.get(position).indexOf(ids));
+                                    imagesperbox.remove(result.get(position).indexOf(ids));
                                     unload();
                                     dialog.dismiss();
                                 }
@@ -186,6 +207,7 @@ public class Unload_main extends Fragment {
             add.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
+                    //viewBoxes(null,null);
                     scanpermit();
                 }
             });
@@ -327,21 +349,65 @@ public class Unload_main extends Fragment {
     }
 
     @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
+                                           @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == 100) {
+            if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                Toast.makeText(getContext(), "camera permission granted", Toast.LENGTH_LONG).show();
+            } else {
+                Toast.makeText(getContext(), "camera permission denied", Toast.LENGTH_LONG).show();
+            }
+        }else if (requestCode == CAMERA_REQUEST) {
+            if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                Toast.makeText(getContext(), "camera permission granted", Toast.LENGTH_LONG).show();
+            } else {
+                Toast.makeText(getContext(), "camera permission denied", Toast.LENGTH_LONG).show();
+            }
+        }
+    }
+    @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data){
-        IntentResult result = IntentIntegrator.parseActivityResult(requestCode, resultCode, data);
         try {
-            if (result.getContents() != null) {
-                String bn = result.getContents();
+            IntentResult result = IntentIntegrator.parseActivityResult(requestCode, resultCode, data);
+            if (requestCode == CAMERA_REQUEST && resultCode == Activity.RESULT_OK) {
+                Bitmap photo = (Bitmap) data.getExtras().get("data");
+                ByteArrayOutputStream stream = new ByteArrayOutputStream();
+                photo.compress(Bitmap.CompressFormat.PNG, 100, stream);
+
+                byte[] bytimg = stream.toByteArray();
+                Log.e("camera", "success " + bytimg + "/bn "+boxnumbertest);
+
+                if (boxnumbertest != null){
+                    imgtest = null;
+                    imgtest = bytimg;
+                    viewBoxes(boxnumbertest, bytimg);
+                }else{
+                    imgtest = null;
+                    imgtest = bytimg;
+                    viewBoxes(null, bytimg);
+                }
+            }else{
+                Log.e("requestcode", requestCode + "");
+                if (result.getContents() != null) {
+                    String bn = result.getContents();
+                    Log.e("boxnumber", bn);
                     if (checkIfExist(bn)) {
                         if (!boxes.contains(bn)) {
-                            boxes.add(bn);
-                            if (!(timestart.getText().toString().equals("Time start"))){
+//                            boxes.add(bn);
+                            if (!(timestart.getText().toString().equals("Time start"))) {
                                 timestart.setText(timestart.getText().toString());
-                            }else{
+                            } else {
                                 timestart.setText(returnHourMin());
                             }
-                            viewBoxes(bn);
-//                          unload();
+                            boxnumbertest = bn;
+                            Log.e("imgtest", imgtest+"");
+                            if (imgtest != null){
+                                viewBoxes(bn, imgtest);
+                            }else {
+                                viewBoxes(bn, null);
+                            }
+    //                        //unload();
                         } else {
                             String b = "Box number has been scanned, please try another.";
                             customToast(b);
@@ -350,9 +416,12 @@ public class Unload_main extends Fragment {
                         String t = "Boxnumber exists in unloading database.";
                         customToast(t);
                     }
-            } else
-                super.onActivityResult(requestCode, resultCode, data);
-        }catch (Exception e){}
+                } else{
+                    String t = "No box number detected, please try again.";
+                    customToast(t);
+                }
+            }
+        } catch (Exception e) {}
     }
 
     public boolean checkNum(String bn){
@@ -400,24 +469,78 @@ public class Unload_main extends Fragment {
         return name;
     }
 
-    public void viewBoxes(String number){
+    public void viewBoxes(String number, final byte[] image){
         final AlertDialog.Builder boxdisplay = new AlertDialog.Builder(getContext());
         final LayoutInflater inflater = getLayoutInflater();
         final View d = inflater.inflate(R.layout.unl_box,null);
         boxdisplay.setView(d);
-        final TextView boxnumber = (EditText)d.findViewById(R.id.boxnum);
-        final ImageView addimage = (ImageButton)d.findViewById(R.id.additem);
+        final TextView boxnumber = (TextView) d.findViewById(R.id.boxnum);
+        final ImageView addimage = (ImageView) d.findViewById(R.id.imgbox);
+        final ImageButton addbox = (ImageButton) d.findViewById(R.id.editbox);
+        Button ok = (Button)d.findViewById(R.id.confirm);
+        Button cancel = (Button)d.findViewById(R.id.cancel);
+        final AlertDialog td = boxdisplay.create();
         if (number != null){
             boxnumber.setText(number);
         }
-        boxdisplay.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+        if (image != null){
+            Bitmap bm = BitmapFactory.decodeByteArray(image,0,image.length);
+            addimage.setImageBitmap(bm);
+        }
+
+        addbox.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(DialogInterface dialog, int which) {
-                dialog.dismiss();
+            public void onClick(View v) {
+                td.dismiss();
+                scanpermit();
             }
         });
-        boxdisplay.setTitle("Add-ons");
-        final AlertDialog td = boxdisplay.create();
+
+        addimage.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                try {
+                    td.dismiss();
+                    Intent cameraIntent = new Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
+                    startActivityForResult(cameraIntent, CAMERA_REQUEST);
+                } catch (Exception e) {
+                    td.dismiss();
+                    ActivityCompat.requestPermissions(getActivity(),
+                            new String[]{Manifest.permission.CAMERA}, CAMERA_REQUEST);
+                }
+            }
+        });
+
+        //confirm button
+       ok.setOnClickListener(new View.OnClickListener() {
+           @Override
+           public void onClick(View v) {
+               if (image == null){
+                   String ni = "Please box image.";
+                   customToast(ni);
+               }else {
+                   String bn = boxnumber.getText().toString();
+                   if (!boxes.contains(bn)) {
+                       boxes.add(bn);
+                   }
+                   if (!imagesperbox.contains(image)){
+                       imagesperbox.add(image);
+                   }
+                   imgtest = null;
+                   unload();
+                   td.dismiss();
+               }
+           }
+       });
+
+       //cancel button
+       cancel.setOnClickListener(new View.OnClickListener() {
+           @Override
+           public void onClick(View v) {
+               td.dismiss();
+           }
+       });
+
         td.show();
     }
 
@@ -540,12 +663,15 @@ public class Unload_main extends Fragment {
                 String fields = "Form fields are missing, kindly fill it up correctly. Thank you.";
                 customToast(fields);
             }
-            else if (result.size() == 0){
+            else if (boxes.size() == 0){
                 String fields = "Please scan a barcode for unloading, thank you.";
                 customToast(fields);
             }
             else{
                 for (String bn : boxes){
+                    for (byte[] im : imagesperbox) {
+                        rate.addNewUnloadingImage(loadhome.getUnloadtrans(), bn, im);
+                    }
                     gen.addUnload(loadhome.getUnloadtrans(), bn, "2");
                     saveInventory(bn);
                 }
@@ -564,7 +690,9 @@ public class Unload_main extends Fragment {
                 unload();
                 loadingPost(getView());
             }
-        }catch (Exception e){}
+        }catch (Exception e){
+            Log.e("saving_trans", e.getMessage());
+        }
     }
 
     public void saveInventory(String bn){

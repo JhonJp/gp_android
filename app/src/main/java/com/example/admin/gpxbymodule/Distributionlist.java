@@ -194,13 +194,26 @@ public class Distributionlist extends Fragment {
                             "<t>" + getRemarks(ids) + ""));
 
                     Button close = (Button) dialog.findViewById(R.id.close);
-                    close.setOnClickListener(new View.OnClickListener() {
-                        @Override
-                        public void onClick(View v) {
-                            dialog.dismiss();
-                        }
-                    });
-
+                    if (getAccStat(ids) == 0){
+                        close.setText("Confirm transaction");
+                        close.setTextColor(getResources().getColor(R.color.textcolor));
+                        close.setBackgroundColor(getResources().getColor(R.color.colorPrimary));
+                        close.setOnClickListener(new View.OnClickListener() {
+                            @Override
+                            public void onClick(View v) {
+                                gen.updateDistById(ids);
+                                dialog.dismiss();
+                            }
+                        });
+                    }else{
+                        close.setText("Close");
+                        close.setOnClickListener(new View.OnClickListener() {
+                            @Override
+                            public void onClick(View v) {
+                                dialog.dismiss();
+                            }
+                        });
+                    }
                     dialog.show();
                 }
 
@@ -267,12 +280,26 @@ public class Distributionlist extends Fragment {
                             "<t>" + getRemarksPartner(ids) + ""));
 
                     Button close = (Button) dialog.findViewById(R.id.close);
-                    close.setOnClickListener(new View.OnClickListener() {
-                        @Override
-                        public void onClick(View v) {
-                            dialog.dismiss();
-                        }
-                    });
+                    if (getAccStatPartner(ids) == 0){
+                        close.setText("Confirm transaction");
+                        close.setTextColor(getResources().getColor(R.color.textcolor));
+                        close.setBackgroundColor(getResources().getColor(R.color.colorPrimary));
+                        close.setOnClickListener(new View.OnClickListener() {
+                            @Override
+                            public void onClick(View v) {
+                                rate.updateDistById(ids);
+                                dialog.dismiss();
+                            }
+                        });
+                    }else{
+                        close.setText("Close");
+                        close.setOnClickListener(new View.OnClickListener() {
+                            @Override
+                            public void onClick(View v) {
+                                dialog.dismiss();
+                            }
+                        });
+                    }
 
                     dialog.show();
                 }
@@ -510,6 +537,40 @@ public class Distributionlist extends Fragment {
             Log.e("boxname", name);
         }
         return name;
+    }
+
+    public int getAccStat(String trans){
+        int x = 0;
+        SQLiteDatabase db = gen.getReadableDatabase();
+        String query = "SELECT * FROM "+gen.tbname_tempDist
+                +" WHERE "+gen.temp_transactionnumber+" = '"+trans+"'";
+        Cursor c = db.rawQuery(query, null);
+        if (c.moveToNext()){
+            int i  = c.getInt(c.getColumnIndex(gen.temp_acceptstat));
+            if (i == 0){
+                x = 0;
+            }else{
+                x = i;
+            }
+        }
+        return x;
+    }
+
+    public int getAccStatPartner(String trans){
+        int x = 0;
+        SQLiteDatabase db = rate.getReadableDatabase();
+        String query = "SELECT * FROM "+rate.tbname_part_distribution
+                +" WHERE "+rate.partdist_transactionnumber+" = '"+trans+"'";
+        Cursor c = db.rawQuery(query, null);
+        if (c.moveToNext()){
+            int i  = c.getInt(c.getColumnIndex(rate.partdist_acceptstat));
+            if (i == 0){
+                x = 0;
+            }else{
+                x = i;
+            }
+        }
+        return x;
     }
 
 }

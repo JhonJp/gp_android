@@ -615,6 +615,7 @@ public class Distribution extends AppCompatActivity
                     String remarks = c.getString(c.getColumnIndex(gen.temp_remarks));
                     String d = c.getString(c.getColumnIndex(gen.temp_createdate));
                     String by = c.getString(c.getColumnIndex(gen.temp_createby));
+                    String accstat = c.getString(c.getColumnIndex(gen.temp_acceptstat));
                     json.put("id", trans);
                     json.put("type", type);
                     json.put("mode_of_shipment", "");
@@ -624,6 +625,7 @@ public class Distribution extends AppCompatActivity
                     json.put("remarks", remarks);
                     json.put("created_date", d);
                     json.put("created_by", by);
+                    json.put("acceptance_status", accstat);
                     reserve = gen.getDistributionsBox(trans);
                     img = getDistributionImage(trans);
                     json.put("distribution_box", reserve);

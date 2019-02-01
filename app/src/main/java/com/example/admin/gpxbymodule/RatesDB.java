@@ -305,6 +305,7 @@ public class RatesDB extends SQLiteOpenHelper {
     public final String partdist_status = "status";
     public final String partdist_createdate = "created_date";
     public final String partdist_createby = "createby";
+    public final String partdist_acceptstat = "acceptance_status";
     public final String partdist_uploadstat = "upload_status";
     public final String create_part_dist = " CREATE TABLE " + tbname_part_distribution + "("
             + partdist_id + " INTEGER PRIMARY KEY AUTOINCREMENT, "
@@ -319,6 +320,7 @@ public class RatesDB extends SQLiteOpenHelper {
             + partdist_status + " TEXT, "
             + partdist_createdate + " TEXT, "
             + partdist_createby + " TEXT, "
+            + partdist_acceptstat + " INTEGER, "
             + partdist_uploadstat + " TEXT )";
     public final String drop_part_dist = " DROP TABLE IF EXISTS " + tbname_part_distribution;
 
@@ -1203,5 +1205,15 @@ public class RatesDB extends SQLiteOpenHelper {
         Log.e("update_loadbox", box_num);
         db.close();
     }
+
+    public void updateDistById(String id){
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues cv = new ContentValues();
+        cv.put(partdist_acceptstat, "1");
+        db.update(tbname_part_distribution, cv, partdist_transactionnumber+" = '"+id+"'", null);
+        Log.e("update_distaccepted", id);
+        db.close();
+    }
+
 
 }
