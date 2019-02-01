@@ -41,8 +41,10 @@ import android.widget.DatePicker;
 import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.TimePicker;
 import android.widget.Toast;
@@ -338,7 +340,8 @@ public class Unload_main extends Fragment {
                             }else{
                                 timestart.setText(returnHourMin());
                             }
-                            unload();
+                            viewBoxes(bn);
+//                          unload();
                         } else {
                             String b = "Box number has been scanned, please try another.";
                             customToast(b);
@@ -395,6 +398,27 @@ public class Unload_main extends Fragment {
             Log.e("boxname", name);
         }
         return name;
+    }
+
+    public void viewBoxes(String number){
+        final AlertDialog.Builder boxdisplay = new AlertDialog.Builder(getContext());
+        final LayoutInflater inflater = getLayoutInflater();
+        final View d = inflater.inflate(R.layout.unl_box,null);
+        boxdisplay.setView(d);
+        final TextView boxnumber = (EditText)d.findViewById(R.id.boxnum);
+        final ImageView addimage = (ImageButton)d.findViewById(R.id.additem);
+        if (number != null){
+            boxnumber.setText(number);
+        }
+        boxdisplay.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.dismiss();
+            }
+        });
+        boxdisplay.setTitle("Add-ons");
+        final AlertDialog td = boxdisplay.create();
+        td.show();
     }
 
     public String getBookingTrans(String box){
