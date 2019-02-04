@@ -320,7 +320,7 @@ public class Home extends AppCompatActivity
                         startActivity(new Intent(Home.this, Partner_Maindelivery.class));
                         finish();
                     break;
-                case "Box Releasing":
+                case "Barcode Releasing":
                     startActivity(new Intent(Home.this, BoxRelease.class));
                     finish();
                     break;
@@ -444,7 +444,7 @@ public class Home extends AppCompatActivity
             helper.addModule("Remittance", off_final_rem, officer);
             helper.addModule("Inventory", off_final_inv, officer);
             helper.addModule("Incident Report", off_final_inc, officer);
-            helper.addModule("Box Releasing", off_final_tra, officer);
+            helper.addModule("Barcode Releasing", off_final_tra, officer);
 
             //drawable sales driver user
             Drawable driver_reservation = res.getDrawable(R.drawable.reservation);
@@ -534,7 +534,7 @@ public class Home extends AppCompatActivity
             helper.addModule("Loading/Unloading", check_final_unl, checker);
             helper.addModule("Distribution", off_final_dist, checker);
             helper.addModule("Incident Report", check_final_inc, checker);
-            helper.addModule("Box Releasing", check_final_loa, checker);
+            helper.addModule("Barcode Releasing", check_final_loa, checker);
 
             //drawable partner portal user
             Drawable partner_load = res.getDrawable(R.drawable.unload);
