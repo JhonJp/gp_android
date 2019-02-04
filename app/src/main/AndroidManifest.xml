@@ -4,8 +4,8 @@
 
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission android:name="android.permission.BLUETOOTH"></uses-permission>
-    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN"></uses-permission>
+    <uses-permission android:name="android.permission.BLUETOOTH" />
+    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
@@ -32,11 +32,9 @@
             android:name=".Login"
             android:label="@string/app_name"
             android:screenOrientation="portrait" />
-
         <activity
             android:name=".DeviceListActivity"
-            android:theme="@android:style/Theme.DeviceDefault.Dialog"/>
-
+            android:theme="@android:style/Theme.DeviceDefault.Dialog" />
         <activity
             android:name=".Home"
             android:label="@string/title_activity_home"
@@ -189,12 +187,14 @@
             android:label="@string/title_activity_partner_acceptance"
             android:screenOrientation="portrait"
             android:theme="@style/AppTheme.NoActionBar" />
-
         <activity android:name=".Partner_driverpage" />
-
-        <activity android:name=".Deliverycont"
+        <activity
+            android:name=".Deliverycont"
             android:label="Delivery Content" />
-
+        <activity
+            android:name=".BoxRelease"
+            android:label="@string/title_activity_box_release"
+            android:theme="@style/AppTheme.NoActionBar"></activity>
     </application>
 
 </manifest>

@@ -75,4 +75,5 @@
     <string name="title_activity_partner_distribution">Partner_distribution</string>
     <string name="title_activity_partner_acceptance">Acceptance</string>
     <string name="servestxt">This window serves as your partial receipt</string>
+    <string name="title_activity_box_release">BoxRelease</string>
 </resources>
