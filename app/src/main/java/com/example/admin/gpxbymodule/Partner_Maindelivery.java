@@ -374,6 +374,10 @@ public class Partner_Maindelivery extends AppCompatActivity
             case "Direct":
                 drawer.closeDrawer(Gravity.START);
                 break;
+            case "Barcode Releasing":
+                startActivity(new Intent(this, BoxRelease.class));
+                finish();
+                break;
         }
     }
 

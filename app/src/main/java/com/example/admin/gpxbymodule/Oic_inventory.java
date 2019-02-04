@@ -254,6 +254,10 @@ public class Oic_inventory extends AppCompatActivity
                     finish();
                 }
                 break;
+            case "Barcode Releasing":
+                startActivity(new Intent(this, BoxRelease.class));
+                finish();
+                break;
             case "Incident Report":
                     Intent i = new Intent(this, Incident.class);
                     Bundle bundle = new Bundle();

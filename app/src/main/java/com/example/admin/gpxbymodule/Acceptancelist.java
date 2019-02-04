@@ -283,6 +283,10 @@ public class Acceptancelist extends AppCompatActivity
                     startActivity(new Intent(this, Partner_Maindelivery.class));
                     finish();
                 break;
+            case "Barcode Releasing":
+                startActivity(new Intent(this, BoxRelease.class));
+                finish();
+                break;
         }
     }
 

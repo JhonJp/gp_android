@@ -372,8 +372,8 @@ public class Deliverycontent extends AppCompatActivity {
         Cursor v = db.rawQuery(" SELECT * FROM " + gen.tbname_customers +
                 " WHERE "+gen.cust_accountnumber+ " = '"+a+"'", null);
         if(v.moveToNext()) {
-            fullname = ""+ getBrgy(v.getString(v.getColumnIndex(gen.cust_barangay))) + ", "
-                    + getCity(v.getString(v.getColumnIndex(gen.cust_city))) + ", "
+            fullname = ""+ getBrgy(v.getString(v.getColumnIndex(gen.cust_barangay))) + " "
+                    + getCity(v.getString(v.getColumnIndex(gen.cust_city))) + " "
                     + getProvince(v.getString(v.getColumnIndex(gen.cust_prov))) +" "
                     + v.getString(v.getColumnIndex(gen.cust_postal));
             Log.e("full_add", a);

@@ -8,6 +8,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
+import android.view.Gravity;
 import android.view.View;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
@@ -240,6 +241,10 @@ public class BoxRelease extends AppCompatActivity
                 startActivity(new Intent(this, Partner_Maindelivery.class));
                 finish();
                 break;
+            case "Barcode Releasing":
+                DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+                drawer.closeDrawer(Gravity.START);
+                break;
         }
     }
 
@@ -281,4 +286,5 @@ public class BoxRelease extends AppCompatActivity
         drawer.closeDrawer(GravityCompat.START);
         return true;
     }
+
 }

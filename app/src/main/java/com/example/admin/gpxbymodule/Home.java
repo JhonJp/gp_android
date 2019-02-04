@@ -321,7 +321,7 @@ public class Home extends AppCompatActivity
                         finish();
                     break;
                 case "Barcode Releasing":
-                    startActivity(new Intent(Home.this, BoxRelease.class));
+                    startActivity(new Intent(this, BoxRelease.class));
                     finish();
                     break;
             }
