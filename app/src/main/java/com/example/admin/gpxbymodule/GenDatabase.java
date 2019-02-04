@@ -175,6 +175,7 @@ public class GenDatabase extends SQLiteOpenHelper {
     public final String temp_createdate = "created_date";
     public final String temp_createby = "createby";
     public final String temp_acceptstat = "acceptance_status";
+    public final String temp_acceptsign = "acceptance_signature";
     public final String temp_uploadstat = "upload_status";
     public final String createTempDist = " CREATE TABLE " + tbname_tempDist + "("
             + temp_id + " INTEGER PRIMARY KEY AUTOINCREMENT, "
@@ -187,6 +188,7 @@ public class GenDatabase extends SQLiteOpenHelper {
             + temp_createdate + " TEXT, "
             + temp_createby + " TEXT, "
             + temp_acceptstat + " INTEGER, "
+            + temp_acceptsign + " BLOB, "
             + temp_uploadstat + " TEXT )";
     public final String dropTempDist = " DROP TABLE IF EXISTS " + tbname_tempDist;
 
@@ -376,6 +378,7 @@ public class GenDatabase extends SQLiteOpenHelper {
     public final String book_con_box_number = "box_number";
     public final String book_con_stat = "status";
     public final String book_con_hardport = "hardport";
+    public final String book_con_boxcont = "contents";
 
     //create all table booking consignee box
     public final String createTBBooking_Consignee_Box = " CREATE TABLE " + tbname_booking_consignee_box + "("
@@ -387,6 +390,7 @@ public class GenDatabase extends SQLiteOpenHelper {
             + book_con_transaction_no + " TEXT, "
             + book_con_box_number + " TEXT UNIQUE, "
             + book_con_hardport + " TEXT, "
+            + book_con_boxcont + " TEXT, "
             + book_con_stat + " TEXT )";
     public final String dropBooking_consignee_box = " DROP TABLE IF EXISTS " + tbname_booking_consignee_box;
 
@@ -1140,7 +1144,7 @@ public class GenDatabase extends SQLiteOpenHelper {
 
     public boolean addDistribution(String trans, String type, String typename,
                                    String truck, String rem, String status, String upstat,
-                                   String date, String by) {
+                                   String date, String by, int sac, byte[] sign) {
         SQLiteDatabase db = this.getWritableDatabase();
 
         ContentValues cv = new ContentValues();
@@ -1153,6 +1157,8 @@ public class GenDatabase extends SQLiteOpenHelper {
         cv.put(temp_uploadstat, upstat);
         cv.put(temp_createdate, date);
         cv.put(temp_createby, by);
+        cv.put(temp_acceptstat, sac);
+        cv.put(temp_acceptsign, sign);
 
         db.insert(tbname_tempDist, null, cv);
         Log.e("distribution",trans);
@@ -2008,7 +2014,7 @@ public class GenDatabase extends SQLiteOpenHelper {
 
     //add consignee booking
     public void addConsigneeBooking(String con, String boxtype, String orig, String dest, String trans,
-                                    String boxnum, String stat,String hardport) {
+                                    String boxnum, String stat,String hardport, String boxcont) {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues cv = new ContentValues();
         cv.put(book_con_box_account_no, con);
@@ -2019,6 +2025,7 @@ public class GenDatabase extends SQLiteOpenHelper {
         cv.put(book_con_box_number, boxnum);
         cv.put(book_con_hardport, hardport);
         cv.put(book_con_stat, stat);
+        cv.put(book_con_boxcont, boxcont);
         db.insert(tbname_booking_consignee_box, null, cv);
         Log.e("consignee", boxnum);
         db.close();
@@ -2782,7 +2789,7 @@ public class GenDatabase extends SQLiteOpenHelper {
 
 
     public void updConsigneeBooking(String id, String con,String orig, String dest, String trans,
-                                    String boxnum, String stat,String hardport) {
+                                    String boxnum, String stat,String hardport, String bcont) {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues cv = new ContentValues();
         cv.put(book_con_box_account_no, con);
@@ -2792,13 +2799,14 @@ public class GenDatabase extends SQLiteOpenHelper {
         cv.put(book_con_box_number, boxnum);
         cv.put(book_con_stat, stat);
         cv.put(book_con_hardport, hardport);
+        cv.put(book_con_boxcont, bcont);
 
         db.update(tbname_booking_consignee_box, cv, book_con_box_id + " = " + id, null);
         db.close();
     }
 
     public void updConsigneeBookingExist(String con, String boxtype, String orig, String dest, String trans,
-                                    String boxnum, String stat, String hardport) {
+                                    String boxnum, String stat, String hardport, String bcont) {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues cv = new ContentValues();
         cv.put(book_con_box_account_no, con);
@@ -2809,6 +2817,7 @@ public class GenDatabase extends SQLiteOpenHelper {
         cv.put(book_con_box_number, boxnum);
         cv.put(book_con_stat, stat);
         cv.put(book_con_hardport, hardport);
+        cv.put(book_con_boxcont, bcont);
         db.update(tbname_booking_consignee_box, cv, book_con_transaction_no+" = '"+trans+"'", null);
         Log.e("update_consignee", boxnum);
         db.close();
@@ -2848,10 +2857,11 @@ public class GenDatabase extends SQLiteOpenHelper {
         db.close();
     }
 
-    public void updateDistById(String id){
+    public void updateDistById(String id, byte[] sign){
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues cv = new ContentValues();
         cv.put(temp_acceptstat, "1");
+        cv.put(temp_acceptsign, sign);
         db.update(tbname_tempDist, cv, temp_transactionnumber+" = '"+id+"'", null);
         Log.e("update_distaccepted", id);
         db.close();

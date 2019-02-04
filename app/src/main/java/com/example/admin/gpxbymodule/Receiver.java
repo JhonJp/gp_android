@@ -64,7 +64,7 @@ public class Receiver extends Fragment {
     ArrayList<ListItem> result ;
     ArrayList<String> clickids, boxnumbers;
     FloatingActionButton addnewitem;
-    Spinner sour, dest, nsbspin;
+    Spinner sour, dest, nsbspin, bcontent;
     int sourceid, destid, selectedbt;
     ArrayList<String> boxesids;
     TextView nsbid;
@@ -334,6 +334,7 @@ public class Receiver extends Fragment {
             addcust = (ImageButton) d.findViewById(R.id.add_cust);
             sour = (Spinner) d.findViewById(R.id.source);
             dest = (Spinner) d.findViewById(R.id.destination);
+            bcontent = (Spinner) d.findViewById(R.id.boxcont);
 
             //populate listview for receiver
             String[] names = gen.getYourReceivers(book.getAccntno());
@@ -349,6 +350,13 @@ public class Receiver extends Fragment {
                     receivername.requestFocus();
                 }
             });
+
+            //populate box contents
+            String[] bbcont = rate.getAllBoxContents();
+            ArrayAdapter<String> bcontadapter =
+                    new ArrayAdapter<>(getContext(), R.layout.spinneritem,
+                            bbcont);
+            bcontent.setAdapter(bcontadapter);
 
             //populate sources
             String[] sr = rate.getSources();
@@ -431,6 +439,7 @@ public class Receiver extends Fragment {
                         String trans = book.getTransNo();
                         String re = receivername.getText().toString();
                         String bn = boxnum.getText().toString();
+                        String bcont = bcontent.getSelectedItem().toString();
                         if (!boxnumbers.contains(bn)){
                             boxnumbers.add(bn);
                         }
@@ -438,10 +447,10 @@ public class Receiver extends Fragment {
                         Log.e("hardport", feed+"");
                         if (feed == true) {
                             gen.updConsigneeBooking(id, getAccntNo(re), sourceid + "",
-                                    destid + "", trans, bn, "1","1");
+                                    destid + "", trans, bn, "1","1",bcont);
                         }else{
                             gen.updConsigneeBooking(id, getAccntNo(re), sourceid + "",
-                                    destid + "", trans, bn, "1","0");
+                                    destid + "", trans, bn, "1","0",bcont);
                         }
                         Log.e("boxtype", selectedbt + "");
                         if (book.getPayamount() == 0) {
@@ -492,7 +501,7 @@ public class Receiver extends Fragment {
                         Cursor exist = getexist.rawQuery(" SELECT * FROM "+gen.tbname_booking_consignee_box
                         +" WHERE "+gen.book_con_box_number+" = '"+bnum+"'", null);
                         if (exist.getCount() == 0 ) {
-                            gen.addConsigneeBooking(receiver, bt, "", "", transactionum, bnum, "1", "0");
+                            gen.addConsigneeBooking(receiver, bt, "", "", transactionum, bnum, "1", "0", "");
                         }else{
                             exist.moveToNext();
                             String id = exist.getString(exist.getColumnIndex(gen.book_con_box_id));
@@ -503,17 +512,18 @@ public class Receiver extends Fragment {
                             String dest = exist.getString(exist.getColumnIndex(gen.book_con_destination));
                             String btype = exist.getString(exist.getColumnIndex(gen.book_con_boxtype));
                             String hard = exist.getString(exist.getColumnIndex(gen.book_con_hardport));
+                            String bc = exist.getString(exist.getColumnIndex(gen.book_con_boxcont));
                             book.setTransNo(t);
                             //gen.deleteConsigneeTemp(b);
                             if (rec.equals("")) {
                                 gen.deleteConsigneeTemp(b);
-                                gen.addConsigneeBooking(rec, btype, orig, dest, t, b, "1", hard);
+                                gen.addConsigneeBooking(rec, btype, orig, dest, t, b, "1", hard,bc);
                             }
                             withReservation();
                         }
                     Log.e("boxnum", bnum);
                 }else{
-                    gen.addConsigneeBooking(null, bt,"", "", transactionum, bnumber,"1", "0");
+                    gen.addConsigneeBooking(null, bt,"", "", transactionum, bnumber,"1", "0", "");
                 }
                 getb.close();
 
@@ -537,6 +547,14 @@ public class Receiver extends Fragment {
         sour = (Spinner)d.findViewById(R.id.source);
         dest = (Spinner)d.findViewById(R.id.destination);
         nsbspin = (Spinner)d.findViewById(R.id.nsbtype);
+        bcontent = (Spinner)d.findViewById(R.id.boxcont);
+
+        //populate box contents
+        String[] bbcont = rate.getAllBoxContents();
+        ArrayAdapter<String> bcontadapter =
+                new ArrayAdapter<>(getContext(), R.layout.spinneritem,
+                        bbcont);
+        bcontent.setAdapter(bcontadapter);
 
         //populate sources
         String[] sr = rate.getSources();
@@ -625,6 +643,7 @@ public class Receiver extends Fragment {
 //                String prov = get(receivername.getText().toString());
                 Log.e("re", re);
                 String bnum = reboxnum.getText().toString();
+                String bcont = bcontent.getSelectedItem().toString();
                 if (re.equals("")){
                     String t ="Receiver name is invalid.";
                     customToast(t);
@@ -641,10 +660,10 @@ public class Receiver extends Fragment {
                     Log.e("hardport", feed+"");
                     if (feed == true) {
                         gen.addConsigneeBooking(re, getBoxNameIDused(boxid), sourceid + "", destid + "",
-                                book.getTransNo(), bnum, "1", "1");
+                                book.getTransNo(), bnum, "1", "1",bcont);
                     }else{
                         gen.addConsigneeBooking(re, getBoxNameIDused(boxid), sourceid + "", destid + "",
-                                book.getTransNo(), bnum, "1", "0");
+                                book.getTransNo(), bnum, "1", "0",bcont);
                     }
                     String lastid = getLastId()+"";
                     if (book.getPayamount() == 0) {

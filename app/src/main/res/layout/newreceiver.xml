@@ -13,7 +13,7 @@
 
         <FrameLayout
             android:layout_width="match_parent"
-            android:layout_height="150dp"
+            android:layout_height="100dp"
             android:layout_marginStart="10dp">
 
             <LinearLayout
@@ -84,6 +84,48 @@
                     android:hint="Box Number"
                     android:inputType="text|number" />
             </android.support.design.widget.TextInputLayout>
+
+        </FrameLayout>
+
+        <TextView
+            android:id="@+id/txtboxcont"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="left"
+            android:layout_marginEnd="10dp"
+            android:layout_marginTop="10dp"
+            android:gravity="right"
+            android:paddingEnd="10dp"
+            android:paddingStart="10dp"
+            android:text="Box Content"
+            android:textAppearance="@style/HintTextStyle" />
+
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:layout_marginEnd="10dp"
+            android:layout_marginStart="10dp"
+            android:layout_marginTop="5dp"
+            android:background="@drawable/droplayout"
+            android:orientation="horizontal">
+
+            <Spinner
+                android:id="@+id/boxcont"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_centerVertical="true"
+                android:layout_gravity="center"
+                android:layout_marginEnd="5dp"
+                android:layout_marginStart="5dp"
+                android:background="@android:color/transparent"
+                android:gravity="center" />
+
+            <ImageView
+                android:layout_width="65dp"
+                android:layout_height="wrap_content"
+                android:layout_alignParentRight="true"
+                android:layout_gravity="right"
+                android:src="@drawable/drop" />
 
         </FrameLayout>
 

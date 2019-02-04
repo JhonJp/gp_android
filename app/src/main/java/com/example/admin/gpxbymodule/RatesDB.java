@@ -306,6 +306,7 @@ public class RatesDB extends SQLiteOpenHelper {
     public final String partdist_createdate = "created_date";
     public final String partdist_createby = "createby";
     public final String partdist_acceptstat = "acceptance_status";
+    public final String partdist_acceptsign = "acceptance_signature";
     public final String partdist_uploadstat = "upload_status";
     public final String create_part_dist = " CREATE TABLE " + tbname_part_distribution + "("
             + partdist_id + " INTEGER PRIMARY KEY AUTOINCREMENT, "
@@ -321,6 +322,7 @@ public class RatesDB extends SQLiteOpenHelper {
             + partdist_createdate + " TEXT, "
             + partdist_createby + " TEXT, "
             + partdist_acceptstat + " INTEGER, "
+            + partdist_acceptsign + " BLOB, "
             + partdist_uploadstat + " TEXT )";
     public final String drop_part_dist = " DROP TABLE IF EXISTS " + tbname_part_distribution;
 
@@ -426,6 +428,15 @@ public class RatesDB extends SQLiteOpenHelper {
             +unbi_image+" BLOB )";
     public final String dropUnbi = " DROP TABLE IF EXISTS "+tbname_unloadingbox_image;
 
+    //box contents
+    public final String tbname_boxcont = "gpx_boxcontent";
+    public final String bcont_id = "id";
+    public final String bcont_desc = "description";
+    public final String createBCont  = " CREATE TABLE "+tbname_boxcont+" ("
+            +bcont_id+" INTEGER PRIMARY KEY UNIQUE, "
+            +bcont_desc+" TEXT )";
+    public final String dropbcont = " DROP TABLE IF EXISTS "+tbname_boxcont;
+
     public RatesDB(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
     }
@@ -441,6 +452,7 @@ public class RatesDB extends SQLiteOpenHelper {
         db.execSQL(createDelStat);
         db.execSQL(createDelSubStat);
         db.execSQL(createUnbi);
+        db.execSQL(createBCont);
 
         //province
         db.execSQL(createProvinces);
@@ -475,6 +487,7 @@ public class RatesDB extends SQLiteOpenHelper {
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion){
         db.execSQL(DROP_rates);
         db.execSQL(dropcity);
+        db.execSQL(dropbcont);
         db.execSQL(dropprovinces);
         db.execSQL(dropdistimage);
         db.execSQL(dropwarehouse);
@@ -568,6 +581,19 @@ public class RatesDB extends SQLiteOpenHelper {
         ArrayList<String> numbers = new ArrayList<String>();
         while(!cursor.isAfterLast()) {
             numbers.add(cursor.getString(cursor.getColumnIndex(prov_name)));
+            cursor.moveToNext();
+        }
+        cursor.close();
+        return numbers.toArray(new String[numbers.size()]);
+    }
+
+    public String[] getAllBoxContents(){
+        Cursor cursor = getReadableDatabase().rawQuery("SELECT "+bcont_desc+" FROM "+ tbname_boxcont
+                , null);
+        cursor.moveToFirst();
+        ArrayList<String> numbers = new ArrayList<String>();
+        while(!cursor.isAfterLast()) {
+            numbers.add(cursor.getString(cursor.getColumnIndex(bcont_desc)));
             cursor.moveToNext();
         }
         cursor.close();
@@ -995,7 +1021,7 @@ public class RatesDB extends SQLiteOpenHelper {
 
     public boolean addDistribution(String trans, String type,String mode, String typename,String driver,
                                    String truck, String rem,String eta, String status, String upstat,
-                                   String date, String by, String upds) {
+                                   String date, String by, String upds, int sac, byte[] sign) {
         SQLiteDatabase db = this.getWritableDatabase();
 
         ContentValues cv = new ContentValues();
@@ -1012,6 +1038,8 @@ public class RatesDB extends SQLiteOpenHelper {
         cv.put(partdist_createdate, date);
         cv.put(partdist_createby, by);
         cv.put(partdist_uploadstat, upds);
+        cv.put(partdist_acceptstat, sac);
+        cv.put(partdist_acceptsign, sign);
 
         db.insert(tbname_part_distribution, null, cv);
         Log.e("distribution",trans);
@@ -1215,5 +1243,14 @@ public class RatesDB extends SQLiteOpenHelper {
         db.close();
     }
 
+    public void addBoxContent(String id, String desc){
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues cv = new ContentValues();
+        cv.put(bcont_id, id);
+        cv.put(bcont_desc, desc);
+        db.insert(tbname_boxcont, null, cv);
+        Log.e("boxcont", id+"/"+desc);
+        db.close();
+    }
 
 }

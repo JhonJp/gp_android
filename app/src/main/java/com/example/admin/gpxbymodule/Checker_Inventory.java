@@ -328,7 +328,7 @@ public class Checker_Inventory extends AppCompatActivity
 
     public void boxtypes(final String ids){
         try {
-            final String[] ware = new String[]{"Empty", "Filled", "With boxnumber"};
+            final String[] ware = new String[]{"Empty", "Filled", "With boxnumber","Barcodes"};
             final ArrayAdapter<String> w =
                     new ArrayAdapter<>(getApplicationContext(), R.layout.spinneritem,
                             ware);

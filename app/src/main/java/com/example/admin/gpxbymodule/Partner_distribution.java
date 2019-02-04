@@ -501,7 +501,7 @@ public class Partner_distribution extends AppCompatActivity
         try {
             db = rate.getReadableDatabase();
             String q = " SELECT * FROM " + rate.tbname_part_distribution
-                    +" WHERE "+rate.partdist_uploadstat +" = '1'";
+                    +" WHERE "+rate.partdist_uploadstat +" = '1' AND "+rate.partdist_acceptstat+" = '1'";
             Cursor x = db.rawQuery(q, null);
             if (x.getCount() != 0) {
             String link = helper.getUrl();
@@ -521,7 +521,8 @@ public class Partner_distribution extends AppCompatActivity
             String trans = null;
                 db = rate.getReadableDatabase();
                 String query = " SELECT * FROM " + rate.tbname_part_distribution
-                        +" WHERE "+rate.partdist_uploadstat +" = '1'";
+                        +" WHERE "+rate.partdist_uploadstat +" = '1' AND "
+                        +rate.partdist_acceptstat+" = '1'";
                 Cursor c = db.rawQuery(query, null);
                 c.moveToFirst();
                 while (!c.isAfterLast()) {
@@ -535,6 +536,7 @@ public class Partner_distribution extends AppCompatActivity
                     String remarks = c.getString(c.getColumnIndex(rate.partdist_remarks));
                     String d = c.getString(c.getColumnIndex(rate.partdist_createdate));
                     String by = c.getString(c.getColumnIndex(rate.partdist_createby));
+                    String accstat = c.getString(c.getColumnIndex(rate.partdist_acceptstat));
                     json.put("id", trans);
                     json.put("mode_of_shipment", mode);
                     json.put("type", type);
@@ -544,6 +546,7 @@ public class Partner_distribution extends AppCompatActivity
                     json.put("remarks", remarks);
                     json.put("created_date", d);
                     json.put("created_by", by);
+                    json.put("acceptance_status", accstat);
                     reserve = rate.getDistributionsBox(trans);
                     img = getDistributionImage(trans);
                     json.put("distribution_box", reserve);
@@ -587,13 +590,13 @@ public class Partner_distribution extends AppCompatActivity
                         @Override
                         public void run() {
                             progressBar.dismiss();
-                            updateDist("2");
                             final AlertDialog.Builder builder =
                                     new AlertDialog.Builder(Partner_distribution.this);
                             builder.setTitle("Information confirmation")
                                     .setMessage("Data upload has been successful, thank you.")
                                     .setPositiveButton("Ok", new DialogInterface.OnClickListener() {
                                         public void onClick(DialogInterface dialog, int id) {
+                                            updateDist("2");
                                             dialog.dismiss();
                                         }
                                     });

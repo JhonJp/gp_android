@@ -275,7 +275,7 @@ public class Partdist_transactioninfo extends Fragment {
     }
 
     //save distribution
-    public void savePartDistribution() {
+    public void savePartDistribution(){
         try {
             if (dist.getDistname() == null) {
                 String x = "Distribution type or name is empty.";
@@ -306,7 +306,7 @@ public class Partdist_transactioninfo extends Fragment {
                         customToast(x);
                     } else if (rate.addDistribution(f_trans, f_type, mode, f_name, f_driver, f_truck,
                             f_remarks, eta,"1", "1", datereturn(),
-                            helper.logcount() + "", "1")) {
+                            helper.logcount() + "", "1", 0, null)) {
                         if (f_type.equals("Direct")){
                             for (String bn : numbers){
                                 rate.addPartDistributionBox(f_trans,

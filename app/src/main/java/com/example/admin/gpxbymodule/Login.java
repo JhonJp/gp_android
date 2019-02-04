@@ -129,7 +129,8 @@ public class Login extends AppCompatActivity {
                     "('2','Sales Driver','Sales Driver','1')," +
                     "('3','OIC','OIC','1')," +
                     "('4','Warehouse Checker','Warehouse Checker','1')," +
-                    "('5','Partner Portal','Partner Portal','1')");
+                    "('5','Partner Portal','Partner Portal','1'),"+
+                    "('6','Partner Driver','Partner Portal Driver','1')");
         }
     }
 
@@ -309,7 +310,7 @@ public class Login extends AppCompatActivity {
                                 employee_id = json_data.getString("employee_id");
                                 emp_branch = json_data.getString("branch");
 
-                                if (checkSalesDriver(employee_id, emp_branch)) {
+                                if (!(role.equals("6"))) {
                                     if (conn.getResponseMessage().equals("OK")) {
                                         helper.loggedRole(employee_id, name, email, fullname, role, emp_branch);
                                         runOnUiThread(new Runnable() {
@@ -331,15 +332,26 @@ public class Login extends AppCompatActivity {
                                         });
                                     }
                                 }else{
-                                    runOnUiThread(new Runnable() {
-                                        @Override
-                                        public void run() {
-                                            helper.loggedRole(employee_id, name, email, fullname, "Partner Driver", emp_branch);
-                                            progressBar.dismiss();
-                                            startActivity(new Intent(getApplicationContext(), Partner_driverpage.class));
-                                            finish();
-                                        }
-                                    });
+                                    if (conn.getResponseMessage().equals("OK")) {
+                                        runOnUiThread(new Runnable() {
+                                            @Override
+                                            public void run() {
+                                                helper.loggedRole(employee_id, name, email, fullname, role, emp_branch);
+                                                progressBar.dismiss();
+                                                startActivity(new Intent(getApplicationContext(), Partner_driverpage.class));
+                                                finish();
+                                            }
+                                        });
+                                    } else {
+                                        runOnUiThread(new Runnable() {
+                                            @Override
+                                            public void run() {
+                                                progressBar.dismiss();
+                                                String l = "Login error, please check your credentials and try again.";
+                                                loginerror(l);
+                                            }
+                                        });
+                                    }
                                 }
                             }
                             conn.disconnect();

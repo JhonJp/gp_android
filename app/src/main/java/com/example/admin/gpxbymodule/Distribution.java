@@ -582,7 +582,7 @@ public class Distribution extends AppCompatActivity
             db = gen.getReadableDatabase();
             String q = " SELECT * FROM " + gen.tbname_tempDist
                     + " WHERE " + gen.temp_createby + " = '" + helper.logcount() + "' AND "
-                    +gen.temp_uploadstat+" = '1'";
+                    +gen.temp_uploadstat+" = '1' AND "+gen.temp_acceptstat+" = '1'";
             Cursor x = db.rawQuery(q, null);
             if (x.getCount() != 0 ) {
                 String link = helper.getUrl();
@@ -602,7 +602,7 @@ public class Distribution extends AppCompatActivity
 
                 String query = " SELECT * FROM " + gen.tbname_tempDist
                         + " WHERE " + gen.temp_createby + " = '" + helper.logcount() + "' AND "
-                        +gen.temp_uploadstat+" = '1'";
+                        +gen.temp_uploadstat+" = '1' AND "+gen.temp_acceptstat+" = '1'";
                 Cursor c = db.rawQuery(query, null);
                 String trans = null;
                 c.moveToFirst();

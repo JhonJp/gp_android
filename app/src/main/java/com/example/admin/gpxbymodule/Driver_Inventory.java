@@ -220,7 +220,7 @@ public class Driver_Inventory extends AppCompatActivity
 
     public void spinnerlist(){
         try {
-            String[] items = new String[]{"Empty box", "Filled box"};
+            String[] items = new String[]{"Empty box", "Filled box","Barcodes"};
             ArrayAdapter<String> adapter =
                     new ArrayAdapter<>(getApplicationContext(), R.layout.spinneritem,
                             items);
@@ -663,7 +663,7 @@ public class Driver_Inventory extends AppCompatActivity
                             String[] boxtypeid = json_data.getString("boxtype_id").split(",");
 
                             gendata.addDistribution(id,distribution_type, destination_name,truck_number,
-                                    remarks, "1", "2", createddate, createdby);
+                                    remarks, "1", "2", createddate, createdby, 1, null);
                             for (int ix = 0; ix < boxtypeid.length; ix++){
                                 gendata.addTempBoxDist( id, boxtypeid[ix],"", box_number[ix], "2");
 

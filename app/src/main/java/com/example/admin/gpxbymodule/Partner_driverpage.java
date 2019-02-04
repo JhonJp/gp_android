@@ -295,9 +295,10 @@ public class Partner_driverpage extends AppCompatActivity {
                         String boxtype = jx.getString("boxtype");
                         String box_number = jx.getString("box_number");
                         String hardport = jx.getString("hardport");
+                        String bcont = jx.getString("box_content");
                         //add consignee booking
                         gen.addConsigneeBooking( consignee, boxtype, source_id, destination_id,
-                                transaction_no, box_number, "2",hardport);
+                                transaction_no, box_number, "2",hardport, bcont);
                         //update inventory
                         gen.updateInvBoxnumber("1", box_number, "2");
 

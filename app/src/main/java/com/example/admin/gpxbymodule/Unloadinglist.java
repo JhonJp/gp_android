@@ -556,12 +556,16 @@ public class Unloadinglist extends AppCompatActivity
                     String forwarder = c.getString(c.getColumnIndex(gen.unload_forward));
                     String container = c.getString(c.getColumnIndex(gen.unload_con_number));
                     String eta = c.getString(c.getColumnIndex(gen.unload_eta));
+                    String start = c.getString(c.getColumnIndex(gen.unload_timestart));
+                    String end = c.getString(c.getColumnIndex(gen.unload_timeend));
                     String by = c.getString(c.getColumnIndex(gen.unload_con_by));
                     json.put("id", id);
                     json.put("unload_date", date);
                     json.put("unload_shipper", forwarder);
                     json.put("unload_container", container);
                     json.put("unload_eta", eta);
+                    json.put("time_start", start);
+                    json.put("time_end", end);
                     json.put("createdby", by);
                     json.put("unloading_boxes", getAllUnloadBox(id));
                     json.put("unloading_boxes_image", getUnloadImage(id));

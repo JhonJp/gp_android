@@ -337,7 +337,8 @@ public class Oic_inventory extends AppCompatActivity
 
     public void warehousespinner(){
         try {
-            final String[] warehouses = rate.getWarehouseName(helper.getBranch(helper.logcount() + ""));
+            final String[] warehouses
+                    = rate.getWarehouseName(helper.getBranch(helper.logcount() + ""));
             ArrayAdapter<String> warehouseadapter =
                     new ArrayAdapter<>(getApplicationContext(), R.layout.spinneritem,
                             warehouses);

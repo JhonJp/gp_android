@@ -440,7 +440,7 @@ public class Home extends AppCompatActivity
             helper.addModule("Remittance", off_final_rem, officer);
             helper.addModule("Inventory", off_final_inv, officer);
             helper.addModule("Incident Report", off_final_inc, officer);
-            helper.addModule("Transactions", off_final_tra, officer);
+            helper.addModule("Box Releasing", off_final_tra, officer);
 
             //drawable sales driver user
             Drawable driver_reservation = res.getDrawable(R.drawable.reservation);
@@ -530,7 +530,7 @@ public class Home extends AppCompatActivity
             helper.addModule("Loading/Unloading", check_final_unl, checker);
             helper.addModule("Distribution", off_final_dist, checker);
             helper.addModule("Incident Report", check_final_inc, checker);
-            helper.addModule("Transactions", check_final_loa, checker);
+            helper.addModule("Box Releasing", check_final_loa, checker);
 
             //drawable partner portal user
             Drawable partner_load = res.getDrawable(R.drawable.unload);
@@ -636,6 +636,9 @@ public class Home extends AppCompatActivity
             public void run() {
                 //thread rate
                 getSubStat();
+
+                //get box contents
+                getBoxContents();
 
                 try {
                     String resp = null;
@@ -1108,7 +1111,7 @@ public class Home extends AppCompatActivity
         try {
             String q = " SELECT * FROM " + gendata.tbname_tempDist
                     + " WHERE " + gendata.temp_createby + " = '" + helper.logcount() + "' AND "
-                    + gendata.temp_uploadstat + " = '1'";
+                    + gendata.temp_uploadstat + " = '1' AND "+gendata.temp_acceptstat+" = '1'";
             Cursor x = db.rawQuery(q, null);
             if (x.getCount() != 0) {
                 String link = helper.getUrl();
@@ -1129,7 +1132,7 @@ public class Home extends AppCompatActivity
 
                 String query = " SELECT * FROM " + gendata.tbname_tempDist
                         + " WHERE " + gendata.temp_createby + " = '" + helper.logcount() + "' AND "
-                        + gendata.temp_uploadstat + " = '1'";
+                        + gendata.temp_uploadstat + " = '1' AND "+gendata.temp_acceptstat+" = '1'";
                 Cursor c = db.rawQuery(query, null);
                 String trans = null;
                 c.moveToFirst();
@@ -1158,7 +1161,6 @@ public class Home extends AppCompatActivity
                     img = getDistributionImage(trans);
                     json.put("distribution_box", reserve);
                     json.put("distribution_image", img);
-                    distids.add(trans);
                     finalarray.put(json);
                     c.moveToNext();
                 }
@@ -1186,7 +1188,7 @@ public class Home extends AppCompatActivity
         try {
             db = ratesDB.getReadableDatabase();
             String q = " SELECT * FROM " + ratesDB.tbname_part_distribution
-                    +" WHERE "+ratesDB.partdist_uploadstat +" = '1'";
+                    +" WHERE "+ratesDB.partdist_uploadstat +" = '1' AND "+ratesDB.partdist_acceptstat+" = '1'";
             Cursor x = db.rawQuery(q, null);
             if (x.getCount() != 0) {
                 String link = helper.getUrl();
@@ -1206,7 +1208,7 @@ public class Home extends AppCompatActivity
                 String trans = null;
                 db = ratesDB.getReadableDatabase();
                 String query = " SELECT * FROM " + ratesDB.tbname_part_distribution
-                        +" WHERE "+ratesDB.partdist_uploadstat +" = '1'";
+                        +" WHERE "+ratesDB.partdist_uploadstat +" = '1' AND "+ratesDB.partdist_acceptstat+" = '1'";
                 Cursor c = db.rawQuery(query, null);
                 c.moveToFirst();
                 while (!c.isAfterLast()) {
@@ -2024,12 +2026,16 @@ public class Home extends AppCompatActivity
                     String forwarder = c.getString(c.getColumnIndex(gendata.unload_forward));
                     String container = c.getString(c.getColumnIndex(gendata.unload_con_number));
                     String eta = c.getString(c.getColumnIndex(gendata.unload_eta));
+                    String start = c.getString(c.getColumnIndex(gendata.unload_timestart));
+                    String end = c.getString(c.getColumnIndex(gendata.unload_timeend));
                     String by = c.getString(c.getColumnIndex(gendata.unload_con_by));
                     json.put("id", id);
                     json.put("unload_date", date);
                     json.put("unload_shipper", forwarder);
                     json.put("unload_container", container);
                     json.put("unload_eta", eta);
+                    json.put("time_start", start);
+                    json.put("time_end", end);
                     json.put("createdby", by);
                     json.put("unloading_boxes", getAllUnloadBox(id));
                     json.put("unloading_boxes_image", getUnloadImage(id));
@@ -2695,6 +2701,46 @@ public class Home extends AppCompatActivity
         }
     }
 
+    //api call for box contents
+    public void getBoxContents(){
+        //START THREAD FOR booking data
+        try {
+            String resp = null;
+            String link = helper.getUrl();
+            String series = "http://"+link+"/api/booking/getcontents.php";
+            URL url = new URL(series);
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            conn.setRequestMethod("GET");
+            // read the response
+            InputStream in = new BufferedInputStream(conn.getInputStream());
+            resp = convertStreamToString(in);
+            Log.e("boxcontent", ""+resp);
+            if (resp != null) {
+                JSONArray jsonArray = new JSONArray(resp);
+                for(int i=0; i<jsonArray.length(); i++){
+                    JSONObject json_data = jsonArray.getJSONObject(i);
+                    String id = json_data.getString("id");
+                    String description = json_data.getString("description");
+
+                    ratesDB.addBoxContent(id, description);
+                }
+
+            } else {
+                Log.e("Error", "Couldn't get data from server.");
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        String t = "Couldn't get data from server.";
+                        customToast(t);
+                    }
+                });
+            }
+        } catch (Exception e) {
+            Log.e("Error", " error: " + e.getMessage());
+        }
+        //END THREAD FOR booking
+    }
+
     //api call for bookings
     public void getBookings(){
         //START THREAD FOR booking data
@@ -2731,10 +2777,11 @@ public class Home extends AppCompatActivity
                                 String boxtype = jx.getString("boxtype");
                                 String box_number = jx.getString("box_number");
                                 String hardport = jx.getString("hardport");
+                                String bcont = jx.getString("box_content");
 
                                 //add consignee booking
                                 gendata.updConsigneeBookingExist( consignee, boxtype, source_id, destination_id,
-                                        transaction_no, box_number, "2", hardport);
+                                        transaction_no, box_number, "2", hardport, bcont);
 
                                 if (checkIfInInventory(box_number)){
                                     gendata.updateInvBoxnumber("1", box_number, "2");
@@ -2756,10 +2803,11 @@ public class Home extends AppCompatActivity
                                 String boxtype = jx.getString("boxtype");
                                 String box_number = jx.getString("box_number");
                                 String hardport = jx.getString("hardport");
+                                String bcont = jx.getString("box_content");
 
                                 //add consignee booking
                                 gendata.addConsigneeBooking( consignee, boxtype, source_id, destination_id,
-                                        transaction_no, box_number, "2", hardport);
+                                        transaction_no, box_number, "2", hardport, bcont);
 
                                 if (checkIfInInventory(box_number)){
                                     gendata.updateInvBoxnumber("1", box_number, "2");
@@ -2878,7 +2926,7 @@ public class Home extends AppCompatActivity
                     String[] boxtypeid = json_data.getString("boxtype_id").split(",");
 
                     gendata.addDistribution(id,distribution_type, destination_name,truck_number,
-                            remarks, "1", "2", createddate, createdby);
+                            remarks, "1", "2", createddate, createdby,1, null);
                     for (int ix = 0; ix < boxtypeid.length; ix++){
                         gendata.addTempBoxDist( id, boxtypeid[ix],"", box_number[ix], "2");
                         Log.e("boxesdist","boxtype: "+boxtypeid[ix]+"" +
@@ -3188,7 +3236,7 @@ public class Home extends AppCompatActivity
 
                             }else{
                                 gendata.addDistribution(id,distribution_type, destination_name,truck_number,
-                                        remarks, "1", "2", createddate, createdby);
+                                        remarks, "1", "2", createddate, createdby, 0, null);
                                 for (int ix = 0; ix < boxtypeid.length; ix++){
                                     gendata.addTempBoxDist( id, boxtypeid[ix],"", box_number[ix], "2");
                                 }
@@ -3255,7 +3303,7 @@ public class Home extends AppCompatActivity
 
                             }else{
                                 gendata.addDistribution(id,distribution_type, destination_name,truck_number,
-                                        remarks, "1", "2", createddate, createdby);
+                                        remarks, "1", "2", createddate, createdby, 0, null);
                                 for (int ix = 0; ix < boxtypeid.length; ix++){
                                     gendata.addTempBoxDist( id, boxtypeid[ix],"", box_number[ix], "2");
                                 }
@@ -3483,7 +3531,7 @@ public class Home extends AppCompatActivity
         updateReserveStat(toupdid);
         updateLoadsStat(loadids);
         updateunLoadsStat(unloadids);
-        updateDistpart("2");
+        //updateDistpart("2");
     }
 
     public boolean checkDist(String id){

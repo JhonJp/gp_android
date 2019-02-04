@@ -270,7 +270,7 @@ public class Destination_info extends Fragment {
                     } else {
                         if (gen.addDistribution(f_trans, f_type, f_name, f_truck,
                                 f_remarks, "1", "1", datereturn(),
-                                helper.logcount() + "")) {
+                                helper.logcount() + "", 0, null)) {
 
                             for (String bn : dist.getBoxnumbers()){
                                 updateBxInv(bn);
