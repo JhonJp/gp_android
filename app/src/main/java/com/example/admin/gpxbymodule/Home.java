@@ -320,7 +320,7 @@ public class Home extends AppCompatActivity
                         startActivity(new Intent(Home.this, Partner_Maindelivery.class));
                         finish();
                     break;
-                case "Box Release":
+                case "Box Releasing":
                     startActivity(new Intent(Home.this, BoxRelease.class));
                     finish();
                     break;
