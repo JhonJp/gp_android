@@ -94,7 +94,7 @@
                 android:paddingStart="10dp">
 
                 <EditText
-                    android:id="@+id/rebox"
+                    android:id="@+id/re_boxinput"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:hint="Box Number"

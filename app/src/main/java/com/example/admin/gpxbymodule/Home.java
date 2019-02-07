@@ -2735,7 +2735,7 @@ public class Home extends AppCompatActivity
                 for(int i=0; i<jsonArray.length(); i++){
                     JSONObject json_data = jsonArray.getJSONObject(i);
                     String id = json_data.getString("id");
-                    String description = json_data.getString("description");
+                    String description = json_data.getString("name");
 
                     ratesDB.addBoxContent(id, description);
                 }

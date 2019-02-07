@@ -57,7 +57,7 @@ public class Receiver extends Fragment {
     ImageButton addcust;
     IntentIntegrator scanIntegrator;
     int requestcode = 1;
-    EditText boxnum, reboxnum;
+    EditText boxnum;
     Booking book;
     Button addconsignee;
     String accnt, boxid;
@@ -259,39 +259,6 @@ public class Receiver extends Fragment {
             IntentResult result = IntentIntegrator.parseActivityResult(requestCode, resultCode, data);
             if (result.getContents() != null) {
                 String bn = result.getContents();
-                if (reboxnum.hasFocus()){
-                    if (!getBoxNumber(bn)) {
-                        if (!checkBoxnumNSB(bn)){
-                            if (!checkBoxnumNSBOne(bn)) {
-                                boxid = getBoxName(bn);
-                                Log.e("addnsbboxid", boxid);
-                                reboxnum.setText(bn);
-                            }else{
-                                delExistStatOne(bn);
-                                Log.e("addnsbboxid", boxid);
-                                reboxnum.setText(bn);
-                            }
-                        }else{
-                            String box = "Boxnumber has been used, please try another.";
-                            customToast(box);
-                        }
-                    }else{
-                        if (getBoxNumberBarcode(bn)) {
-                            if (!checkBoxnum(bn)) {
-                                if (!checkBoxnumOne(bn)) {
-                                    boxid = getBoxName(bn);
-                                    reboxnum.setText(bn);
-                                } else {
-                                    delExistStatOne(bn);
-                                    reboxnum.setText(bn);
-                                }
-                            } else {
-                                String box = "Boxnumber has been used, please try another.";
-                                customToast(box);
-                            }
-                        }
-                    }
-                } else {
                     if (getBoxNumber(bn)) {
                         if (!checkBoxnum(bn)) {
                             if (!checkBoxnumOne(bn)) {
@@ -305,8 +272,41 @@ public class Receiver extends Fragment {
                             String box = "Boxnumber has been used, please try another.";
                             customToast(box);
                         }
+                    }else{
+                        if (getBoxNumberBarcode(bn)) {
+                       // if (getBoxNumber(bn)) {
+                            if (!checkBoxnumNSB(bn)){
+                                if (!checkBoxnumNSBOne(bn)) {
+                                    //boxid = getBoxName(bn);
+                                    Log.e("addnsbboxid", boxid);
+                                    boxnum.setText(bn);
+                                }else{
+                                    delExistStatOne(bn);
+                                    Log.e("addnsbboxid", boxid);
+                                    boxnum.setText(bn);
+                                }
+                            }else{
+                                String box = "Boxnumber has been used, please try another.";
+                                customToast(box);
+                            }
+                       // }
+                      }else{
+                            if (!checkBoxnumNSB(bn)){
+                                if (!checkBoxnumNSBOne(bn)) {
+                                    //boxid = getBoxName(bn);
+                                    Log.e("addnsbboxid", boxid);
+                                    boxnum.setText(bn);
+                                }else{
+                                    delExistStatOne(bn);
+                                    Log.e("addnsbboxid", boxid);
+                                    boxnum.setText(bn);
+                                }
+                            }else{
+                                String box = "Boxnumber has been used, please try another.";
+                                customToast(box);
+                            }
+                        }
                     }
-                }
             } else
                 super.onActivityResult(requestCode, resultCode, data);
         }catch (Exception e){}
@@ -544,7 +544,7 @@ public class Receiver extends Fragment {
         dialogBuilder.setTitle("New Box");
 
         receivername = (AutoCompleteTextView)d.findViewById(R.id.receiverinput);
-        reboxnum = (EditText)d.findViewById(R.id.rebox);
+        boxnum = (EditText)d.findViewById(R.id.re_boxinput);
         addcust = (ImageButton)d.findViewById(R.id.add_cust);
         sour = (Spinner)d.findViewById(R.id.source);
         dest = (Spinner)d.findViewById(R.id.destination);
@@ -577,20 +577,6 @@ public class Receiver extends Fragment {
             }
         });
 
-        reboxnum.setOnFocusChangeListener(new View.OnFocusChangeListener() {
-            @Override
-            public void onFocusChange(View v, boolean hasFocus) {
-                if (hasFocus){
-                    scanpermit();
-                }
-            }
-        });
-        reboxnum.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                scanpermit();
-            }
-        });
         //populate destinations
         String[] des = rate.getDest();
         ArrayAdapter<String> destadapter =
@@ -632,6 +618,7 @@ public class Receiver extends Fragment {
 
         addnewcustomer();
         autoFullname();
+        focus();
 
         Button close = (Button) d.findViewById(R.id.cancel);
         Button confirm = (Button) d.findViewById(R.id.confirm);
@@ -644,7 +631,7 @@ public class Receiver extends Fragment {
                 String re = getAccntNo(receivername.getText().toString());
 //                String prov = get(receivername.getText().toString());
                 Log.e("re", re);
-                String bnum = reboxnum.getText().toString();
+                String bnum = boxnum.getText().toString();
                 String bcont = bcontent.getSelectedItem().toString();
                 if (re.equals("")){
                     String t ="Receiver name is invalid.";

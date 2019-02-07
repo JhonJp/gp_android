@@ -556,6 +556,7 @@ public class Booking_payment extends Fragment implements Runnable {
                                 Log.e("bookids", book.getBoxids().toString());
                                 for (String i : book.getBoxids()){
                                     gen.addtoDriverInv(i+"", bn, "1", "2");
+                                    rate.updateBarDriverInv(bn,"1");
                                 }
                             }
                         }
