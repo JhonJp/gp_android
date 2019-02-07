@@ -65,6 +65,7 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.ProtocolException;
 import java.net.URL;
+import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -89,6 +90,7 @@ public class Home extends AppCompatActivity
     Toolbar toolbar;
     NavigationView navigationView;
     Runnable r;
+    String zeros;
     Thread thr;
     ArrayList<String> toupdid, booknums, incids, loadids, unloadids, distids;
 
@@ -441,10 +443,10 @@ public class Home extends AppCompatActivity
 
             helper.addModule("Acceptance", off_final_acc, officer);
             helper.addModule("Distribution", off_final_dist, officer);
-            helper.addModule("Remittance", off_final_rem, officer);
-            helper.addModule("Inventory", off_final_inv, officer);
-            helper.addModule("Incident Report", off_final_inc, officer);
             helper.addModule("Barcode Releasing", off_final_tra, officer);
+            helper.addModule("Inventory", off_final_inv, officer);
+            helper.addModule("Remittance", off_final_rem, officer);
+            helper.addModule("Incident Report", off_final_inc, officer);
 
             //drawable sales driver user
             Drawable driver_reservation = res.getDrawable(R.drawable.reservation);
@@ -530,11 +532,11 @@ public class Home extends AppCompatActivity
             String checker = "Warehouse Checker";
 
             helper.addModule("Acceptance", check_final_acc, checker);
-            helper.addModule("Inventory", check_final_inv, checker);
             helper.addModule("Loading/Unloading", check_final_unl, checker);
             helper.addModule("Distribution", off_final_dist, checker);
-            helper.addModule("Incident Report", check_final_inc, checker);
             helper.addModule("Barcode Releasing", check_final_loa, checker);
+            helper.addModule("Inventory", check_final_inv, checker);
+            helper.addModule("Incident Report", check_final_inc, checker);
 
             //drawable partner portal user
             Drawable partner_load = res.getDrawable(R.drawable.unload);
@@ -643,6 +645,12 @@ public class Home extends AppCompatActivity
 
                 //get box contents
                 getBoxContents();
+
+                //get barcode generated
+                getBarCodeInventory();
+
+                //get barcode driver
+                getBarCodeDriverInventory();
 
                 try {
                     String resp = null;
@@ -908,6 +916,9 @@ public class Home extends AppCompatActivity
                                 String branch = json_data.getString("branch");
 
                                 gendata.addEmployee(id, fname, mid, last, mail,
+                                        mob, ph, gend, bday, post, hnum, brgy, ct, branch);
+
+                                ratesDB.addEmployee(id, fname, mid, last, mail,
                                         mob, ph, gend, bday, post, hnum, brgy, ct, branch);
                             }
 
@@ -2727,6 +2738,114 @@ public class Home extends AppCompatActivity
                     String description = json_data.getString("description");
 
                     ratesDB.addBoxContent(id, description);
+                }
+
+            } else {
+                Log.e("Error", "Couldn't get data from server.");
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        String t = "Couldn't get data from server.";
+                        customToast(t);
+                    }
+                });
+            }
+        } catch (Exception e) {
+            Log.e("Error", " error: " + e.getMessage());
+        }
+        //END THREAD FOR booking
+    }
+
+    //barcode to inventory
+    public void getBarCodeInventory(){
+        //START THREAD FOR booking data
+        try {
+            String resp = null;
+            String link = helper.getUrl();
+            String series = "http://"+link+"/api/boxnumberseries/getyours.php?id="+helper.logcount();
+            URL url = new URL(series);
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            conn.setRequestMethod("GET");
+            // read the response
+            InputStream in = new BufferedInputStream(conn.getInputStream());
+            resp = convertStreamToString(in);
+            Log.e("barcodes", ""+resp);
+            if (resp != null) {
+                JSONArray jsonArray = new JSONArray(resp);
+                for(int i=0; i<jsonArray.length(); i++){
+                    JSONObject json_data = jsonArray.getJSONObject(i);
+                    String series_start = json_data.getString("series_start");
+                    String series_end = json_data.getString("series_end");
+                    String quantity = json_data.getString("quantity");
+                    DateFormat df = new SimpleDateFormat("yy"); // Just the year, with 2 digits
+                    String formattedDate = df.format(Calendar.getInstance().getTime());
+                    Log.e("year_only",formattedDate);
+
+                    for (int str = Integer.parseInt(series_start);str <= Integer.parseInt(series_end); str++){
+
+                        if (String.valueOf(str).length() < 2 ){
+                               zeros = "0000000";
+                            }else if (String.valueOf(str).length() < 3 ){
+                                zeros = "000000";
+                            }else if (String.valueOf(str).length() < 4 ){
+                                zeros = "00000";
+                            }else if (String.valueOf(str).length() < 5 ){
+                                zeros = "0000";
+                            }else if (String.valueOf(str).length() < 6 ){
+                                zeros = "000";
+                            }else if (String.valueOf(str).length() < 7 ){
+                                zeros = "00";
+                            }else if (String.valueOf(str).length() < 8 ){
+                                zeros = "0";
+                            }else if (String.valueOf(str).length() == 8 ){
+                                zeros = "0";
+                            }
+                            String barcode = formattedDate+""+zeros+""+str;
+                            ratesDB.addBarcodeInventory(barcode,"0");
+                            //Log.e("barcode_inv", barcode);
+
+                    }
+                }
+
+            } else {
+                Log.e("Error", "Couldn't get data from server.");
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        String t = "Couldn't get data from server.";
+                        customToast(t);
+                    }
+                });
+            }
+        } catch (Exception e) {
+            Log.e("Error", " error: " + e.getMessage());
+        }
+        //END THREAD FOR booking
+    }
+
+    //get driver open barcode
+    public void getBarCodeDriverInventory(){
+        //START THREAD FOR booking data
+        try {
+            String resp = null;
+            String link = helper.getUrl();
+            String series = "http://"+link+"/api/boxnumberseries/getbydriver.php?id="+helper.logcount();
+            URL url = new URL(series);
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            conn.setRequestMethod("GET");
+            // read the response
+            InputStream in = new BufferedInputStream(conn.getInputStream());
+            resp = convertStreamToString(in);
+            Log.e("barcodes", ""+resp);
+            if (resp != null) {
+                JSONArray jsonArray = new JSONArray(resp);
+                for(int i=0; i<jsonArray.length(); i++){
+                    JSONObject json_data = jsonArray.getJSONObject(i);
+                    String[] box_number = json_data.getString("box_number").split(",");
+                    String stat = "0";
+                    for (int ix = 0; ix < box_number.length; ix++){
+                        ratesDB.addBarcodeDriverInventory(box_number[ix], stat);
+                    }
                 }
 
             } else {

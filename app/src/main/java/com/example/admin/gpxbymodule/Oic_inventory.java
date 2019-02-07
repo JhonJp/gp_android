@@ -55,9 +55,10 @@ public class Oic_inventory extends AppCompatActivity
     FloatingActionButton fab;
     TextView total;
     NavigationView navigationView;
-    Spinner warehouse;
+    Spinner warehouse, barcx;
     ProgressDialog progressBar;
     double totalp;
+    TextView tophead, subtop, pr;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -71,9 +72,13 @@ public class Oic_inventory extends AppCompatActivity
         gen = new GenDatabase(getApplicationContext());
         lv = (ListView)findViewById(R.id.lv);
         total = (TextView)findViewById(R.id.total);
+        tophead = (TextView)findViewById(R.id.toptype);
+        subtop = (TextView)findViewById(R.id.subtop);
+        pr = (TextView)findViewById(R.id.subprice);
         warehouse = (Spinner)findViewById(R.id.warehouse);
+        barcx = (Spinner)findViewById(R.id.barcode_empty);
 
-        warehousespinner();
+        boxclass();
 
         try{
             if (helper.logcount() != 0){
@@ -367,6 +372,87 @@ public class Oic_inventory extends AppCompatActivity
                 }
             });
         }catch (Exception e){}
+    }
+
+    public void boxclass(){
+        try {
+            final String[] boar = new String[]{"Accepted Box", "Barcodes"};
+            final ArrayAdapter<String> w =
+                    new ArrayAdapter<>(getApplicationContext(), R.layout.spinneritem,
+                            boar);
+            barcx.setAdapter(w);
+            w.setDropDownViewResource(android.R.layout.select_dialog_singlechoice);
+            barcx.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+                @Override
+                public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                    String x = w.getItem(position);
+                    TableAdapter ad;
+                    final ArrayList<ListItem> item;
+                    switch (x) {
+                        case "Accepted Box":
+                            tophead.setText("Box type");
+                            subtop.setText("Quantity");
+                            pr.setText("Price");
+                            warehousespinner();
+                            break;
+                        case "Barcodes":
+                            tophead.setText("#");
+                            subtop.setText("Box type");
+                            pr.setText("Box No.");
+                            final ArrayList<ListItem> listitem = getBarcodes("0");
+                            Three_tableAd adpt = new Three_tableAd(getApplicationContext(), listitem);
+                            lv.setAdapter(adpt);
+                            total.setText(Html.fromHtml("<small>Overall total: </small>" +
+                                    "<b>" + countBarcodes("0") + " barcode(s) </b>"));
+                            break;
+                        default:
+                            tophead.setText("Box type");
+                            subtop.setText("Quantity");
+                            pr.setText("Price");
+                            warehousespinner();
+                            break;
+                    }
+                }
+
+                @Override
+                public void onNothingSelected(AdapterView<?> parent) {
+                }
+            });
+        }catch (Exception e){}
+    }
+
+    public ArrayList<ListItem> getBarcodes(String stats){
+        ArrayList<ListItem> results = new ArrayList<>();
+        try {
+            SQLiteDatabase db = rate.getReadableDatabase();
+            String r = "SELECT * FROM "+rate.tbname_barcode_inventory
+                    +" WHERE "+rate.barcodeinv_status+" = '"+stats+"'";
+            Cursor c = db.rawQuery(r, null);
+            if (c.getCount() != 0 ) {
+                c.moveToFirst();
+                int i = 1;
+                while (!c.isAfterLast()) {
+                    String id = c.getString(c.getColumnIndex(rate.barcodeinv_id));
+                    String subitem = c.getString(c.getColumnIndex(rate.barcodeinv_boxnumber));
+                    String topitem = "Open";
+//                    String boxids = c.getString(2);
+                    ListItem list = new ListItem(id, i+"", topitem, subitem);
+                    results.add(list);
+                    i++;
+                    c.moveToNext();
+                }
+            }
+        }catch (Exception e){}
+        return results;
+    }
+
+    public int countBarcodes(String stats){
+        SQLiteDatabase db = rate.getReadableDatabase();
+        String r = "SELECT * FROM "+rate.tbname_barcode_inventory
+                +" WHERE "+rate.barcodeinv_status+" = '"+stats+"'";
+        Cursor c = db.rawQuery(r, null);
+
+        return c.getCount();
     }
 
     //get boxes from inventory

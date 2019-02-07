@@ -77,4 +77,7 @@
     <string name="servestxt">This window serves as your partial receipt</string>
     <string name="title_activity_box_release">Barcode Releasing</string>
     <string name="save_barcodeRelease">Save</string>
+    <string name="barcode_released_list">Barcode Released List</string>
+    <string name="title_activity_box_release_list">Barcode Released List</string>
+    <string name="sync_data">Sync data</string>
 </resources>

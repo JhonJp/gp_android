@@ -190,10 +190,16 @@
         <activity android:name=".Partner_driverpage" />
         <activity
             android:name=".Deliverycont"
-            android:label="Delivery Content" />
+            android:label="Delivery Content"
+            android:screenOrientation="portrait" />
         <activity
             android:name=".BoxRelease"
             android:label="@string/title_activity_box_release"
+            android:screenOrientation="portrait"
+            android:theme="@style/AppTheme.NoActionBar" />
+        <activity
+            android:name=".BoxReleaseList"
+            android:label="@string/title_activity_box_release_list"
             android:theme="@style/AppTheme.NoActionBar"></activity>
     </application>
 

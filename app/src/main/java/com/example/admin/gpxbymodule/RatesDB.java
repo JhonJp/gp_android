@@ -437,6 +437,93 @@ public class RatesDB extends SQLiteOpenHelper {
             +bcont_desc+" TEXT )";
     public final String dropbcont = " DROP TABLE IF EXISTS "+tbname_boxcont;
 
+    //barcode distribution
+    public final String tbname_barcode_dist = "gpx_barcode_distribution";
+    public final String bardist_id = "id";
+    public final String bardist_trans = "transaction_no";
+    public final String bardist_driverid = "driver_id";
+    public final String bardist_createddate = "createddate";
+    public final String bardist_createdby = "createdby";
+    public final String bardist_upds = "upload_status";
+    public final String bardist_accptstat = "acceptance_status";
+    public final String createBarcodeDist  = " CREATE TABLE "+tbname_barcode_dist+" ("
+            +bardist_id+" INTEGER PRIMARY KEY AUTOINCREMENT, "
+            +bardist_trans+" TEXT UNIQUE, "
+            +bardist_driverid+" INTEGER, "
+            +bardist_createddate+" TEXT, "
+            +bardist_upds+" INTEGER, "
+            +bardist_accptstat+" INTEGER, "
+            +bardist_createdby+" TEXT )";
+    public final String dropBarcodeDist = " DROP TABLE IF EXISTS "+tbname_barcode_dist;
+
+    //barcode distribution box number
+    public final String tbname_barcode_dist_boxnumber = "gpx_barcode_distribution_boxnumber";
+    public final String bardist_bnum_id = "id";
+    public final String bardist_bnum_trans = "transaction_no";
+    public final String bardist_bnum_boxnumber = "box_number";
+    public final String bardist_bnum_status = "status";
+    public final String createBarDistBoxnumber  = " CREATE TABLE "+tbname_barcode_dist_boxnumber+" ("
+            +bardist_bnum_id+" INTEGER PRIMARY KEY AUTOINCREMENT, "
+            +bardist_bnum_trans+" TEXT, "
+            +bardist_bnum_boxnumber+" TEXT UNIQUE, "
+            +bardist_bnum_status+" INTEGER )";
+    public final String dropBarDistBoxnumber = " DROP TABLE IF EXISTS "+tbname_barcode_dist_boxnumber;
+
+    //barcode inventory
+    public final String tbname_barcode_inventory = "gpx_barcode_inventory";
+    public final String barcodeinv_id = "id";
+    public final String barcodeinv_boxnumber = "box_number";
+    public final String barcodeinv_status = "status";
+    public final String createBarcodeInventory  = " CREATE TABLE "+tbname_barcode_inventory+" ("
+            +barcodeinv_id+" INTEGER PRIMARY KEY AUTOINCREMENT, "
+            +barcodeinv_boxnumber+" TEXT UNIQUE, "
+            +barcodeinv_status+" INTEGER )";
+    public final String dropBarcodeInventory = " DROP TABLE IF EXISTS "+tbname_barcode_inventory;
+
+    //barcode inventory
+    public final String tbname_barcode_driver_inventory = "gpx_barcode_driver_inventory";
+    public final String barcodeDriverInv_id = "id";
+    public final String barcodeDriverInv_boxnumber = "box_number";
+    public final String barcodeDriverInv_status = "status";
+    public final String createBarcodeDriverInventory  = " CREATE TABLE "+tbname_barcode_driver_inventory+" ("
+            +barcodeDriverInv_id+" INTEGER PRIMARY KEY AUTOINCREMENT, "
+            +barcodeDriverInv_boxnumber+" TEXT UNIQUE, "
+            +barcodeDriverInv_status+" INTEGER )";
+    public final String dropBarcodeDriverInventory = " DROP TABLE IF EXISTS "+tbname_barcode_driver_inventory;
+
+    //all employee table
+    public final String tbname_employee = "gpx_employee";
+    public final String emp_id = "id";
+    public final String emp_first = "firstname";
+    public final String emp_mid = "middlename";
+    public final String emp_last = "lastname";
+    public final String emp_mail = "email";
+    public final String emp_mobile = "mobile";
+    public final String emp_phone = "phone";
+    public final String emp_gender = "gender";
+    public final String emp_birth = "birthdate";
+    public final String emp_post = "position";
+    public final String emp_house = "house_number_street";
+    public final String emp_brgy = "barangay";
+    public final String emp_city = "city";
+    public final String emp_branch = "branch";
+    public String createEmpTb = " CREATE TABLE " + tbname_employee + "("
+            + emp_id + " INTEGER PRIMARY KEY UNIQUE,"
+            + emp_first + " TEXT, "
+            + emp_mid + " TEXT, "
+            + emp_last + " TEXT, "
+            + emp_mail + " TEXT, "
+            + emp_mobile + " TEXT, "
+            + emp_phone + " TEXT, "
+            + emp_gender + " TEXT, "
+            + emp_birth + " TEXT, "
+            + emp_post + " TEXT, "
+            + emp_house + " TEXT, "
+            + emp_brgy + " TEXT, "
+            + emp_city + " TEXT, "
+            + emp_branch+ " INTEGER )";
+    public String dropemp = "DROP TABLE IF EXISTS " + tbname_employee;
+
     public RatesDB(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
     }
@@ -446,6 +533,11 @@ public class RatesDB extends SQLiteOpenHelper {
 
         //rates
         db.execSQL(createRates);
+        db.execSQL(createBarcodeDist);
+        db.execSQL(createBarDistBoxnumber);
+        db.execSQL(createBarcodeInventory);
+        db.execSQL(createBarcodeDriverInventory);
+        db.execSQL(createEmpTb);
         db.execSQL(createSd);
         db.execSQL(createTableBox);
         db.execSQL(createExpit);
@@ -498,6 +590,11 @@ public class RatesDB extends SQLiteOpenHelper {
         db.execSQL(dropreservesign);
         db.execSQL(dropbranch);
         db.execSQL(dropBooksign);
+        db.execSQL(dropBarcodeDist);
+        db.execSQL(dropBarDistBoxnumber);
+        db.execSQL(dropBarcodeInventory);
+        db.execSQL(dropBarcodeDriverInventory);
+        db.execSQL(dropemp);
         db.execSQL(dropsd);
         db.execSQL(dropLoading);
         db.execSQL(dropLoadbox);
@@ -1250,6 +1347,111 @@ public class RatesDB extends SQLiteOpenHelper {
         cv.put(bcont_desc, desc);
         db.insert(tbname_boxcont, null, cv);
         Log.e("boxcont", id+"/"+desc);
+        db.close();
+    }
+
+    //barcode inventory
+    public void addBarcodeInventory(String boxnumber, String status){
+        SQLiteDatabase db =  this.getWritableDatabase();
+        ContentValues cv = new ContentValues();
+        cv.put(barcodeinv_boxnumber, boxnumber);
+        cv.put(barcodeinv_status, status);
+        db.insert(tbname_barcode_inventory, null, cv);
+        Log.e("barcode_inv", boxnumber);
+        db.close();
+    }
+
+    public void addBarcodeDriverInventory(String boxnumber, String status){
+        SQLiteDatabase db =  this.getWritableDatabase();
+        ContentValues cv = new ContentValues();
+        cv.put(barcodeDriverInv_boxnumber, boxnumber);
+        cv.put(barcodeDriverInv_status, status);
+        db.insert(tbname_barcode_driver_inventory, null, cv);
+        Log.e("barcode_driver_inv", boxnumber);
+        db.close();
+    }
+
+    //barcode distribution
+    public void addBarcodeDistribution(String trans, String driverid, String createddate,
+                                       String createdby, String upds, String accpt){
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues cv = new ContentValues();
+        cv.put(bardist_trans, trans);
+        cv.put(bardist_driverid, driverid);
+        cv.put(bardist_createddate, createddate);
+        cv.put(bardist_createdby, createdby);
+        cv.put(bardist_upds, upds);
+        cv.put(bardist_accptstat, accpt);
+
+        db.insert(tbname_barcode_dist, null, cv);
+        Log.e("barcode_dist", trans);
+        db.close();
+    }
+
+    public void addBarcodeDistributionBoxnumber(String trans, String boxnumber,String status){
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues cv = new ContentValues();
+        cv.put(bardist_bnum_trans, trans);
+        cv.put(bardist_bnum_boxnumber, boxnumber);
+        cv.put(bardist_bnum_status, status);
+        db.insert(tbname_barcode_dist_boxnumber, null, cv);
+        Log.e("barcode_dist_boxnumber", boxnumber);
+        db.close();
+    }
+
+    public ArrayList<LinearItem> getAllBarcodeReleased(String by) {
+        ArrayList<LinearItem> results = new ArrayList<>();
+        SQLiteDatabase db = this.getReadableDatabase();
+        String y = " SELECT * FROM " + tbname_barcode_dist
+                +" LEFT JOIN "+tbname_employee+" ON "
+                +tbname_barcode_dist+"."+bardist_driverid+" = "+tbname_employee+"."+emp_id
+                +" WHERE "+bardist_createdby+" = '"+by+"'";
+        Cursor res = db.rawQuery( y ,null);
+        res.moveToFirst();
+        while (!res.isAfterLast()) {
+            String topitem = res.getString(res.getColumnIndex(emp_first))+" "
+                    +res.getString(res.getColumnIndex(emp_last));
+            String ids = res.getString(res.getColumnIndex(bardist_trans));
+            String sub = res.getString(res.getColumnIndex(bardist_createddate));
+            LinearItem list = new LinearItem(ids, topitem, sub);
+            results.add(list);
+            res.moveToNext();
+        }
+        res.close();
+        // Add some more dummy data for testing
+        return results;
+    }
+
+    public void addEmployee(String id, String first, String mid, String last, String mail,
+                            String mobile, String phone, String gender, String birth, String post,
+                            String house, String brgy, String cty, String branch){
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues cv = new ContentValues();
+        cv.put(emp_id, id);
+        cv.put(emp_first, first);
+        cv.put(emp_mid, mid);
+        cv.put(emp_last, last);
+        cv.put(emp_mail, mail);
+        cv.put(emp_mobile, mobile);
+        cv.put(emp_phone, phone);
+        cv.put(emp_gender, gender);
+        cv.put(emp_birth, birth);
+        cv.put(emp_post, post);
+        cv.put(emp_house, house);
+        cv.put(emp_brgy, brgy);
+        cv.put(emp_city, cty);
+        cv.put(emp_branch, branch);
+        db.insert(tbname_employee, null, cv);
+        db.close();
+
+    }
+
+    public void updateBarDriverInv(String bn, String stat){
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues cv = new ContentValues();
+        cv.put(barcodeDriverInv_status, stat);
+        db.update(tbname_barcode_driver_inventory, cv, barcodeDriverInv_boxnumber+" = '"+bn+"'", null);
+        Log.e("upd_driver_inv", bn);
         db.close();
     }
 

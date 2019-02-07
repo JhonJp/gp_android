@@ -2304,7 +2304,8 @@ public class GenDatabase extends SQLiteOpenHelper {
     public ArrayList<LinearItem> getSalesDriver(String post, String branch) {
         SQLiteDatabase db = this.getReadableDatabase();
         ArrayList<LinearItem> numbers = new ArrayList<LinearItem>();
-        Cursor c = db.rawQuery(" SELECT * FROM " + tbname_employee
+        Cursor c = db.rawQuery(" SELECT *,"
+                +tbname_employee+"."+emp_id+" FROM " + tbname_employee
                 +" LEFT JOIN "+tbname_branch
                 +" ON "+tbname_branch+"."+branch_id+" = "+tbname_employee+"."+emp_branch
                 +" WHERE "+emp_post+" = '"+post+"' AND "+emp_branch
@@ -2315,7 +2316,7 @@ public class GenDatabase extends SQLiteOpenHelper {
             String name = c.getString(c.getColumnIndex(emp_first))+" "
                     +c.getString(c.getColumnIndex(emp_last));
             String sub = c.getString(c.getColumnIndex(branch_name));
-            LinearItem list = new LinearItem(id, name, sub);
+            LinearItem list = new LinearItem(id,name, sub);
             numbers.add(list);
             c.moveToNext();
         }

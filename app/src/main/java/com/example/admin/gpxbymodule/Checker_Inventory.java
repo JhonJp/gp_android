@@ -384,6 +384,18 @@ public class Checker_Inventory extends AppCompatActivity
                                     "<b>" + countWithNum("1","0") + " box(s) </b>"));
                             tprice.setVisibility(View.INVISIBLE);
                             break;
+                        case "Barcodes":
+                            tophead.setText("#");
+                            subhead.setText("Box type");
+                            pricehead.setText("Box No.");
+                            item = getBarcodes("0");
+                            three_ad = new Three_tableAd(getApplicationContext(), item);
+                            three_ad.notifyDataSetChanged();
+                            lv.setAdapter(three_ad);
+                            to.setText(Html.fromHtml("<small>Overall total: </small>" +
+                                    "<b>" + countBarcodes("0") + " barcodes </b>"));
+                            tprice.setVisibility(View.INVISIBLE);
+                            break;
                         default:
                             tophead.setText("Box type");
                             subhead.setText("Quantity");
@@ -626,6 +638,40 @@ public class Checker_Inventory extends AppCompatActivity
             }
         }catch (Exception e){}
         return results;
+    }
+
+    public ArrayList<ListItem> getBarcodes(String stats){
+        ArrayList<ListItem> results = new ArrayList<>();
+        try {
+            SQLiteDatabase db = rate.getReadableDatabase();
+            String r = "SELECT * FROM "+rate.tbname_barcode_inventory
+                    +" WHERE "+rate.barcodeinv_status+" = '"+stats+"'";
+            Cursor c = db.rawQuery(r, null);
+            if (c.getCount() != 0 ) {
+                c.moveToFirst();
+                int i = 1;
+                while (!c.isAfterLast()) {
+                    String id = c.getString(c.getColumnIndex(rate.barcodeinv_id));
+                    String subitem = c.getString(c.getColumnIndex(rate.barcodeinv_boxnumber));
+                    String topitem = "Open";
+//                    String boxids = c.getString(2);
+                    ListItem list = new ListItem(id, i+"", topitem, subitem);
+                    results.add(list);
+                    i++;
+                    c.moveToNext();
+                }
+            }
+        }catch (Exception e){}
+        return results;
+    }
+
+    public int countBarcodes(String stats){
+        SQLiteDatabase db = rate.getReadableDatabase();
+        String r = "SELECT * FROM "+rate.tbname_barcode_inventory
+                +" WHERE "+rate.barcodeinv_status+" = '"+stats+"'";
+        Cursor c = db.rawQuery(r, null);
+
+        return c.getCount();
     }
 
     //syncing data reservations

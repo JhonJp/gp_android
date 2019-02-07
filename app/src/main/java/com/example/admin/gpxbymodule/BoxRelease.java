@@ -1,14 +1,24 @@
 package com.example.admin.gpxbymodule;
 
+import android.Manifest;
+import android.app.Activity;
 import android.app.AlertDialog;
+import android.content.ContentValues;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.graphics.Bitmap;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
+import android.util.Log;
 import android.view.Gravity;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
@@ -18,11 +28,26 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
 import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
+import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.ListView;
+import android.widget.Spinner;
 import android.widget.TextView;
+import android.widget.Toast;
 
+import com.google.zxing.integration.android.IntentIntegrator;
+import com.google.zxing.integration.android.IntentResult;
+
+import java.io.ByteArrayOutputStream;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.TimeZone;
 
 public class BoxRelease extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
@@ -33,6 +58,16 @@ public class BoxRelease extends AppCompatActivity
     String value;
     RatesDB rate;
     NavigationView navigationView;
+    String trans_no;
+    Spinner driver;
+    TextView driverid;
+    ArrayList<String> barcodes;
+    Button add;
+    IntentIntegrator scanIntegrator;
+    int scan_code = 100;
+    ListView lv;
+    TextView tol;
+    String dri;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -40,12 +75,33 @@ public class BoxRelease extends AppCompatActivity
         setContentView(R.layout.activity_box_release);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-        gen = new GenDatabase(getApplicationContext());
+        gen = new GenDatabase(this);
         helper = new HomeDatabase(this);
-        rate = new RatesDB(getApplicationContext());
+        rate = new RatesDB(this);
+        driver = (Spinner)findViewById(R.id.drivernames);
+        add = (Button)findViewById(R.id.addbarc);
+        lv = (ListView) findViewById(R.id.lv);
+        tol = (TextView) findViewById(R.id.total);
+        barcodes = new ArrayList<>();
 
+        //transactions
         if (helper.logcount() != 0) {
             value = helper.getRole(helper.logcount());
+        }
+
+        //check getter and setter
+        if (getTrans_no() != null){
+            setTrans_no(getTrans_no());
+        }else{
+            setTrans_no(generateTransNo()); //set transaction number
+        }
+        try {
+            Log.e("transaction_no", getTrans_no());
+            populateDriverNames();
+            addBoxnumber();
+            customType();
+        }catch (Exception e){
+            Log.e("error", e.getMessage());
         }
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
@@ -60,6 +116,88 @@ public class BoxRelease extends AppCompatActivity
         sidenavMain();
         setNameMail();
         subMenu();
+
+    }
+
+    //populate listview
+    public void customType(){
+        try {
+            ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
+                    android.R.layout.simple_list_item_1, barcodes);
+            lv.setAdapter(adapter);
+            tol.setText("Total : " + barcodes.size() + " pcs. ");
+            lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                @Override
+                public void onItemClick(AdapterView<?> parent, View view, final int position, long id) {
+                    final String ids = barcodes.get(position);
+                    final AlertDialog.Builder builder = new AlertDialog.Builder(BoxRelease.this);
+                    builder.setTitle("Delete this data ?")
+                            .setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+                                public void onClick(DialogInterface dialog, int id) {
+                                    barcodes.remove(barcodes.get(position).indexOf(ids));
+                                    customType();
+                                    dialog.dismiss();
+                                }
+                            }).setNegativeButton("Cancel",new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int id) {
+                            dialog.dismiss();
+                        }});
+                    // Create the AlertDialog object and show it
+                    builder.create().show();
+                }
+            });
+        }catch (Exception e){
+            Log.e("error", e.getMessage());
+        }
+    }
+
+    public void addBoxnumber(){
+        try {
+            add.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    scanpermit();
+                }
+            });
+        }catch (Exception e){}
+    }
+
+    public void scanpermit(){
+        if (ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.CAMERA)
+                == PackageManager.PERMISSION_DENIED) {
+            ActivityCompat.requestPermissions(BoxRelease.this, new String[]
+                    {Manifest.permission.CAMERA}, scan_code);
+        }else{
+            scanIntegrator = new IntentIntegrator(BoxRelease.this);
+            scanIntegrator.setPrompt("Scan barcode");
+            scanIntegrator.setBeepEnabled(true);
+            scanIntegrator.setOrientationLocked(true);
+            scanIntegrator.setCaptureActivity(CaptureActivityPortrait.class);
+            scanIntegrator.initiateScan();
+
+        }
+    }
+
+    public void populateDriverNames(){
+        final ArrayList<LinearItem> name = gen.getSalesDriver("Sales Driver", helper.getBranch(helper.logcount() + ""));
+        final LinearList list = new LinearList(this, name);
+        driver.setAdapter(list);
+        driver.setPrompt("Select sales driver");
+        driver.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                driverid = (TextView) parent.findViewById(R.id.dataid);
+                dri = driverid.getText().toString();
+                        Log.e("driverid", driverid.getText().toString());
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+                driverid = (TextView) parent.findViewById(R.id.dataid);
+                dri = driverid.getText().toString();
+                Log.e("driverid", driverid.getText().toString());
+            }
+        });
     }
 
     public void setNameMail(){
@@ -183,7 +321,7 @@ public class BoxRelease extends AppCompatActivity
             case "Incident Report":
                 Intent i = new Intent(this, Incident.class);
                 Bundle bundle = new Bundle();
-                bundle.putString("module", "Booking");
+                bundle.putString("module", "Barcode Releasing");
                 //Add the bundle to the intent
                 i.putExtras(bundle);
                 startActivity(i);
@@ -271,8 +409,11 @@ public class BoxRelease extends AppCompatActivity
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
-        if (id == R.id.action_settings) {
-            return true;
+        if (id == R.id.savebarcode_release) {
+            confirmSave();
+        }else if (id == R.id.barcodelist){
+            startActivity(new Intent(this, BoxReleaseList.class));
+            finish();
         }
 
         return super.onOptionsItemSelected(item);
@@ -285,6 +426,142 @@ public class BoxRelease extends AppCompatActivity
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
         return true;
+    }
+
+
+    //getter and setter
+    public String getTrans_no() {
+        return trans_no;
+    }
+
+    public void setTrans_no(String trans_no) {
+        this.trans_no = trans_no;
+    }
+
+    public String generateTransNo(){
+        String transNo = null;
+        Date datetalaga = Calendar.getInstance().getTime();
+        SimpleDateFormat writeDate = new SimpleDateFormat("yyyyMMddhhmmss");
+        writeDate.setTimeZone(TimeZone.getTimeZone("GMT+8"));
+        String sa = writeDate.format(datetalaga);
+
+        transNo = helper.logcount() + sa;
+        return transNo;
+    }
+
+    //activity results
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
+                                           @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == scan_code) {
+            if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                Toast.makeText(getApplicationContext(), "camera permission granted", Toast.LENGTH_LONG).show();
+            } else {
+                Toast.makeText(getApplicationContext(), "camera permission denied", Toast.LENGTH_LONG).show();
+            }
+        }
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data){
+        try{
+//            if (requestCode == scan_code) {
+                IntentResult result = IntentIntegrator.parseActivityResult(requestCode, resultCode, data);
+                if (result.getContents() != null){
+                    String bn = result.getContents();
+                    if (checkifInventory(bn)) {
+                        if (!barcodes.contains(bn)) {
+                            barcodes.add(bn);
+                            customType();
+                        } else {
+                            String x = "Barcode has been scanned, please try another.";
+                            customToast(x);
+                        }
+                    }else{
+                        String x = "Barcode is not in your inventory, please try another.";
+                        customToast(x);
+                    }
+                    Log.e("boxnumber", bn);
+                }
+//            }
+
+        }catch (Exception e){
+            Log.e("error", e.getMessage());}
+    }
+
+    //custom alert
+    public void customToast(String txt){
+        Toast toast = new Toast(BoxRelease.this);
+        toast.setDuration(Toast.LENGTH_SHORT);
+        LayoutInflater inflater = BoxRelease.this.getLayoutInflater();
+        View view = inflater.inflate(R.layout.toast, null);
+        TextView t = (TextView)view.findViewById(R.id.toasttxt);
+        t.setText(txt);
+        toast.setView(view);
+        toast.setGravity(Gravity.TOP | Gravity.RIGHT, 15, 50);
+        Animation animation = AnimationUtils.loadAnimation(BoxRelease.this, R.anim.enterright);
+        view.startAnimation(animation);
+        toast.show();
+    }
+
+    //save transaction
+    public void confirmSave(){
+        try{
+            if (barcodes.size() == 0){
+                String c = "Please scan a barcode.";
+                customToast(c);
+            }else {
+                String trans = this.getTrans_no();
+                String driv = dri;
+                String datetime = dateandtime();
+                String by = helper.logcount() + "";
+
+                for (String code : barcodes) {
+                    rate.addBarcodeDistributionBoxnumber(trans, code, "0");
+                    updateBarcodeInv(code);
+                }
+                rate.addBarcodeDistribution(trans, driv, datetime, by, "1", "0");
+
+                String y = "Transaction has been saved, thank you.";
+                customToast(y);
+                barcodes.clear();
+                startActivity(new Intent(this, BoxReleaseList.class));
+                finish();
+            }
+
+        }catch (Exception e){}
+    }
+
+    public boolean checkifInventory(String bn){
+        SQLiteDatabase db = rate.getReadableDatabase();
+        String x = " SELECT * FROM "+rate.tbname_barcode_inventory
+                +" WHERE "+rate.barcodeinv_boxnumber+" = '"+bn+"' AND "
+                +rate.barcodeinv_status+" = '0'";
+        Cursor c = db.rawQuery(x, null);
+        if (c.getCount() != 0){
+            return true;
+        }else{
+            return false;
+        }
+    }
+
+    public String dateandtime(){
+        Date datetalaga = Calendar.getInstance().getTime();
+        SimpleDateFormat writeDate = new SimpleDateFormat("yyyy-MM-dd h:mm");
+        writeDate.setTimeZone(TimeZone.getTimeZone("GMT+8"));
+        String findate = writeDate.format(datetalaga);
+
+        return findate;
+    }
+
+    public void updateBarcodeInv(String bn){
+        SQLiteDatabase db = rate.getWritableDatabase();
+        ContentValues cv = new ContentValues();
+        cv.put(rate.barcodeinv_status, "1");
+        db.update(rate.tbname_barcode_inventory, cv, rate.barcodeinv_boxnumber+" = '"+bn+"'", null);
+        Log.e("upd_barcodeinv", bn);
+        db.close();
     }
 
 }

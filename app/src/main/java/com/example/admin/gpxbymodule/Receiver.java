@@ -276,17 +276,19 @@ public class Receiver extends Fragment {
                             customToast(box);
                         }
                     }else{
-                        if (!checkBoxnum(bn)) {
-                            if (!checkBoxnumOne(bn)) {
-                                boxid = getBoxName(bn);
-                                reboxnum.setText(bn);
+                        if (getBoxNumberBarcode(bn)) {
+                            if (!checkBoxnum(bn)) {
+                                if (!checkBoxnumOne(bn)) {
+                                    boxid = getBoxName(bn);
+                                    reboxnum.setText(bn);
+                                } else {
+                                    delExistStatOne(bn);
+                                    reboxnum.setText(bn);
+                                }
                             } else {
-                                delExistStatOne(bn);
-                                reboxnum.setText(bn);
+                                String box = "Boxnumber has been used, please try another.";
+                                customToast(box);
                             }
-                        } else {
-                            String box = "Boxnumber has been used, please try another.";
-                            customToast(box);
                         }
                     }
                 } else {
@@ -835,6 +837,17 @@ public class Receiver extends Fragment {
         SQLiteDatabase db = gen.getReadableDatabase();
         Cursor x = db.rawQuery(" SELECT * FROM "+gen.tbname_driver_inventory
         +" WHERE "+gen.sdinv_boxnumber+" = '"+bn+"'", null);
+        if (x.getCount() != 0){
+            return true;
+        }else {
+            return false;
+        }
+    }
+
+    public boolean getBoxNumberBarcode(String bn){
+        SQLiteDatabase db = rate.getReadableDatabase();
+        Cursor x = db.rawQuery(" SELECT * FROM "+rate.tbname_barcode_driver_inventory
+        +" WHERE "+rate.barcodeDriverInv_boxnumber+" = '"+bn+"'", null);
         if (x.getCount() != 0){
             return true;
         }else {

@@ -332,7 +332,7 @@ public class Distributionlist extends Fragment {
                             }
                         });
                     }
-
+                    dialog.setCancelable(true);
                     dialog.show();
                 }
 

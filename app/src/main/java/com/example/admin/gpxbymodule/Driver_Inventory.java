@@ -127,7 +127,7 @@ public class Driver_Inventory extends AppCompatActivity
                 to.setVisibility(View.VISIBLE);
                 to.setText(Html.fromHtml("<small>Overall total: </small>" +
                         "<b>" + countAll("0", "0") + " box(s) </b>"));
-            } else {
+            }else {
                 topt.setText("Boxtype");
                 subt.setText("Action");
                 listitem = getFilledNotInAcceptance("1", "2");
@@ -237,6 +237,25 @@ public class Driver_Inventory extends AppCompatActivity
                             break;
                         case "Filled box":
                             all(x);
+                            break;
+                        case "Barcodes":
+                            topt.setText("#");
+                            subt.setText("Box No.");
+                            listitem = getBarcodes("0");
+                            TableAdapter ad = new TableAdapter(Driver_Inventory.this, listitem);
+                            lv.setAdapter(ad);
+                            lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                                @Override
+                                public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                                    Log.e("clicked", "no");
+                                }
+                            });
+                            to.setVisibility(View.VISIBLE);
+                            to.setText(Html.fromHtml("<small>Overall total: </small>" +
+                                    "<b>" + countAllBarcode("0") + " pcs. </b>"));
+                            break;
+                        default :
+                            all("Empty box");
                             break;
                     }
                 }
@@ -484,6 +503,14 @@ public class Driver_Inventory extends AppCompatActivity
         return c.getCount()+"";
     }
 
+    public String countAllBarcode(String stat){
+        SQLiteDatabase db = rate.getReadableDatabase();
+        String r = " SELECT * FROM "+rate.tbname_barcode_driver_inventory
+                +" WHERE "+rate.barcodeDriverInv_status+" = '"+stat+"'";
+        Cursor c = db.rawQuery(r, null);
+        return c.getCount()+"";
+    }
+
     public ArrayList<ListItem> getEmptyBoxes(String type, String stat){
         ArrayList<ListItem> results = new ArrayList<>();
         try {
@@ -505,6 +532,27 @@ public class Driver_Inventory extends AppCompatActivity
                 String subitem = c.getString(2);
                 ListItem list = new ListItem(id, topitem, subitem, null);
                 results.add(list);
+                c.moveToNext();
+            }
+        }catch (Exception e){}
+        return results;
+    }
+
+    public ArrayList<ListItem> getBarcodes(String stat){
+        ArrayList<ListItem> results = new ArrayList<>();
+        try {
+            SQLiteDatabase db = rate.getReadableDatabase();
+            String r = " SELECT * FROM "+rate.tbname_barcode_driver_inventory
+                    +" WHERE "+rate.barcodeDriverInv_status+" = '"+stat+"'";
+            Cursor c = db.rawQuery(r, null);
+            c.moveToFirst();
+            int i = 1;
+            while (!c.isAfterLast()) {
+                String id = c.getString(c.getColumnIndex(rate.barcodeDriverInv_id));
+                String subitem = c.getString(c.getColumnIndex(rate.barcodeDriverInv_boxnumber));
+                ListItem list = new ListItem(id, i+"", subitem, null);
+                results.add(list);
+                i++;
                 c.moveToNext();
             }
         }catch (Exception e){}

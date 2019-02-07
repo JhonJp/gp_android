@@ -98,7 +98,9 @@
 
             <FrameLayout
                 android:layout_width="match_parent"
-                android:layout_height="match_parent">
+                android:layout_height="match_parent"
+                android:layout_marginEnd="5dp"
+                android:layout_marginStart="5dp">
 
                 <FrameLayout
                     android:layout_width="match_parent"
@@ -167,7 +169,9 @@
 
             <FrameLayout
                 android:layout_width="match_parent"
-                android:layout_height="300dp">
+                android:layout_height="300dp"
+                android:layout_marginEnd="5dp"
+                android:layout_marginStart="5dp">
 
                 <include
                     layout="@layout/list"
