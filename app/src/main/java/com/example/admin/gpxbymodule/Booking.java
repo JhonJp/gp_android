@@ -83,6 +83,16 @@ public class Booking extends AppCompatActivity
 
     ArrayList<String> boxnumbers;
 
+    public ArrayList<String> getClicksids() {
+        return clicksids;
+    }
+
+    public void setClicksids(ArrayList<String> clicksids) {
+        this.clicksids = clicksids;
+    }
+
+    ArrayList<String> clicksids;
+
     public int getClickcount() {
         return clickcount;
     }
@@ -351,6 +361,7 @@ public class Booking extends AppCompatActivity
         builder.setPositiveButton("Ok", new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int id) {
                 //generaldb.deleteDiscountsOnDestroy(getTransNo());
+                deleteTransactions("1");
                 startActivity(new Intent(getApplicationContext(), Bookinglist.class));
                 finish();
             }
@@ -526,6 +537,14 @@ public class Booking extends AppCompatActivity
 
     public void setAdditionalpay(double additionalpay) {
         this.additionalpay = additionalpay;
+    }
+
+    public void deleteTransactions(String stat){
+        SQLiteDatabase db = generaldb.getWritableDatabase();
+        db.delete(generaldb.tbname_booking_consignee_box,
+                generaldb.book_con_stat+" = '1'",null);
+        Log.e("delete_book_con", stat);
+        db.close();
     }
 
 }

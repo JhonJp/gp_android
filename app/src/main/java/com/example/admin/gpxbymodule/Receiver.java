@@ -31,6 +31,7 @@ import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.ListView;
@@ -70,7 +71,8 @@ public class Receiver extends Fragment {
     TextView nsbid;
     ArrayList<LinearItem> itemsboxnsb;
     LinearList ad;
-    String nsbname = null;
+    String nsbname = null, len, wid, hei;
+    EditText l, w, h;
 
     @Nullable
     @Override
@@ -93,6 +95,9 @@ public class Receiver extends Fragment {
         if (book.getTransNo() != null ){
             book.setTransNo(book.getTransNo());
             Log.e("booktrans", book.getTransNo());
+        }
+        if (book.getClicksids() != null ){
+            clickids = book.getClicksids();
         }
 
         withReservation();
@@ -148,6 +153,7 @@ public class Receiver extends Fragment {
                         final String head = top.getText().toString();
                         selectedbt = getBoxId(result.get(position).getAmount());
                         Log.e("boxtypeID", ""+selectedbt);
+
                         itemclick(idg, head, nub);
                     }
                 });
@@ -365,7 +371,9 @@ public class Receiver extends Fragment {
             ArrayAdapter<String> sourceadapter =
                     new ArrayAdapter<>(getContext(), R.layout.spinneritem,
                             sr);
+            sour.setEnabled(false);
             sour.setAdapter(sourceadapter);
+            sour.setSelection(sourceadapter.getPosition(getYourBranch()));
             sourceadapter.setDropDownViewResource(android.R.layout.select_dialog_singlechoice);
             sour.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
                 @Override
@@ -456,15 +464,25 @@ public class Receiver extends Fragment {
                         }
                         Log.e("boxtype", selectedbt + "");
                         if (book.getPayamount() == 0) {
-                            book.setPayamount(Double.valueOf((calculate(selectedbt + "",
-                                    sourceid + "", destid + ""))));
-                            Log.e("amount", book.getPayamount() + "");
-                            clickids.add(id);
+                            String calc = calculate(selectedbt + "",
+                                    sourceid + "", destid + "");
+                            if (calc != null){
+                                book.setPayamount(Double.valueOf(calc));
+                                Log.e("amount", book.getPayamount() + "");
+                            }
+
+                            if (!clickids.contains(id)) {
+                                clickids.add(id);
+                            }
                         } else {
                             if (!clickids.contains(id)) {
-                                Double famount = ((book.getPayamount()) + (Double.valueOf(calculate(selectedbt + "",
-                                        sourceid + "", destid + ""))));
-                                book.setPayamount(famount);
+                                String calc = calculate(selectedbt + "",
+                                        sourceid + "", destid + "");
+                                if (calc != null){
+                                    Double famount = ((book.getPayamount()) + (Double.valueOf(calc)));
+                                    book.setPayamount(famount);
+                                }
+
                                 clickids.add(id);
                                 Log.e("ids", clickids.toString() + "");
                                 Log.e("amount", book.getPayamount() + "");
@@ -546,8 +564,6 @@ public class Receiver extends Fragment {
         receivername = (AutoCompleteTextView)d.findViewById(R.id.receiverinput);
         boxnum = (EditText)d.findViewById(R.id.re_boxinput);
         addcust = (ImageButton)d.findViewById(R.id.add_cust);
-        sour = (Spinner)d.findViewById(R.id.source);
-        dest = (Spinner)d.findViewById(R.id.destination);
         nsbspin = (Spinner)d.findViewById(R.id.nsbtype);
         bcontent = (Spinner)d.findViewById(R.id.boxcont);
 
@@ -557,45 +573,6 @@ public class Receiver extends Fragment {
                 new ArrayAdapter<>(getContext(), R.layout.spinneritem,
                         bbcont);
         bcontent.setAdapter(bcontadapter);
-
-        //populate sources
-        String[] sr = rate.getSources();
-        ArrayAdapter<String> sourceadapter =
-                new ArrayAdapter<>(getContext(), R.layout.spinneritem,
-                        sr);
-        sour.setAdapter(sourceadapter);
-        sourceadapter.setDropDownViewResource(android.R.layout.select_dialog_singlechoice);
-        sour.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override
-            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                sourceid = getSourceid(sour.getSelectedItem().toString());
-                Log.e("sourceid", sourceid+"");
-            }
-            @Override
-            public void onNothingSelected(AdapterView<?> parent) {
-                sourceid = getSourceid(sour.getSelectedItem().toString());
-            }
-        });
-
-        //populate destinations
-        String[] des = rate.getDest();
-        ArrayAdapter<String> destadapter =
-                new ArrayAdapter<>(getContext(), R.layout.spinneritem,
-                        des);
-        dest.setAdapter(destadapter);
-        destadapter.setDropDownViewResource(android.R.layout.select_dialog_singlechoice);
-        dest.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override
-            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                destid = getDestid(dest.getSelectedItem().toString());
-                Log.e("destid", destid+"");
-            }
-
-            @Override
-            public void onNothingSelected(AdapterView<?> parent) {
-                destid = getDestid(dest.getSelectedItem().toString());
-            }
-        });
 
         itemsboxnsb = getNSBboxes();
         ad = new LinearList(getContext(), itemsboxnsb);
@@ -628,56 +605,12 @@ public class Receiver extends Fragment {
         confirm.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                String re = getAccntNo(receivername.getText().toString());
-//                String prov = get(receivername.getText().toString());
-                Log.e("re", re);
-                String bnum = boxnum.getText().toString();
-                String bcont = bcontent.getSelectedItem().toString();
-                if (re.equals("")){
-                    String t ="Receiver name is invalid.";
-                    customToast(t);
-                }else if (bnum.equals("")){
-                    String t ="Box number is empty.";
-                    customToast(t);
-                }
-                else {
-                    if (!boxnumbers.contains(bnum)){
-                        boxnumbers.add(bnum);
-                    }
-                    boxesids.add(boxid);
-                    boolean feed = checkHardPort(getProvince(getAccntNo(receivername.getText().toString())));
-                    Log.e("hardport", feed+"");
-                    if (feed == true) {
-                        gen.addConsigneeBooking(re, getBoxNameIDused(boxid), sourceid + "", destid + "",
-                                book.getTransNo(), bnum, "1", "1",bcont);
-                    }else{
-                        gen.addConsigneeBooking(re, getBoxNameIDused(boxid), sourceid + "", destid + "",
-                                book.getTransNo(), bnum, "1", "0",bcont);
-                    }
-                    String lastid = getLastId()+"";
-                    if (book.getPayamount() == 0) {
-                        book.setPayamount(Double.parseDouble(calculate(boxid + "",
-                                sourceid + "", destid + "")));
-                        Log.e("amount", book.getPayamount() + "");
-                        clickids.add(lastid);
-                        Log.e("ids", clickids.toString() + "");
-                    } else {
-                        if (!clickids.contains(lastid)) {
-                            Double famount = ((book.getPayamount()) + (Double.parseDouble(calculate(boxid + "",
-                                    sourceid + "", destid + ""))));
-                            book.setPayamount(famount);
-                            clickids.add(lastid);
-                            Log.e("ids", clickids.toString() + "");
-                            Log.e("amount", book.getPayamount() + "");
-                        } else {
-                            book.setPayamount(book.getPayamount());
-                            Log.e("amount", book.getPayamount() + "");
-                        }
-                    }
-                    withReservation();
-                    Log.e("hardport", checkHardPort(getProvince(getAccntNo(receivername.getText().toString())))+"");
+                if (checkIFNSB(boxid)){
+                    addlengthwidth();
                     alertDialog.dismiss();
-
+                }else{
+                    newboxsourcedes();
+                    alertDialog.dismiss();
                 }
             }
         });
@@ -687,6 +620,111 @@ public class Receiver extends Fragment {
                 alertDialog.dismiss();
             }
         });
+    }
+
+    public void addlengthwidth(){
+        AlertDialog.Builder dlwh = new AlertDialog.Builder(getContext());
+        LayoutInflater inflater = Receiver.this.getLayoutInflater();
+        View d = inflater.inflate(R.layout.nsblwh, null);
+        dlwh.setTitle("NSB Box dimensions");
+
+        l = (EditText)d.findViewById(R.id.length);
+        w = (EditText)d.findViewById(R.id.width);
+        h = (EditText)d.findViewById(R.id.height);
+
+        dlwh.setView(d);
+        dlwh.setPositiveButton("Confirm", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface di, int which) {
+                len = l.getText().toString();
+                wid = w.getText().toString();
+                hei = h.getText().toString();
+                newboxsourcedes();
+                di.dismiss();
+            }
+        });
+        dlwh.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dicancel, int which) {
+                dicancel.dismiss();
+            }
+        });
+//        final AlertDialog alertDialog = dlwh.show();
+        dlwh.show();
+
+    }
+
+    public void newboxsourcedes(){
+        AlertDialog.Builder dlwh = new AlertDialog.Builder(getContext());
+        LayoutInflater inflater = Receiver.this.getLayoutInflater();
+        View d = inflater.inflate(R.layout.nsbsourcedest, null);
+        dlwh.setTitle("New box destinations");
+
+        sour = (Spinner)d.findViewById(R.id.source);
+        dest = (Spinner)d.findViewById(R.id.destination);
+
+        //populate sources
+        String[] sr = rate.getSources();
+        ArrayAdapter<String> sourceadapter =
+                new ArrayAdapter<>(getContext(), R.layout.spinneritem,
+                        sr);
+        sour.setEnabled(false);
+        sour.setAdapter(sourceadapter);
+        sour.setSelection(sourceadapter.getPosition(getYourBranch()));
+        sourceadapter.setDropDownViewResource(android.R.layout.select_dialog_singlechoice);
+        sour.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                sourceid = getSourceid(sour.getSelectedItem().toString());
+                Log.e("sourceid", sourceid+"");
+//                Log.e("sourceid", sour.getSelectedItem().toString()+"");
+            }
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+                sourceid = getSourceid(sour.getSelectedItem().toString());
+            }
+        });
+
+        //populate destinations
+        String[] des = rate.getDest();
+        ArrayAdapter<String> destadapter =
+                new ArrayAdapter<>(getContext(), R.layout.spinneritem,
+                        des);
+        dest.setAdapter(destadapter);
+        destadapter.setDropDownViewResource(android.R.layout.select_dialog_singlechoice);
+        dest.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                destid = getDestid(dest.getSelectedItem().toString());
+                Log.e("destid", destid+"");
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+                destid = getDestid(dest.getSelectedItem().toString());
+            }
+        });
+
+        dlwh.setView(d);
+        dlwh.setPositiveButton("Confirm", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface di, int which) {
+                if (checkIFNSB(boxid)){
+                    savePartialConsigneeNSB();
+                }else{
+                    savePartialConsignee();
+                }
+                di.dismiss();
+            }
+        });
+        dlwh.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dicancel, int which) {
+                dicancel.dismiss();
+            }
+        });
+        dlwh.show();
+
     }
 
     public int getBoxId(String id){
@@ -700,14 +738,14 @@ public class Receiver extends Fragment {
     }
 
     public String calculate(String t, String sid, String did){
-        String a = "0";
+        String rateval = null;
         SQLiteDatabase db = rate.getReadableDatabase();
-            Cursor x = db.rawQuery(" SELECT * FROM " + rate.tbname_rates
-                    + " WHERE " + rate.rate_boxtype + " = '" + t + "' AND " + rate.rate_source_id + " = '" + sid + "' AND " + rate.rate_destination_id + " = '" + did + "'", null);
-            if (x.moveToNext()) {
-                a =  x.getString(x.getColumnIndex(rate.rate_amount));
-            }
-        return a;
+        Cursor x = db.rawQuery(" SELECT * FROM " + rate.tbname_rates
+                + " WHERE " + rate.rate_boxtype + " = '" + t + "' AND " + rate.rate_source_id + " = '" + sid + "' AND " + rate.rate_destination_id + " = '" + did + "'", null);
+        if (x.moveToNext()) {
+            rateval = x.getString(x.getColumnIndex(rate.rate_amount));
+        }
+        return rateval;
     }
 
     public  int getSourceid(String name){
@@ -852,6 +890,7 @@ public class Receiver extends Fragment {
                 customToast(x);
             }
             book.setClickcount(clickids.size());
+            book.setClicksids(clickids);
             if (book.getReserveno() != null) {
                 Log.e("reservenum", book.getReserveno());
             }else{
@@ -953,6 +992,158 @@ public class Receiver extends Fragment {
         }
 
         return ok;
+    }
+
+    public boolean checkIFNSB(String boxid){
+        boolean ok = false;
+        SQLiteDatabase db = gen.getReadableDatabase();
+        String x = " SELECT * FROM "+gen.tbname_boxes
+                +" WHERE "+gen.box_id+" = '"+boxid+"'";
+        Cursor c = db.rawQuery(x, null);
+        if (c.moveToNext()){
+         int nsbi = c.getInt(c.getColumnIndex(gen.box_nsb));
+         if (nsbi == 1){
+             ok = true;
+         }else if (nsbi == 0){
+             ok = false;
+         }
+        }
+        return ok;
+    }
+
+    public void savePartialConsignee(){
+        try {
+            String re = getAccntNo(receivername.getText().toString());
+            String bnum = boxnum.getText().toString();
+            String bcont = bcontent.getSelectedItem().toString();
+            if (re.equals("")) {
+                String t = "Receiver name is invalid.";
+                customToast(t);
+            } else if (bnum.equals("")) {
+                String t = "Box number is empty.";
+                customToast(t);
+            } else {
+                if (!boxnumbers.contains(bnum)) {
+                    boxnumbers.add(bnum);
+                }
+                boxesids.add(boxid);
+                boolean feed = checkHardPort(getProvince(getAccntNo(receivername.getText().toString())));
+                if (feed == true) {
+                    gen.addConsigneeBooking(re, getBoxNameIDused(boxid), sourceid + "", destid + "",
+                            book.getTransNo(), bnum, "1", "1", bcont);
+                    clickids.add(getLastId() + "");
+                    Log.e("ids", clickids.toString() + "");
+                } else {
+                    gen.addConsigneeBooking(re, getBoxNameIDused(boxid), sourceid + "", destid + "",
+                            book.getTransNo(), bnum, "1", "0", bcont);
+                    clickids.add(getLastId() + "");
+                    Log.e("ids", clickids.toString() + "");
+                }
+                if (book.getPayamount() == 0) {
+                    String calc = calculate(selectedbt + "",
+                            sourceid + "", destid + "");
+                    if (calc != null){
+                        book.setPayamount(Double.valueOf(calc));
+                        Log.e("amount", book.getPayamount() + "");
+                    }
+                    Log.e("rate", calc+ "");
+                } else {
+                    String calc = calculate(selectedbt + "",
+                            sourceid + "", destid + "");
+                    if (calc != null){
+                        Double famount = ((book.getPayamount()) + (Double.valueOf(calc)));
+                        book.setPayamount(famount);
+                    }
+
+                    Log.e("amount", book.getPayamount() + "");
+                }
+                withReservation();
+            }
+        }catch (Exception e){
+            Log.e("exception_con", e.getMessage());
+        }
+    }
+
+    public void savePartialConsigneeNSB(){
+        try{
+            String re = getAccntNo(receivername.getText().toString());
+            double length = Double.valueOf(len);
+            double width = Double.valueOf(wid);
+            double height = Double.valueOf(hei);
+            double staticmillion = 1000000;
+            String bnum = boxnum.getText().toString();
+            String bcont = bcontent.getSelectedItem().toString();
+            if (re.equals("")){
+                String t ="Receiver name is invalid.";
+                customToast(t);
+            }else if (bnum.equals("")){
+                String t ="Box number is empty.";
+                customToast(t);
+            }
+            else {
+                if (!boxnumbers.contains(bnum)){
+                    boxnumbers.add(bnum);
+                }
+                boxesids.add(boxid);
+                boolean feed = checkHardPort(getProvince(getAccntNo(receivername.getText().toString())));
+                if (feed == true) {
+                    gen.addConsigneeBooking(re, getBoxNameIDused(boxid), sourceid + "", destid + "",
+                            book.getTransNo(), bnum, "1", "1", bcont);
+                    clickids.add(getLastId()+"");
+                    Log.e("ids", clickids.toString() + "");
+                }else{
+                    gen.addConsigneeBooking(re, getBoxNameIDused(boxid), sourceid + "", destid + "",
+                            book.getTransNo(), bnum, "1", "0",bcont);
+                    clickids.add(getLastId()+"");
+                    Log.e("ids", clickids.toString() + "");
+                }
+                String lastid = getLastId()+"";
+                if (book.getPayamount() == 0) {
+                    //calculation formula
+                    double frate = Double.valueOf(getNSBrate(boxid,sourceid+"",destid+""));
+                    double fratestat = (length * width * height)/staticmillion;
+                    double fratetotal = (fratestat)* frate;
+                    book.setPayamount(fratetotal);
+                    //clicked ids
+                    Log.e("amount", book.getPayamount() + "");
+                } else {
+                    //calculation formula
+                    double frate = Double.valueOf(getNSBrate(boxid,sourceid+"",destid+""));
+                    double fratestat = (length * width * height)/staticmillion;
+                    double fratetotal = (fratestat)* frate;
+                    double getPayAm = book.getPayamount();
+                    double total = getPayAm + fratetotal;
+                    book.setPayamount(total);
+                    Log.e("amount", book.getPayamount() + "");
+                }
+                withReservation();
+            }
+        }catch (Exception e){
+            Log.e("exception_conNSB", e.getMessage());
+        }
+    }
+
+    public String getYourBranch(){
+        String branchname = null;
+        SQLiteDatabase db = rate.getReadableDatabase();
+        Cursor x = db.rawQuery(" SELECT * FROM "+rate.tbname_branch
+                +" WHERE "+rate.branch_id+" = '"+home.getBranch(""+home.logcount())+"'", null);
+        if (x.moveToNext()){
+            branchname = x.getString(x.getColumnIndex(rate.branch_name));
+        }
+        return branchname;
+    }
+
+    public String getNSBrate(String boxid, String source, String dest){
+        String rate = null;
+        SQLiteDatabase db = gen.getReadableDatabase();
+        Cursor x = db.rawQuery(" SELECT * FROM "+gen.tbname_nsbrate
+                +" WHERE "+gen.nsbr_boxid+" = '"+boxid+"' AND "+gen.nsbr_sourceid+" = '"+source+"' AND "
+                +gen.nsbr_destid+" = '"+dest+"'", null);
+        if (x.moveToNext()){
+            rate = x.getString(x.getColumnIndex(gen.nsbr_rate));
+        }
+        return rate;
     }
 
 }

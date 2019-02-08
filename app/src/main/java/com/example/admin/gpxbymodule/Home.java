@@ -649,6 +649,9 @@ public class Home extends AppCompatActivity
                 //get barcode generated
                 getBarCodeInventory();
 
+                //get nsb rates for calculation
+                getNSBrates();
+
                 //get barcode driver
                 getBarCodeDriverInventory();
 
@@ -983,17 +986,36 @@ public class Home extends AppCompatActivity
 
                 //END THREAD FOR branch
 
-                    getReservations();
-                    getSalesDriverDistribution();
-                    getBranchDistribution();
-                    getHubDistributions();
-                    getWarehouseAcceptance();
-                    getBoxesFromDistribution(helper.getFullname(helper.logcount()+""));
-                    getBoxesFromDistributionChecker(helper.getBranch(helper.logcount()+""));
-                    getWarehouse();
-                    getBookings();
-                    getLoadItems();
-                    getUnLoadsItem();
+                //get pending reservations
+                getReservations();
+
+                //distribution to sales driver
+                getSalesDriverDistribution();
+
+                //distribution to GP branch
+                getBranchDistribution();
+
+                //distribution to PARTNER HUB
+                getHubDistributions();
+
+                //get warehouse acceptance FILLED BOX
+                getWarehouseAcceptance();
+
+                //get boxes distributed to driver
+                getBoxesFromDistribution(helper.getFullname(helper.logcount()+""));
+
+                //get boxes distributed to branch
+                getBoxesFromDistributionChecker(helper.getBranch(helper.logcount()+""));
+
+                //get warehouse names
+                getWarehouse();
+
+                // get booking transactions
+                getBookings();
+                //get loaded boxes
+                getLoadItems();
+                //get unloaded items or boxes
+                getUnLoadsItem();
 
             }
         });
@@ -2756,6 +2778,44 @@ public class Home extends AppCompatActivity
         //END THREAD FOR booking
     }
 
+    public void getNSBrates(){
+        //START THREAD FOR booking data
+        try {
+            String resp = null;
+            String link = helper.getUrl();
+            String series = "http://"+link+"/api/boxrate/getnsbrate.php";
+            URL url = new URL(series);
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            conn.setRequestMethod("GET");
+            // read the response
+            InputStream in = new BufferedInputStream(conn.getInputStream());
+            resp = convertStreamToString(in);
+            Log.e("nsbrates", ""+resp);
+            if (resp != null) {
+                JSONArray jsonArray = new JSONArray(resp);
+                for(int i=0; i<jsonArray.length(); i++){
+                    JSONObject json_data = jsonArray.getJSONObject(i);
+                    String boxid = json_data.getString("boxid");
+                    String sourceid = json_data.getString("sourceid");
+                    String destinationid = json_data.getString("destinationid");
+                    String nsbrate = json_data.getString("rate");
+
+                    if (checkNSBrate(boxid, sourceid, destinationid, nsbrate)){
+                        gendata.updateNSBrates(boxid, sourceid, destinationid, nsbrate);
+                    }else{
+                        gendata.addNSBrate(boxid, sourceid, destinationid, nsbrate);
+                    }
+                }
+
+            } else {
+                Log.e("Error", "Couldn't get data from server.");
+            }
+        } catch (Exception e) {
+            Log.e("Error", " error: " + e.getMessage());
+        }
+        //END THREAD FOR booking
+    }
+
     //barcode to inventory
     public void getBarCodeInventory(){
         //START THREAD FOR booking data
@@ -2841,10 +2901,14 @@ public class Home extends AppCompatActivity
                 JSONArray jsonArray = new JSONArray(resp);
                 for(int i=0; i<jsonArray.length(); i++){
                     JSONObject json_data = jsonArray.getJSONObject(i);
+                    String id = json_data.getString("id");
+                    String trans = json_data.getString("transaction_no");
                     String[] box_number = json_data.getString("box_number").split(",");
                     String stat = "0";
-                    for (int ix = 0; ix < box_number.length; ix++){
-                        ratesDB.addBarcodeDriverInventory(box_number[ix], stat);
+                    if (id != null && trans != null) {
+                        for (int ix = 0; ix < box_number.length; ix++) {
+                            ratesDB.addBarcodeDriverInventory(box_number[ix], stat);
+                        }
                     }
                 }
 
@@ -3683,6 +3747,18 @@ public class Home extends AppCompatActivity
         SQLiteDatabase db = gendata.getReadableDatabase();
         Cursor c = db.rawQuery(" SELECT * FROM "+gendata.tbname_booking
         +" WHERE "+gendata.book_transaction_no+" = '"+id+"'", null);
+        if (c.getCount() != 0){
+            return true;
+        }else{
+            return false;
+        }
+    }
+
+    public boolean checkNSBrate(String boxid, String source, String des, String rate){
+        SQLiteDatabase db = gendata.getReadableDatabase();
+        Cursor c = db.rawQuery(" SELECT * FROM "+gendata.tbname_nsbrate
+        +" WHERE "+gendata.nsbr_boxid+" = '"+boxid+"' AND "+gendata.nsbr_sourceid+" = '"+source+"'"
+                +" AND "+gendata.nsbr_destid+" = '"+des+"' AND "+gendata.nsbr_rate+" = '"+rate+"'", null);
         if (c.getCount() != 0){
             return true;
         }else{

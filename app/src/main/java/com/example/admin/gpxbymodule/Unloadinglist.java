@@ -563,6 +563,8 @@ public class Unloadinglist extends AppCompatActivity
                     String start = c.getString(c.getColumnIndex(gen.unload_timestart));
                     String end = c.getString(c.getColumnIndex(gen.unload_timeend));
                     String by = c.getString(c.getColumnIndex(gen.unload_con_by));
+                    String plate = c.getString(c.getColumnIndex(gen.unload_plateno));
+                    String driver_name = c.getString(c.getColumnIndex(gen.unload_driver));
                     json.put("id", id);
                     json.put("unload_date", date);
                     json.put("unload_shipper", forwarder);
@@ -571,6 +573,8 @@ public class Unloadinglist extends AppCompatActivity
                     json.put("time_start", start);
                     json.put("time_end", end);
                     json.put("createdby", by);
+                    json.put("plate_no", plate);
+                    json.put("driver_name", driver_name);
                     json.put("unloading_boxes", getAllUnloadBox(id));
                     json.put("unloading_boxes_image", getUnloadImage(id));
                     unids.add(id);

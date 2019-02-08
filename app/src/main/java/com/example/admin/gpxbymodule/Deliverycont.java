@@ -145,6 +145,7 @@ public class Deliverycont extends AppCompatActivity {
             capt.setVisibility(View.INVISIBLE);
             viewgrid(getTrans(booknum));
             byte[] signature = getSignatre(booknum);
+            Log.e("sign", signature+"");
             Bitmap bm = BitmapFactory.decodeByteArray(signature,0,signature.length);
             sig.setImageBitmap(bm);
         }else{
@@ -551,7 +552,7 @@ public class Deliverycont extends AppCompatActivity {
         Button conf = (Button)d.findViewById(R.id.confirm);
         denom.setTitle("Receiver information");
         final AlertDialog dial = denom.show();
-        final String[] rel = {"Father","Mother","Brother","Sister","Friend","Neighbor"};
+        final String[] rel = {"Receiver","Father","Mother","Brother","Sister","Friend","Neighbor"};
         ArrayAdapter<String> rela = new ArrayAdapter<String>
                 (getApplicationContext(), android.R.layout.select_dialog_item, rel);
         relationship.setAdapter(rela);

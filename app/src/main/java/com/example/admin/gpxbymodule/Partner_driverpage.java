@@ -339,6 +339,13 @@ public class Partner_driverpage extends AppCompatActivity {
                 //get your deliveries
                 getDeliveries(drivername);
 
+                //get delivered data
+                getDeliveredData();
+                //get delivery images
+                getProof();
+                //get delivery boxes
+                getDeliveredBox();
+
             }
         });
 
@@ -413,6 +420,113 @@ public class Partner_driverpage extends AppCompatActivity {
                         rates.addDirectBox(bn, "0");
                     }
                 }
+            } else {
+                Log.e("Error", "Couldn't get data from server.");
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        String r = "Couldn't get data from server, trying again.";
+                        customToast(r);
+                    }
+                });
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void getDeliveredData(){
+        //thread rate
+        try {
+            String resp = null;
+            String link = helper.getUrl();
+            String urlget = "http://"+link+"/api/delivery/get.php?id="+helper.logcount();
+            URL url = new URL(urlget);
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            conn.setRequestMethod("GET");
+            // read the response
+            InputStream in = new BufferedInputStream(conn.getInputStream());
+            resp = convertStreamToString(in);
+            if (resp != null) {
+                Log.e("deliveries", " : " + resp);
+                JSONArray jsonArray = new JSONArray(resp);
+                for(int i=0; i<jsonArray.length(); i++){
+                    JSONObject json_data = jsonArray.getJSONObject(i);
+                    String id = json_data.getString("id");
+                    String transaction_no = json_data.getString("transaction_no");
+                    String customer = json_data.getString("customer");
+                    String createddate = json_data.getString("createddate");
+                    String signature = json_data.getString("signature");
+                    String receivedby = json_data.getString("receivedby");
+                    String relationship = json_data.getString("relationship");
+                    String remarks = json_data.getString("remarks");
+                    String createdby = json_data.getString("createdby");
+                    String base64String = "data:image/png;base64,"+signature;
+                    String base64Image = base64String.split(",")[1];
+
+                    byte[] decodedString = Base64.decode(base64Image, Base64.DEFAULT);
+                    Log.e("base64tobyte", decodedString+"");
+                    if (!checkDelId(id)) {
+                        gen.addDelivery(id, transaction_no, customer,
+                                createddate, decodedString, helper.logcount() + "", "1", "", remarks, receivedby, relationship);
+                    }
+                }
+
+            } else {
+                Log.e("Error", "Couldn't get data from server.");
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        String r = "Couldn't get data from server, trying again.";
+                        customToast(r);
+                    }
+                });
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void getDeliveredBox(){
+        //thread rate
+        try {
+            String resp = null;
+            String link = helper.getUrl();
+            String urlget = "http://"+link+"/api/delivery/getbox.php";
+            URL url = new URL(urlget);
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            conn.setRequestMethod("GET");
+            // read the response
+            InputStream in = new BufferedInputStream(conn.getInputStream());
+            resp = convertStreamToString(in);
+            if (resp != null) {
+                Log.e("deliverybox", " : " + resp);
+                JSONArray jsonArray = new JSONArray(resp);
+                for(int i=0; i<jsonArray.length(); i++){
+                    JSONObject json_data = jsonArray.getJSONObject(i);
+                    String id = json_data.getString("id");
+                    String box_number = json_data.getString("box_number");
+                    String transaction_no = json_data.getString("transaction_no");
+                    String receiver = json_data.getString("receiver");
+                    String origin = json_data.getString("origin");
+                    String destination = json_data.getString("destination");
+                    String delivery_id = json_data.getString("delivery_id");
+                    String createddate = json_data.getString("createddate");
+                    String status = json_data.getString("status");
+
+                    if (!checkDelBox(box_number)){
+                        String substat = null;
+                        if (status.equals("2")){
+                            substat = "1";
+                        }
+                        gen.addDeliveryBox(box_number, transaction_no, receiver, origin,
+                                destination, delivery_id, status, substat, createddate);
+                        if (checkDirects(box_number)){
+                            rates.updateDirectBox(box_number);
+                        }
+                    }
+                }
+
                 if (conn.getResponseMessage().equals("OK")){
                     runOnUiThread(new Runnable() {
                         @Override
@@ -458,6 +572,51 @@ public class Partner_driverpage extends AppCompatActivity {
                         }
                     });
                 }
+
+            } else {
+                Log.e("Error", "Couldn't get data from server.");
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        String r = "Couldn't get data from server, trying again.";
+                        customToast(r);
+                    }
+                });
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void getProof(){
+        //thread rate
+        try {
+            String resp = null;
+            String link = helper.getUrl();
+            String urlget = "http://"+link+"/api/delivery/getproof.php";
+            URL url = new URL(urlget);
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            conn.setRequestMethod("GET");
+            // read the response
+            InputStream in = new BufferedInputStream(conn.getInputStream());
+            resp = convertStreamToString(in);
+            if (resp != null) {
+                Log.e("proofs", " : " + resp);
+                JSONArray jsonArray = new JSONArray(resp);
+                for(int i=0; i<jsonArray.length(); i++){
+                    JSONObject json_data = jsonArray.getJSONObject(i);
+                    String id = json_data.getString("id");
+                    String delivery_id = json_data.getString("delivery_id");
+                    String images = json_data.getString("images");
+                    String base64String = "data:image/png;base64,"+images;
+                    String base64Image = base64String.split(",")[1];
+
+                    byte[] decodedString = Base64.decode(base64Image, Base64.DEFAULT);
+
+                    rates.addReserveImage(delivery_id, decodedString);
+
+                }
+
             } else {
                 Log.e("Error", "Couldn't get data from server.");
                 runOnUiThread(new Runnable() {
@@ -649,12 +808,16 @@ public class Partner_driverpage extends AppCompatActivity {
                     byte[] sign = c.getBlob(c.getColumnIndex(gen.del_sign));
                     String by = c.getString(c.getColumnIndex(gen.del_createdby));
                     String remar = c.getString(c.getColumnIndex(gen.del_notes));
+                    Bitmap bitmap = BitmapFactory.decodeByteArray(sign, 0, sign.length);
+                    byte[] bitmapdata = getBytesFromBitmap(bitmap);
 
+                    // get the base 64 string
+                    String imgString = Base64.encodeToString(bitmapdata, Base64.NO_WRAP);
                     json.put("id", id);
                     json.put("transaction_no", trans);
                     json.put("customer", cust);
                     json.put("createddate", date);
-                    json.put("signature", sign);
+                    json.put("signature", imgString);
                     json.put("receivedby", recby);
                     json.put("relationship", relation);
                     json.put("createdby", by);
@@ -843,6 +1006,39 @@ public class Partner_driverpage extends AppCompatActivity {
             Log.e("upload", "uploaded delivery");
         }
         db.close();
+    }
+
+    public boolean checkDelId(String id){
+        SQLiteDatabase db = gen.getReadableDatabase();
+        Cursor c = db.rawQuery("SELECT * FROM "+gen.tbname_delivery
+        +" WHERE "+gen.del_id+" = '"+id+"'", null);
+        if (c.getCount() == 0){
+            return false;
+        }else{
+            return true;
+        }
+    }
+
+    public boolean checkDelBox(String boxnumber){
+        SQLiteDatabase db = gen.getReadableDatabase();
+        Cursor c = db.rawQuery("SELECT * FROM "+gen.tbname_delivery_box
+        +" WHERE "+gen.del_box_boxnumber+" = '"+boxnumber+"'", null);
+        if (c.getCount() == 0){
+            return false;
+        }else{
+            return true;
+        }
+    }
+
+    public boolean checkDirects(String boxnumber){
+        SQLiteDatabase db = rates.getReadableDatabase();
+        Cursor c = db.rawQuery("SELECT * FROM "+rates.tbname_fordirects
+        +" WHERE "+rates.direct_boxnumber+" = '"+boxnumber+"'", null);
+        if (c.getCount() == 0){
+            return false;
+        }else{
+            return true;
+        }
     }
 
 }

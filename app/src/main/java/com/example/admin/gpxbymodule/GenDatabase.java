@@ -735,6 +735,21 @@ public class GenDatabase extends SQLiteOpenHelper {
             +disc_remarks+" TEXT )";
     public String dropDiscount = " DROP TABLE IF EXISTS "+tbname_discount;
 
+    //discount table
+    public final String tbname_nsbrate = "gpx_nsbrate";
+    public final String nsbr_id = "id";
+    public final String nsbr_boxid = "boxid";
+    public final String nsbr_sourceid = "sourceid";
+    public final String nsbr_destid = "destinationid";
+    public final String nsbr_rate = "rate";
+    public String createNSBrate = " CREATE TABLE "+tbname_nsbrate+"("
+            +nsbr_id+" INTEGER PRIMARY KEY AUTOINCREMENT,"
+            +nsbr_boxid+" TEXT,"
+            +nsbr_sourceid+" TEXT,"
+            +nsbr_destid+" TEXT,"
+            +nsbr_rate+" TEXT )";
+    public String dropNSBrate = " DROP TABLE IF EXISTS "+tbname_nsbrate;
+
 
     public GenDatabase(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
@@ -752,6 +767,7 @@ public class GenDatabase extends SQLiteOpenHelper {
         db.execSQL(createTBPayment);
         db.execSQL(createTableAcceptance);
         db.execSQL(createReserveboxtypeBoxnumber);
+        db.execSQL(createNSBrate);
         db.execSQL(createEmpTb);
         db.execSQL(createchinv);
         db.execSQL(createPartInv);
@@ -806,6 +822,7 @@ public class GenDatabase extends SQLiteOpenHelper {
         db.execSQL(dropAccept);
         db.execSQL(dropemp);
         db.execSQL(dropReserveBoxtypeBoxnumber);
+        db.execSQL(dropNSBrate);
         db.execSQL(droppart_inv);
         db.execSQL(dropchinv);
         db.execSQL(dropbranch);
@@ -2865,6 +2882,32 @@ public class GenDatabase extends SQLiteOpenHelper {
         cv.put(temp_acceptsign, sign);
         db.update(tbname_tempDist, cv, temp_transactionnumber+" = '"+id+"'", null);
         Log.e("update_distaccepted", id);
+        db.close();
+    }
+
+    public void addNSBrate(String boxid, String sourceid, String destinationid, String rate){
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues cv = new ContentValues();
+        cv.put(nsbr_boxid, boxid);
+        cv.put(nsbr_sourceid, sourceid);
+        cv.put(nsbr_destid, destinationid);
+        cv.put(nsbr_rate, rate);
+        db.insert(tbname_nsbrate, null, cv);
+        Log.e("nsb_rate",boxid);
+        db.close();
+    }
+
+    public void updateNSBrates(String boxid, String sourceid, String destinationid, String rate){
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues cv = new ContentValues();
+        cv.put(nsbr_boxid, boxid);
+        cv.put(nsbr_sourceid, sourceid);
+        cv.put(nsbr_destid, destinationid);
+        cv.put(nsbr_rate, rate);
+        db.update(tbname_nsbrate, cv,nsbr_boxid+" = '"+boxid+"' AND "
+                +nsbr_sourceid+" = '"+sourceid+"' AND "+nsbr_destid+" = '"+destinationid+"' AND "
+                +nsbr_rate+" = '"+rate+"'",null);
+        Log.e("nsb_rate_update",boxid);
         db.close();
     }
 

@@ -129,12 +129,6 @@ public class Partner_DeliveryPending extends Fragment {
         }catch (Exception e){}
     }
 
-//    @Override
-//    public void onPrepareOptionsMenu(Menu menu) {
-//        menu.findItem(R.id.syncdelivery).setVisible(false);
-//        super.onPrepareOptionsMenu(menu);
-//    }
-
     public String getAccntNo(String fulln){
         String fullname = null;
         SQLiteDatabase db = gen.getReadableDatabase();

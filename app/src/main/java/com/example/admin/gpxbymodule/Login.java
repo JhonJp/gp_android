@@ -86,7 +86,7 @@ public class Login extends AppCompatActivity {
             Cursor c = db.rawQuery(" SELECT * FROM "+helper.tbname_userrole, null);
             if (c.moveToNext()){
                 String r = c.getString(c.getColumnIndex(helper.role_role));
-                if (r.equals("Partner Driver")){
+                if (r.equals("6")){
                     startActivity(new Intent(getApplicationContext(), Partner_driverpage.class));
                     finish();
                 }else{

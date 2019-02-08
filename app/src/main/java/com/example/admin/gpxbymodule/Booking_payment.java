@@ -670,6 +670,7 @@ public class Booking_payment extends Fragment implements Runnable {
                     }
                 }
             }
+            book.getClicksids().clear();
         }catch (Exception e){}
     }
 
