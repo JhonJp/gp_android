@@ -702,70 +702,12 @@ public class Home extends AppCompatActivity
                 getsource("destination");
 
                 //START THREAD FOR CUSTOMERS
-                try {
-                    String customers = null;
-                    String urlget = "http://"+link+"/api/customer/getbybranch.php?branchid="+helper.getBranch(""+helper.logcount());
-                    URL url = new URL(urlget);
-                    HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-                    conn.setRequestMethod("GET");
-                    // read the response
-                    InputStream in = new BufferedInputStream(conn.getInputStream());
-                    customers = convertStreamToString(in);
-
-                    if (customers != null) {
-
-                        Log.e("Customers", "Customers: " + customers);
-
-                            JSONArray jsonArray = new JSONArray(customers);
-
-                            for(int i=0; i<jsonArray.length(); i++){
-
-                                JSONObject json_data = jsonArray.getJSONObject(i);
-
-                                String account_no = json_data.getString("account_no");
-                                String firstname = json_data.getString("firstname");
-                                String middlename = json_data.getString("middlename");
-                                String lastname = json_data.getString("lastname");
-                                String mobile = json_data.getString("mobile");
-                                String secmob = json_data.getString("secondary_number");
-                                String thrmob = json_data.getString("another_number");
-                                String phone = json_data.getString("phone");
-                                String email = json_data.getString("email");
-                                String gender = json_data.getString("gender");
-                                String birthdate = json_data.getString("birthdate");
-
-                                //address
-                                String prov = json_data.getString("province");
-                                String openfield = json_data.getString("house_number_street");
-                                String barangay = json_data.getString("barangay");
-                                String city = json_data.getString("city");
-                                String postal = json_data.getString("postal_code");
-
-
-                                String type = json_data.getString("type");
-                                String createdby = json_data.getString("createdby");
-                                String recordstatus = json_data.getString("recordstatus");
-                                String sender_account_no = json_data.getString("sender_account_no");
-                                String name = firstname + " "+ lastname;
-
-                                gendata.addCustomer( account_no, sender_account_no, firstname, middlename, lastname, mobile,
-                                        secmob, thrmob, phone, email, gender, birthdate, prov, city,postal,
-                                        barangay, openfield, type, createdby, recordstatus, name, "2");
-
-                            }
-
-                    } else {
-                        Log.e("Error", "Couldn't get data from server.");
-                        runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                String r = "Couldn't get data from server, trying again....";
-                                customToast(r);
-                            }
-                        });
-                    }
-                } catch (Exception e) {
-                    e.printStackTrace();
+                if (value.equals("Partner Portal")){
+                    getAllCustomers();
+                }else if (value.equals("Partner Driver")){
+                    getAllCustomers();
+                }else{
+                    getCustomers();
                 }
                 //END THREAD FOR CUSTOMERS
 
@@ -1021,6 +963,146 @@ public class Home extends AppCompatActivity
             }
         });
         thr.start();
+    }
+
+    //get customers from api per branch
+    public void getCustomers(){
+        try {
+            String link = helper.getUrl();
+            String customers = null;
+            String urlget = "http://"+link+"/api/customer/getbybranch.php?branchid="+helper.getBranch(""+helper.logcount());
+            URL url = new URL(urlget);
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            conn.setRequestMethod("GET");
+            // read the response
+            InputStream in = new BufferedInputStream(conn.getInputStream());
+            customers = convertStreamToString(in);
+
+            if (customers != null) {
+
+                Log.e("Customers", "Customers: " + customers);
+
+                JSONArray jsonArray = new JSONArray(customers);
+
+                for(int i=0; i<jsonArray.length(); i++){
+
+                    JSONObject json_data = jsonArray.getJSONObject(i);
+
+                    String account_no = json_data.getString("account_no");
+                    String firstname = json_data.getString("firstname");
+                    String middlename = json_data.getString("middlename");
+                    String lastname = json_data.getString("lastname");
+                    String mobile = json_data.getString("mobile");
+                    String secmob = json_data.getString("secondary_number");
+                    String thrmob = json_data.getString("another_number");
+                    String phone = json_data.getString("phone");
+                    String email = json_data.getString("email");
+                    String gender = json_data.getString("gender");
+                    String birthdate = json_data.getString("birthdate");
+
+                    //address
+                    String prov = json_data.getString("province");
+                    String openfield = json_data.getString("house_number_street");
+                    String barangay = json_data.getString("barangay");
+                    String city = json_data.getString("city");
+                    String postal = json_data.getString("postal_code");
+
+
+                    String type = json_data.getString("type");
+                    String createdby = json_data.getString("createdby");
+                    String recordstatus = json_data.getString("recordstatus");
+                    String sender_account_no = json_data.getString("sender_account_no");
+                    String name = firstname + " "+ lastname;
+
+                    gendata.addCustomer( account_no, sender_account_no, firstname, middlename, lastname, mobile,
+                            secmob, thrmob, phone, email, gender, birthdate, prov, city,postal,
+                            barangay, openfield, type, createdby, recordstatus, name, "2");
+
+                }
+
+            } else {
+                Log.e("Error", "Couldn't get data from server.");
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        String r = "Couldn't get data from server, trying again....";
+                        customToast(r);
+                    }
+                });
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    //get customers general
+    public void getAllCustomers(){
+        try {
+            String link = helper.getUrl();
+            String customers = null;
+            String urlget = "http://"+link+"/api/customer/get.php";
+            URL url = new URL(urlget);
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            conn.setRequestMethod("GET");
+            // read the response
+            InputStream in = new BufferedInputStream(conn.getInputStream());
+            customers = convertStreamToString(in);
+
+            if (customers != null) {
+
+                Log.e("Customers", "Customers: " + customers);
+
+                JSONArray jsonArray = new JSONArray(customers);
+
+                for(int i=0; i<jsonArray.length(); i++){
+
+                    JSONObject json_data = jsonArray.getJSONObject(i);
+
+                    String account_no = json_data.getString("account_no");
+                    String firstname = json_data.getString("firstname");
+                    String middlename = json_data.getString("middlename");
+                    String lastname = json_data.getString("lastname");
+                    String mobile = json_data.getString("mobile");
+                    String secmob = json_data.getString("secondary_number");
+                    String thrmob = json_data.getString("another_number");
+                    String phone = json_data.getString("phone");
+                    String email = json_data.getString("email");
+                    String gender = json_data.getString("gender");
+                    String birthdate = json_data.getString("birthdate");
+
+                    //address
+                    String prov = json_data.getString("province");
+                    String openfield = json_data.getString("house_number_street");
+                    String barangay = json_data.getString("barangay");
+                    String city = json_data.getString("city");
+                    String postal = json_data.getString("postal_code");
+
+
+                    String type = json_data.getString("type");
+                    String createdby = json_data.getString("createdby");
+                    String recordstatus = json_data.getString("recordstatus");
+                    String sender_account_no = json_data.getString("sender_account_no");
+                    String name = firstname + " "+ lastname;
+
+                    gendata.addCustomer( account_no, sender_account_no, firstname, middlename, lastname, mobile,
+                            secmob, thrmob, phone, email, gender, birthdate, prov, city,postal,
+                            barangay, openfield, type, createdby, recordstatus, name, "2");
+
+                }
+
+            } else {
+                Log.e("Error", "Couldn't get data from server.");
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        String r = "Couldn't get data from server, trying again....";
+                        customToast(r);
+                    }
+                });
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     private String convertStreamToString(InputStream is) {
