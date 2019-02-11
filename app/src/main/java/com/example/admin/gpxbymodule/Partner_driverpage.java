@@ -63,6 +63,7 @@ public class Partner_driverpage extends AppCompatActivity {
     LinearList adapter;
     ArrayList<String> delids;
     String drivername;
+    ArrayList<String> incids;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -75,6 +76,7 @@ public class Partner_driverpage extends AppCompatActivity {
         rates = new RatesDB(this);
         botnav = (BottomNavigationView)findViewById(R.id.bottom_navigation);
         delids = new ArrayList<>();
+        ArrayList<String> incids;
         drivername = helper.getFullname(helper.logcount()+"").replace("  "," ");
 
         //
@@ -679,9 +681,10 @@ public class Partner_driverpage extends AppCompatActivity {
                     String type = json_data.getString("type");
                     String createdby = json_data.getString("createdby");
                     String recordstatus = json_data.getString("recordstatus");
+                    String sender_account_no = json_data.getString("sender_account_no");
                     String name = firstname + " "+ lastname;
 
-                    gen.addCustomer(account_no,"", firstname, middlename, lastname, mobile,
+                    gen.addCustomer(account_no,sender_account_no, firstname, middlename, lastname, mobile,
                             secmob, thrmob, phone, email, gender, birthdate, prov, city,postal,
                             barangay, openfield, type, createdby, recordstatus, name, "2");
 
@@ -869,6 +872,7 @@ public class Partner_driverpage extends AppCompatActivity {
                                     .setMessage("Data upload has been successful, thank you.")
                                     .setPositiveButton("Ok", new DialogInterface.OnClickListener() {
                                         public void onClick(DialogInterface dialog, int id) {
+                                            updateIncStat(incids);
                                             updateDel(delids);
                                             dialog.dismiss();
                                         }
@@ -987,6 +991,8 @@ public class Partner_driverpage extends AppCompatActivity {
             @Override
             public void run() {
 
+                threadIncident();
+
                 threadDelivery();
 
             }
@@ -1039,6 +1045,119 @@ public class Partner_driverpage extends AppCompatActivity {
         }else{
             return true;
         }
+    }
+
+    //thread incidents
+    public void threadIncident(){
+        SQLiteDatabase db = gen.getReadableDatabase();
+        String query = " SELECT * FROM " + gen.tbname_incident
+                + " WHERE " + gen.inc_createdby + " = '" + helper.logcount() + "' AND "
+                +gen.inc_upds+" = '1'";
+        Cursor cx = db.rawQuery(query, null);
+        if (cx.getCount() != 0) {
+            //THREAD FOR incident API
+            try {
+                String link = helper.getUrl();
+                URL url = new URL("http://" + link + "/api/ticket/save.php");
+                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                conn.setRequestMethod("POST");
+                conn.setRequestProperty("Content-Type", "application/json;charset=UTF-8");
+                conn.setRequestProperty("Accept", "application/json");
+                conn.setDoOutput(true);
+                conn.setDoInput(true);
+
+                JSONObject jsonParam = new JSONObject();
+                jsonParam.accumulate("data", getAllIncidents());
+
+                Log.e("JSONinc", jsonParam.toString());
+                DataOutputStream os = new DataOutputStream(conn.getOutputStream());
+                //os.writeBytes(URLEncoder.encode(jsonParam.toString(), "UTF-8"));
+                os.writeBytes(jsonParam.toString());
+                os.flush();
+                os.close();
+
+                Log.i("STATUS", String.valueOf(conn.getResponseCode()));
+                Log.i("MSG", conn.getResponseMessage());
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        //END THREAD incident API
+    }
+
+    //get all incident report
+    public JSONArray getAllIncidents() {
+        SQLiteDatabase myDataBase = gen.getReadableDatabase();
+        String raw = " SELECT * FROM " + gen.tbname_incident
+                +" WHERE "+gen.inc_upds+" = '1'";
+        Cursor c = myDataBase.rawQuery(raw, null);
+        JSONArray resultSet = new JSONArray();
+        c.moveToFirst();
+        try {
+            while (!c.isAfterLast()) {
+                JSONObject js = new JSONObject();
+                String idtrue = c.getString(c.getColumnIndex(gen.inc_id));
+                String id = c.getString(c.getColumnIndex(gen.inc_transnum));
+                String type = c.getString(c.getColumnIndex(gen.inc_type));
+                String reason = c.getString(c.getColumnIndex(gen.inc_reason));
+                String by = c.getString(c.getColumnIndex(gen.inc_createdby));
+                String d = c.getString(c.getColumnIndex(gen.inc_createddate));
+
+                js.put("id", id);
+                js.put("incident_type", type);
+                js.put("reason", reason);
+                js.put("createdby", by);
+                js.put("created_date", d);
+                js.put("images", getIncidentImage(id));
+                incids.add(id);
+                resultSet.put(js);
+                c.moveToNext();
+            }
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        c.close();
+        //Log.e("result set", resultSet.toString());
+        return resultSet;
+    }
+
+    //get incident images by transaction
+    public JSONArray getIncidentImage(String tr) {
+        SQLiteDatabase myDataBase = gen.getReadableDatabase();
+        String raw = " SELECT * FROM " + gen.tbname_incimages + " WHERE "
+                + gen.inc_img_transaction_no + " = '" + tr + "'";
+        Cursor c = myDataBase.rawQuery(raw, null);
+        JSONArray resultSet = new JSONArray();
+        c.moveToFirst();
+        try {
+            while (!c.isAfterLast()) {
+                JSONObject js = new JSONObject();
+                byte[] image = c.getBlob(c.getColumnIndex(gen.inc_img_imageblob));
+                js.put("incident_image", image);
+                resultSet.put(js);
+                c.moveToNext();
+            }
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        c.close();
+        //Log.e("result set", resultSet.toString());
+        return resultSet;
+    }
+
+    //update incident upload status
+    public void updateIncStat(ArrayList<String> id){
+        SQLiteDatabase db = gen.getWritableDatabase();
+        for (String ids : id) {
+            ContentValues cv = new ContentValues();
+            cv.put(gen.inc_upds, "2");
+            db.update(gen.tbname_incident, cv,
+                    gen.inc_id+" = '"+ids+"' AND "+
+                            gen.inc_upds + " = '1'", null);
+            Log.e("upload", "uploaded incidents");
+        }
+        db.close();
     }
 
 }

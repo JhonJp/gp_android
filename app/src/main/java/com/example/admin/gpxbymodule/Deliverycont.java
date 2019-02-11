@@ -46,6 +46,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.GridView;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
@@ -54,9 +55,16 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.io.ByteArrayOutputStream;
+import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -158,7 +166,12 @@ public class Deliverycont extends AppCompatActivity {
         recadd.setText(fulladd(account));
         sendername.setText(sendername(getSenderAccountNum(booknum)));
         boxesmo();
-
+        receivername.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                viewInfo();
+            }
+        });
         capt.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -1149,5 +1162,88 @@ public class Deliverycont extends AppCompatActivity {
         return i;
 
     }
+
+    public void viewInfo(){
+        try {
+            final AlertDialog.Builder thisview = new AlertDialog.Builder(Deliverycont.this);
+            LayoutInflater inflater = getLayoutInflater();
+            View d = inflater.inflate(R.layout.information, null);
+            thisview.setView(d);
+            TextView name = (TextView) d.findViewById(R.id.yourname);
+            TextView mail = (TextView) d.findViewById(R.id.youremail);
+            TextView prim = (TextView) d.findViewById(R.id.yourprimenum);
+            TextView secd = (TextView) d.findViewById(R.id.yoursecnum);
+            TextView thrd = (TextView) d.findViewById(R.id.yourthirdnum);
+            TextView fullad = (TextView) d.findViewById(R.id.yourfulladdress);
+
+            name.setText(receivername(account));
+            mail.setText(getmail(account));
+            prim.setText(getPrimNum(account));
+            secd.setText(getSecNum(account));
+            thrd.setText(getOtherNum(account));
+            fullad.setText(fulladd(account));
+
+            thisview.setPositiveButton("Close", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dx, int which) {
+                    dx.dismiss();
+                }
+            });
+            thisview.setTitle("Receiver Information");
+            thisview.show();
+        }catch (Exception e){
+            Log.e("error", e.getMessage());
+        }
+    }
+
+    //get email address
+    public String getmail(String a){
+        String mail = null;
+        SQLiteDatabase db = gen.getReadableDatabase();
+        Cursor v = db.rawQuery(" SELECT * FROM " + gen.tbname_customers +
+                " WHERE "+gen.cust_accountnumber+ " = '"+a+"'", null);
+        if(v.moveToNext()) {
+            mail = v.getString(v.getColumnIndex(gen.cust_emailadd));
+        }
+        return mail;
+    }
+
+    //get primary number
+    public String getPrimNum(String a){
+        String mail = null;
+        SQLiteDatabase db = gen.getReadableDatabase();
+        Cursor v = db.rawQuery(" SELECT * FROM " + gen.tbname_customers +
+                " WHERE "+gen.cust_accountnumber+ " = '"+a+"'", null);
+        if(v.moveToNext()) {
+            mail = v.getString(v.getColumnIndex(gen.cust_mobile));
+        }
+        return mail;
+    }
+
+    //get sec num
+    public String getSecNum(String a){
+        String mail = null;
+        SQLiteDatabase db = gen.getReadableDatabase();
+        Cursor v = db.rawQuery(" SELECT * FROM " + gen.tbname_customers +
+                " WHERE "+gen.cust_accountnumber+ " = '"+a+"'", null);
+        if(v.moveToNext()) {
+            mail = v.getString(v.getColumnIndex(gen.cust_secmobile));
+        }
+        return mail;
+    }
+
+    //get other num
+    public String getOtherNum(String a){
+        String mail = null;
+        SQLiteDatabase db = gen.getReadableDatabase();
+        Cursor v = db.rawQuery(" SELECT * FROM " + gen.tbname_customers +
+                " WHERE "+gen.cust_accountnumber+ " = '"+a+"'", null);
+        if(v.moveToNext()) {
+            mail = v.getString(v.getColumnIndex(gen.cust_thirdmobile));
+        }
+        return mail;
+    }
+
+
 
 }

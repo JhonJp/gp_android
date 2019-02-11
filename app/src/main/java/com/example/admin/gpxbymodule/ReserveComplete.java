@@ -564,7 +564,9 @@ public class ReserveComplete extends Fragment {
         thread = new Thread(new Runnable() {
             @Override
             public void run() {
+
                 threadCustomers();
+
                 threadReservations();
 
             }

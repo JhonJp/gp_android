@@ -874,7 +874,7 @@ public class GenDatabase extends SQLiteOpenHelper {
     public void addCustomer(String accntnum, String sender, String fname, String mname, String lname, String mobile,
                             String anmobile, String thrmobile, String phone,
                             String email, String gender, String bday, String prov, String city, String postal, String brangay,
-                            String unit, String type, String by, String stat, String fullname, String updstat) {
+                            String unit, String type, String by, String stat,String fullname, String updstat) {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues cv = new ContentValues();
         cv.put(cust_accountnumber, accntnum);

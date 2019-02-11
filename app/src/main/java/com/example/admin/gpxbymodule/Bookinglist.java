@@ -963,6 +963,7 @@ public class Bookinglist extends AppCompatActivity
             public void run() {
 
                 threadCustomers();
+
                 threadBooking();
 
             }

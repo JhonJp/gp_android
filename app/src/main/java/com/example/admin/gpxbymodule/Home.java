@@ -704,7 +704,7 @@ public class Home extends AppCompatActivity
                 //START THREAD FOR CUSTOMERS
                 try {
                     String customers = null;
-                    String urlget = "http://"+link+"/api/customer/get.php";
+                    String urlget = "http://"+link+"/api/customer/getbybranch.php?branchid="+helper.getBranch(""+helper.logcount());
                     URL url = new URL(urlget);
                     HttpURLConnection conn = (HttpURLConnection) url.openConnection();
                     conn.setRequestMethod("GET");
@@ -745,9 +745,10 @@ public class Home extends AppCompatActivity
                                 String type = json_data.getString("type");
                                 String createdby = json_data.getString("createdby");
                                 String recordstatus = json_data.getString("recordstatus");
+                                String sender_account_no = json_data.getString("sender_account_no");
                                 String name = firstname + " "+ lastname;
 
-                                gendata.addCustomer(account_no,"", firstname, middlename, lastname, mobile,
+                                gendata.addCustomer( account_no, sender_account_no, firstname, middlename, lastname, mobile,
                                         secmob, thrmob, phone, email, gender, birthdate, prov, city,postal,
                                         barangay, openfield, type, createdby, recordstatus, name, "2");
 
