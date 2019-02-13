@@ -1014,6 +1014,9 @@ public class Home extends AppCompatActivity
                     String sender_account_no = json_data.getString("sender_account_no");
                     String name = firstname + " "+ lastname;
 
+                    if (sender_account_no.toLowerCase().equals("null")){
+                        sender_account_no = "";
+                    }
                     gendata.addCustomer( account_no, sender_account_no, firstname, middlename, lastname, mobile,
                             secmob, thrmob, phone, email, gender, birthdate, prov, city,postal,
                             barangay, openfield, type, createdby, recordstatus, name, "2");
@@ -1083,7 +1086,9 @@ public class Home extends AppCompatActivity
                     String recordstatus = json_data.getString("recordstatus");
                     String sender_account_no = json_data.getString("sender_account_no");
                     String name = firstname + " "+ lastname;
-
+                    if (sender_account_no.toLowerCase().equals("null")){
+                        sender_account_no = "";
+                    }
                     gendata.addCustomer( account_no, sender_account_no, firstname, middlename, lastname, mobile,
                             secmob, thrmob, phone, email, gender, birthdate, prov, city,postal,
                             barangay, openfield, type, createdby, recordstatus, name, "2");
