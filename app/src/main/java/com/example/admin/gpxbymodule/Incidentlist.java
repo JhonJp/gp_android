@@ -714,7 +714,6 @@ public class Incidentlist extends AppCompatActivity
 
     //update incident upload status
     public void updateIncStat(ArrayList<String> id){
-        for (String ids : id) {
             SQLiteDatabase db = gen.getWritableDatabase();
             ContentValues cv = new ContentValues();
             cv.put(gen.inc_upds, "2");
@@ -722,7 +721,6 @@ public class Incidentlist extends AppCompatActivity
                     gen.inc_upds+" = '1'", null);
             Log.e("upload", "uploaded incidents");
             db.close();
-        }
     }
 
 }

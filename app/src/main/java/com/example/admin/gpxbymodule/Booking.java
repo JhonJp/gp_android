@@ -375,6 +375,12 @@ public class Booking extends AppCompatActivity
         builder.create().show();
     }
 
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        deleteTransactions("1");
+    }
+
     private boolean loadFragment(Fragment fragment) {
         //switching fragment
         if (fragment != null) {

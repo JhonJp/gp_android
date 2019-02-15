@@ -2014,13 +2014,33 @@ public class GenDatabase extends SQLiteOpenHelper {
             String ids = res.getString(res.getColumnIndex(book_con_box_id));
             String sub = res.getString(res.getColumnIndex(book_con_box_number));
             String a = res.getString(res.getColumnIndex(book_con_boxtype));
-            String topitem = "", temptop = "";
-            Cursor getname = db.rawQuery("SELECT " + cust_fullname + " FROM " + tbname_customers
-                    + " WHERE " + cust_accountnumber + " = '" + acount + "'", null);
-            if (getname.moveToNext()) {
-                temptop = getname.getString(getname.getColumnIndex(cust_fullname));
+            int stat = res.getInt(res.getColumnIndex(book_con_stat));
+            String finstat = null;
+            switch(stat){
+                case 1:
+                    finstat = "For Acceptance";
+                    break;
+                case 2:
+                    finstat = "Accepted";
+                    break;
+                case 3:
+                    finstat = "Loaded";
+                    break;
+                case 4:
+                    finstat = "Unloaded";
+                    break;
+                case 5:
+                    finstat = "Distributed";
+                    break;
+                case 6:
+                    finstat = "Delivered";
+                    break;
+                case 7:
+                    finstat = "In-Transit";
+                    break;
+                default:break;
             }
-            ListItem list = new ListItem(ids, temptop, sub, a);
+            ListItem list = new ListItem(ids, sub, finstat, a);
             results.add(list);
             res.moveToNext();
         }
@@ -2836,7 +2856,7 @@ public class GenDatabase extends SQLiteOpenHelper {
         cv.put(book_con_stat, stat);
         cv.put(book_con_hardport, hardport);
         cv.put(book_con_boxcont, bcont);
-        db.update(tbname_booking_consignee_box, cv, book_con_transaction_no+" = '"+trans+"'", null);
+        db.update(tbname_booking_consignee_box, cv, book_con_box_number+" = '"+boxnum+"'", null);
         Log.e("update_consignee", boxnum);
         db.close();
     }

@@ -232,7 +232,7 @@ public class Distributionlist extends Fragment {
                                 dx.requestWindowFeature(Window.FEATURE_NO_TITLE);
                                 dx.setContentView(R.layout.capture_sign);
                                 dx.setCancelable(true);
-                                dialogsign(ids);
+                                dialogsign(ids,1);
                                 //gen.updateDistById(ids);
                                 dialog.dismiss();
                             }
@@ -246,6 +246,7 @@ public class Distributionlist extends Fragment {
                             }
                         });
                     }
+                    dialog.setCancelable(true);
                     dialog.show();
                 }
 
@@ -319,7 +320,12 @@ public class Distributionlist extends Fragment {
                         close.setOnClickListener(new View.OnClickListener() {
                             @Override
                             public void onClick(View v) {
-                                rate.updateDistById(ids);
+                                dx = new Dialog(getContext());
+                                // Removing the features of Normal Dialogs
+                                dx.requestWindowFeature(Window.FEATURE_NO_TITLE);
+                                dx.setContentView(R.layout.capture_sign);
+                                dx.setCancelable(true);
+                                dialogsign(ids,0);
                                 dialog.dismiss();
                             }
                         });
@@ -607,7 +613,7 @@ public class Distributionlist extends Fragment {
 
     //signature view
     // Function for Digital Signature
-    public void dialogsign(final String id){
+    public void dialogsign(final String id, final int xy){
         tempDir = Environment.getExternalStorageDirectory() + "/" + getResources().getString(R.string.app_name) + "/";
         ContextWrapper cw = new ContextWrapper(getContext());
         File directory = cw.getDir(getResources().getString(R.string.app_name), Context.MODE_PRIVATE);
@@ -647,7 +653,11 @@ public class Distributionlist extends Fragment {
                 if(!error){
                     mContent.setDrawingCacheEnabled(true);
                     mSignature.save(mView);
-                    gen.updateDistById(id, off);
+                    if (xy == 1) {
+                        gen.updateDistById(id, off);
+                    }else if(xy == 0){
+                        rate.updateDistById(id);
+                    }
                     dx.dismiss();
                 }
             }

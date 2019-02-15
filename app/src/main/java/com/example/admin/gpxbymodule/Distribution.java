@@ -718,14 +718,16 @@ public class Distribution extends AppCompatActivity
 
     //update distribution upload status
     public void updateDist(ArrayList<String> list){
-        for (String tr: list) {
-            SQLiteDatabase db = gen.getWritableDatabase();
-            ContentValues cv = new ContentValues();
-            cv.put(gen.temp_uploadstat, "2");
-            db.update(gen.tbname_tempDist, cv,
-                    gen.temp_transactionnumber + " = '"+tr+"'", null);
-            Log.e("upload", "uploaded dist");
-            db.close();
+        if (list.size() != 0) {
+            for (String tr : list) {
+                SQLiteDatabase db = gen.getWritableDatabase();
+                ContentValues cv = new ContentValues();
+                cv.put(gen.temp_uploadstat, "2");
+                db.update(gen.tbname_tempDist, cv,
+                        gen.temp_transactionnumber + " = '" + tr + "'", null);
+                Log.e("upload", "uploaded dist");
+                db.close();
+            }
         }
     }
 

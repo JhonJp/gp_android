@@ -746,15 +746,17 @@ public class Unloadinglist extends AppCompatActivity
     }
 
     public void updateunLoadsStat(ArrayList<String> id){
-        SQLiteDatabase db = gen.getWritableDatabase();
-        for (String ids : id) {
-            ContentValues cv = new ContentValues();
-            cv.put(gen.unload_upds, "2");
-            db.update(gen.tb_unload, cv,gen.unload_id+" = '"+ids+"' AND "+
-                    gen.unload_upds + " = '1'", null);
-            Log.e("upload", "uploaded unloading");
+        if (id.size() != 0) {
+            SQLiteDatabase db = gen.getWritableDatabase();
+            for (String ids : id) {
+                ContentValues cv = new ContentValues();
+                cv.put(gen.unload_upds, "2");
+                db.update(gen.tb_unload, cv, gen.unload_id + " = '" + ids + "' AND " +
+                        gen.unload_upds + " = '1'", null);
+                Log.e("upload", "uploaded unloading");
+            }
+            db.close();
         }
-        db.close();
     }
 
 }

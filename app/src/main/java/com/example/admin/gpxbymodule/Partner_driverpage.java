@@ -76,7 +76,7 @@ public class Partner_driverpage extends AppCompatActivity {
         rates = new RatesDB(this);
         botnav = (BottomNavigationView)findViewById(R.id.bottom_navigation);
         delids = new ArrayList<>();
-        ArrayList<String> incids;
+        incids = new ArrayList<>();
         drivername = helper.getFullname(helper.logcount()+"").replace("  "," ");
 
         //
@@ -1005,15 +1005,17 @@ public class Partner_driverpage extends AppCompatActivity {
 
     //update distribution upload status
     public void updateDel(ArrayList<String> ids){
-        SQLiteDatabase db = gen.getWritableDatabase();
-        for (String id : ids) {
-            ContentValues cv = new ContentValues();
-            cv.put(gen.del_upds, "2");
-            db.update(gen.tbname_delivery, cv,gen.del_id+" = '"+id+"' AND "+
-                    gen.del_upds + " = '1'", null);
-            Log.e("upload", "uploaded delivery");
+        if (ids.size() != 0) {
+            SQLiteDatabase db = gen.getWritableDatabase();
+            for (String id : ids) {
+                ContentValues cv = new ContentValues();
+                cv.put(gen.del_upds, "2");
+                db.update(gen.tbname_delivery, cv, gen.del_id + " = '" + id + "' AND " +
+                        gen.del_upds + " = '1'", null);
+                Log.e("upload", "uploaded delivery");
+            }
+            db.close();
         }
-        db.close();
     }
 
     public boolean checkDelId(String id){
@@ -1092,7 +1094,8 @@ public class Partner_driverpage extends AppCompatActivity {
     public JSONArray getAllIncidents() {
         SQLiteDatabase myDataBase = gen.getReadableDatabase();
         String raw = " SELECT * FROM " + gen.tbname_incident
-                +" WHERE "+gen.inc_upds+" = '1'";
+                +" WHERE "+gen.inc_upds+" = '1' AND "
+                +gen.inc_createdby+" = '"+helper.logcount()+"'";;
         Cursor c = myDataBase.rawQuery(raw, null);
         JSONArray resultSet = new JSONArray();
         c.moveToFirst();
@@ -1150,16 +1153,18 @@ public class Partner_driverpage extends AppCompatActivity {
 
     //update incident upload status
     public void updateIncStat(ArrayList<String> id){
-        SQLiteDatabase db = gen.getWritableDatabase();
-        for (String ids : id) {
-            ContentValues cv = new ContentValues();
-            cv.put(gen.inc_upds, "2");
-            db.update(gen.tbname_incident, cv,
-                    gen.inc_id+" = '"+ids+"' AND "+
-                            gen.inc_upds + " = '1'", null);
-            Log.e("upload", "uploaded incidents");
+        if (id.size() != 0) {
+            for (String ids : id) {
+                SQLiteDatabase db = gen.getWritableDatabase();
+                ContentValues cv = new ContentValues();
+                cv.put(gen.inc_upds, "2");
+                db.update(gen.tbname_incident, cv,
+                        gen.inc_id + " = '" + ids + "' AND " +
+                                gen.inc_upds + " = '1'", null);
+                Log.e("upload", "uploaded incidents");
+                db.close();
+            }
         }
-        db.close();
     }
 
 }

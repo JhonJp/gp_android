@@ -80,4 +80,5 @@
     <string name="barcode_released_list">Barcode Released List</string>
     <string name="title_activity_box_release_list">Barcode Released List</string>
     <string name="sync_data">Sync data</string>
+    <string name="update_data">Update Data</string>
 </resources>

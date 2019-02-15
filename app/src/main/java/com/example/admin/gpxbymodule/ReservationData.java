@@ -13,6 +13,7 @@ import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
@@ -54,6 +55,8 @@ import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.EditText;
+import android.widget.GridView;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.TextView;
@@ -118,8 +121,15 @@ public class ReservationData extends AppCompatActivity
     Dialog dialog;
     byte[] off;
     private String uniqueId;
-    FloatingActionButton cam_icon;
     CheckBox tax;
+
+    //capture image
+    ArrayList<byte[]> capt_images;
+    GridView grim;
+    TextView hints;
+    FloatingActionButton getimg;
+    AlertDialog alertd;
+    ArrayList<HomeList> stored_image;
 
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
@@ -139,6 +149,9 @@ public class ReservationData extends AppCompatActivity
         ids = new ArrayList<>();
         ids.clear();
         boxnums = new ArrayList<>();
+        capt_images = new ArrayList<>();
+        stored_image = new ArrayList<HomeList>();
+
         boxnums.clear();
         try{
             if (helper.logcount() != 0){
@@ -153,13 +166,6 @@ public class ReservationData extends AppCompatActivity
             reservnum.setText(reservationid);
             querycheck(reservationid);
 
-            cam_icon = (FloatingActionButton) findViewById(R.id.camera);
-            cam_icon.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    camera_capture();
-                }
-            });
 
         }catch (Exception e){}
 
@@ -464,18 +470,7 @@ public class ReservationData extends AppCompatActivity
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        Log.e("ids_onDestroy", ids.size()+", ids "+ids.toString());
-        if (ids.size() != 0) {
-            if (!ids.contains(selectedid)) {
-                updateWithNumber(ids, "1", "0");
-                //reserveBoxes();
-            } else {
-                updateWithNumber(ids, "1", "0");
-                //reserveBoxes();
-                Log.e("ids", "Selected id is present");
-            }
-        }
-        deleteAllStatOne();
+        //deleteAllStatOne(reservationid);
     }
 
     @Override
@@ -499,7 +494,8 @@ public class ReservationData extends AppCompatActivity
                     //viewReceipt("1");
                 }else if(getTotalWithBoxnumber(reservationid) == getAllReserves(reservationid)) {
                     //dialogsign();
-                    viewReceipt("0");
+                    //viewReceipt("0");
+                    viewGenericImage();
                 }
             }
         }
@@ -562,6 +558,11 @@ public class ReservationData extends AppCompatActivity
                 gen.updateInvBoxnumber("0", num, "3");
             }
 
+            for (byte[] img : capt_images) {
+                //rate.addReserveImage(reservationid, img);
+                rate.addGenericImage("reservation", reservationid, img);
+            }
+
             gen.updateReservationStatus(reservation_no, reservation_no, customer_id, createdby, datereturn(), assigned_to,
                     "2", "1");
             gen.addReservationPayment(orno, bookingid, reservationid, term, "" + ((taxrate)+(pendamount)),
@@ -576,7 +577,8 @@ public class ReservationData extends AppCompatActivity
             }
 
             ids.clear();
-
+            capt_images.clear();
+            stored_image.clear();
             startActivity(new Intent(getApplicationContext(), Reservelist.class));
             finish();
         }catch (Exception e){}
@@ -684,13 +686,10 @@ public class ReservationData extends AppCompatActivity
                     ByteArrayOutputStream stream = new ByteArrayOutputStream();
                     photo.compress(Bitmap.CompressFormat.PNG, 100, stream);
                     byte[] bytimg = stream.toByteArray();
-                    if(rate.addReserveImage(reservationid, bytimg)){
-                        String x = "Image has been saved.";
-                        customToast(x);
-                    }else{
-                        String x = "Image save failed.";
-                        customToast(x);
-                    }
+                    HomeList list = new HomeList(bytimg,"");
+                    capt_images.add(bytimg);
+                    stored_image.add(list);
+                    viewGenericImage();
                     Log.e("camera", "success " + bytimg + " / " + reservationid);
                 }
             }else{
@@ -958,11 +957,11 @@ public class ReservationData extends AppCompatActivity
         }
     }
 
-    public void deleteAllStatOne(){
+    public void deleteAllStatOne(String r){
         SQLiteDatabase db = gen.getWritableDatabase();
         db.delete(gen.tbname_reservation_boxtype_boxnumber,
-                gen.res_btype_bnum_stat+" = '1'", null);
-        Log.e("delete", "delete all onestat");
+                gen.res_btype_bnum_reservation_id+" = '"+r+"'", null);
+        Log.e("delete", "delete all "+r);
         db.close();
     }
 
@@ -1070,7 +1069,6 @@ public class ReservationData extends AppCompatActivity
                 if(!error){
                     mContent.setDrawingCacheEnabled(true);
                     mSignature.save(mView);
-                    Log.e("typessave", c);
                     if (c.equals("1")) {
                         updateWithNumber(ids, "2", "1");
                         gen.addReservationPayment(orno, bookingid, reservationid, term, "" + ((taxrate)+(pendamount)),
@@ -1340,6 +1338,114 @@ public class ReservationData extends AppCompatActivity
         }else{
             return false;
         }
+    }
+
+    //image transactions
+    public void viewGenericImage(){
+        try{
+            final AlertDialog.Builder views = new AlertDialog.Builder(ReservationData.this);
+            LayoutInflater inflater = getLayoutInflater();
+            View d = inflater.inflate(R.layout.generic_image,null);
+            views.setView(d);
+            //initialize variables
+            grim = (GridView)d.findViewById(R.id.grid);
+            hints = (TextView)d.findViewById(R.id.imageshint);
+            Button ok = (Button)d.findViewById(R.id.confirm);
+            Button canc = (Button)d.findViewById(R.id.cancel);
+            getimg = (FloatingActionButton)d.findViewById(R.id.addimage);
+            alertd = views.create();
+            alertd.show();
+            getimg.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    if (capt_images.size() >= 3){
+                        String ty = "Maximum image attachment has been reached.";
+                        customToast(ty);
+                    }else {
+                        alertd.dismiss();
+                        camera_capture();
+                    }
+                }
+            });
+            viewgrid();
+            ok.setOnClickListener( new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    if (capt_images.size() == 0){
+                        String ty = "Please add image proof.";
+                        customToast(ty);
+                    }else{
+                        alertd.dismiss();
+                        viewReceipt("0");
+                    }
+                }
+            });
+            canc.setOnClickListener( new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    alertd.dismiss();
+                }
+            });
+            views.setCancelable(true);
+            Log.e("images", capt_images.size()+"");
+        }catch (Exception e){
+            Log.e("error", e.getMessage());
+        }
+    }
+
+    public void viewgrid(){
+        try {
+            final ArrayList<HomeList> listitem = stored_image;
+            ImageAdapter myAdapter = new ImageAdapter(getApplicationContext(), listitem);
+            grim.setAdapter(myAdapter);
+            if (capt_images.size() > 0) {
+                hints.setVisibility(View.INVISIBLE);
+            } else {
+                hints.setVisibility(View.VISIBLE);
+            }
+            grim.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                @Override
+                public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                    byte[] getitem = listitem.get(position).getTopitem();
+                    alertImage(getitem, position);
+                }
+            });
+        }catch (Exception e){}
+    }
+
+    public void alertImage(final byte[] image, final int idt){
+        try {
+            AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(ReservationData.this);
+            LayoutInflater inflater = this.getLayoutInflater();
+            View d = inflater.inflate(R.layout.imagefullview, null);
+            Button del = (Button) d.findViewById(R.id.delete);
+            Button cancel = (Button) d.findViewById(R.id.cancel);
+            final ImageView img = (ImageView) d.findViewById(R.id.imagefull);
+
+            Bitmap bm = BitmapFactory.decodeByteArray(image, 0, image.length);
+            img.setImageBitmap(bm);
+
+            dialogBuilder.setView(d);
+            final AlertDialog alertDialog = dialogBuilder.show();
+
+            del.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    capt_images.remove(image);
+                    stored_image.remove(idt);
+                    Log.e("index_img", " size-"+capt_images.size());
+                    viewgrid();
+                    alertDialog.dismiss();
+                }
+            });
+
+            cancel.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    alertDialog.dismiss();
+                }
+            });
+        }catch (Exception e){}
     }
 
 }

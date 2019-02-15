@@ -147,8 +147,14 @@ public class Home extends AppCompatActivity
             fab.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-                    //sendPost();
-                    network();
+                    if (isNetworkAvailable()== true){
+                        Toast.makeText(getApplicationContext(),"Connected to the internet.", Toast.LENGTH_LONG).show();
+                        sendPost();
+                        loadingPost(getWindow().getDecorView().getRootView());
+                    }else
+                    {
+                        Toast.makeText(getApplicationContext(),"Please check internet connection.", Toast.LENGTH_LONG).show();
+                    }
                 }
             });
         }catch (Exception e){}
@@ -360,8 +366,18 @@ public class Home extends AppCompatActivity
     public boolean onOptionsItemSelected(MenuItem item) {
         try {
             int id = item.getItemId();
-            if (id == R.id.drop_sync) {
+            if (id == R.id.syncdown){
                 network();
+            }
+            else if (id == R.id.drop_sync) {
+                if (isNetworkAvailable()== true){
+                    Toast.makeText(getApplicationContext(),"Connected to the internet.", Toast.LENGTH_LONG).show();
+                    sendPost();
+                    loadingPost(getWindow().getDecorView().getRootView());
+                }else
+                {
+                    Toast.makeText(getApplicationContext(),"Please check internet connection.", Toast.LENGTH_LONG).show();
+                }
             } else if (id == R.id.homelogout) {
                 final AlertDialog.Builder builder = new AlertDialog.Builder(this);
                 builder.setTitle("Confirm logout?");
@@ -1605,7 +1621,7 @@ public class Home extends AppCompatActivity
 
                     pay = gendata.getResultsPayment(reserveno);
                     json.put("payment", pay);
-                    json.put("image", getImage(reserveno));
+                    json.put("reservation_image", getImage(reserveno));
                     toupdid.add(reserveno);
                     finalarray.put(json);
                     c.moveToNext();
@@ -1630,20 +1646,22 @@ public class Home extends AppCompatActivity
 
     public JSONArray getImage(String id) {
         SQLiteDatabase myDataBase = ratesDB.getReadableDatabase();
-        String raw = "SELECT * FROM " + ratesDB.tbname_reserve_image
-                + " WHERE "+ratesDB.res_img_trans+" = '"+id+"'";
+        String raw = "SELECT * FROM " + ratesDB.tbname_generic_imagedb
+                + " WHERE "+ratesDB.gen_trans+" = '"+id+"' AND "+ratesDB.gen_module+" = 'reservation'";
         Cursor c = myDataBase.rawQuery(raw, null);
         JSONArray resultSet = new JSONArray();
         c.moveToFirst();
         try {
             while (!c.isAfterLast()) {
                 JSONObject js = new JSONObject();
-                byte[] image = c.getBlob(c.getColumnIndex(ratesDB.res_img_image));
+                String module = c.getString(c.getColumnIndex(ratesDB.gen_module));
+                byte[] image = c.getBlob(c.getColumnIndex(ratesDB.gen_image));
                 Bitmap bitmap = BitmapFactory.decodeByteArray(image, 0, image.length);
                 byte[] bitmapdata = getBytesFromBitmap(bitmap);
                 // get the base 64 string
                 String imgString = Base64.encodeToString(bitmapdata, Base64.NO_WRAP);
-                js.put("reservation_image", imgString);
+                js.put("module", module);
+                js.put("image", imgString);
                 resultSet.put(js);
                 c.moveToNext();
             }
@@ -1727,6 +1745,7 @@ public class Home extends AppCompatActivity
                 json.put("createddate", date);
                 json.put("createdby", by);
                 json.put("status", stat);
+                json.put("purchase_order", getEmptyAcceptanceImage(id));
                 resultSet.put(json);
 
                 cursor.moveToNext();
@@ -1735,6 +1754,40 @@ public class Home extends AppCompatActivity
 
         cursor.close();
         //Log.e("result set", resultSet.toString());
+        return resultSet;
+    }
+
+    public JSONArray getEmptyAcceptanceImage(String trans) {
+        SQLiteDatabase myDataBase = ratesDB.getReadableDatabase();
+        String raw = " SELECT * FROM " + ratesDB.tbname_generic_imagedb
+                +" WHERE "+ratesDB.gen_trans+" = '"+trans+"' AND "+ratesDB.gen_module+" = 'acceptance_empty'";
+        Cursor cursor = myDataBase.rawQuery(raw, null);
+        JSONArray resultSet = new JSONArray();
+        cursor.moveToFirst();
+        try {
+            while (!cursor.isAfterLast()) {
+                JSONObject js = new JSONObject();
+                String tr = cursor.getString(cursor.getColumnIndex(ratesDB.gen_trans));
+                String module = cursor.getString(cursor.getColumnIndex(ratesDB.gen_module));
+                byte[] image = cursor.getBlob(cursor.getColumnIndex(ratesDB.gen_image));
+                Bitmap bitmap = BitmapFactory.decodeByteArray(image, 0, image.length);
+                byte[] bitmapdata = getBytesFromBitmap(bitmap);
+
+                // get the base 64 string
+                String imgString = Base64.encodeToString(bitmapdata, Base64.NO_WRAP);
+
+                js.put("transaction_number", tr);
+                js.put("module", module);
+                js.put("image", imgString);
+                resultSet.put(js);
+                cursor.moveToNext();
+            }
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+        cursor.close();
+//Log.e("result set", resultSet.toString());
         return resultSet;
     }
 
@@ -2419,7 +2472,8 @@ public class Home extends AppCompatActivity
     public JSONArray getAllIncidents() {
         SQLiteDatabase myDataBase = gendata.getReadableDatabase();
         String raw = " SELECT * FROM " + gendata.tbname_incident
-                +" WHERE "+gendata.inc_upds+" = '1'";
+                +" WHERE "+gendata.inc_upds+" = '1' AND "
+                +gendata.inc_createdby+" = '"+helper.logcount()+"'";
         Cursor c = myDataBase.rawQuery(raw, null);
         JSONArray resultSet = new JSONArray();
         c.moveToFirst();
@@ -2628,11 +2682,9 @@ public class Home extends AppCompatActivity
                             progressBar.dismiss();
                             final AlertDialog.Builder builder = new AlertDialog.Builder(Home.this);
                             builder.setTitle("Information confirmation")
-                                    .setMessage("Data has been updated, proceed with upload data to server?")
+                                    .setMessage("Data has been updated, thank you.")
                                     .setPositiveButton("Ok", new DialogInterface.OnClickListener() {
                                         public void onClick(DialogInterface dialog, int id) {
-                                            sendPost();
-                                            loadingPost(getWindow().getDecorView().getRootView());
                                             dialog.dismiss();
                                         }
                                     })
@@ -2684,11 +2736,9 @@ public class Home extends AppCompatActivity
                     progressBar.dismiss();
                     final AlertDialog.Builder builder = new AlertDialog.Builder(Home.this);
                     builder.setTitle("Information confirmation")
-                            .setMessage("Data has been updated, proceed with upload data to server?")
+                            .setMessage("Data has been updated, thank you.")
                             .setPositiveButton("Ok", new DialogInterface.OnClickListener() {
                                 public void onClick(DialogInterface dialog, int id) {
-                                    sendPost();
-                                    loadingPost(getWindow().getDecorView().getRootView());
                                     dialog.dismiss();
                                 }
                             })
@@ -3039,10 +3089,12 @@ public class Home extends AppCompatActivity
                         String book_date = json_data.getString("book_date");
                         String createdby = json_data.getString("createdby");
                         String reservation_no = json_data.getString("reservation_no");
+                        String booking_status = json_data.getString("booking_status");
+                        String booking_type = json_data.getString("booking_type");
 
                         if (checkBookingExist(transaction_no)){
                             gendata.updBooking( transaction_no, reservation_no, customer,
-                                    book_date, "2", "1", createdby, "2");
+                                    book_date, booking_status, booking_type, createdby, "2");
                             JSONArray jarray = json_data.getJSONArray("gpx_booking_consignee_box");
                             for(int x=0; x<jarray.length(); x++){
                                 JSONObject jx = jarray.getJSONObject(x);
@@ -3053,10 +3105,11 @@ public class Home extends AppCompatActivity
                                 String box_number = jx.getString("box_number");
                                 String hardport = jx.getString("hardport");
                                 String bcont = jx.getString("box_content");
+                                String status = jx.getString("status");
 
                                 //add consignee booking
-                                gendata.updConsigneeBookingExist( consignee, boxtype, source_id, destination_id,
-                                        transaction_no, box_number, "2", hardport, bcont);
+                                gendata.updConsigneeBookingExist(consignee, boxtype, source_id, destination_id,
+                                        transaction_no, box_number, status, hardport, bcont);
 
                                 if (checkIfInInventory(box_number)){
                                     gendata.updateInvBoxnumber("1", box_number, "2");
@@ -3067,7 +3120,7 @@ public class Home extends AppCompatActivity
                             }
                         }else{
                             gendata.addBooking( transaction_no, reservation_no, customer,
-                                    book_date, "2", "1", createdby, "2");
+                                    book_date, booking_status, booking_type, createdby, "2");
 
                             JSONArray jarray = json_data.getJSONArray("gpx_booking_consignee_box");
                             for(int x=0; x<jarray.length(); x++){
@@ -3079,10 +3132,11 @@ public class Home extends AppCompatActivity
                                 String box_number = jx.getString("box_number");
                                 String hardport = jx.getString("hardport");
                                 String bcont = jx.getString("box_content");
+                                String status = jx.getString("status");
 
                                 //add consignee booking
                                 gendata.addConsigneeBooking( consignee, boxtype, source_id, destination_id,
-                                        transaction_no, box_number, "2", hardport, bcont);
+                                        transaction_no, box_number, status, hardport, bcont);
 
                                 if (checkIfInInventory(box_number)){
                                     gendata.updateInvBoxnumber("1", box_number, "2");
@@ -3632,30 +3686,34 @@ public class Home extends AppCompatActivity
     //upload updates
     //update distribution upload status
     public void updateDist(ArrayList<String> ids){
-        for (String id : ids) {
-            SQLiteDatabase db = gendata.getWritableDatabase();
-            ContentValues cv = new ContentValues();
-            cv.put(gendata.temp_uploadstat, "2");
-            db.update(gendata.tbname_tempDist, cv,
-                    gendata.temp_transactionnumber+" = '"+id+"' AND "+
-                    gendata.temp_uploadstat + " = '1'", null);
-            Log.e("upload", "uploaded dist");
+        if (ids.size() != 0) {
+            for (String id : ids) {
+                SQLiteDatabase db = gendata.getWritableDatabase();
+                ContentValues cv = new ContentValues();
+                cv.put(gendata.temp_uploadstat, "2");
+                db.update(gendata.tbname_tempDist, cv,
+                        gendata.temp_transactionnumber + " = '" + id + "' AND " +
+                                gendata.temp_uploadstat + " = '1'", null);
+                Log.e("upload", "uploaded dist");
+            }
+            db.close();
         }
-        db.close();
     }
 
     //update reservations upload status
     public void updateReserveStat(ArrayList<String> trans){
-        for (String tr : trans) {
-        SQLiteDatabase db = gendata.getWritableDatabase();
-            ContentValues cv = new ContentValues();
-            cv.put(gendata.reserve_upload_status, "2");
-            db.update(gendata.tbname_reservation, cv,
-                    gendata.reserve_reservation_no+" = '"+tr+"' AND "+
-                            gendata.reserve_upload_status + " = '1'", null);
-            Log.e("upload", "uploaded reservations");
+        if (trans.size() != 0) {
+            for (String tr : trans) {
+                SQLiteDatabase db = gendata.getWritableDatabase();
+                ContentValues cv = new ContentValues();
+                cv.put(gendata.reserve_upload_status, "2");
+                db.update(gendata.tbname_reservation, cv,
+                        gendata.reserve_reservation_no + " = '" + tr + "' AND " +
+                                gendata.reserve_upload_status + " = '1'", null);
+                Log.e("upload", "uploaded reservations");
+            }
+            db.close();
         }
-        db.close();
     }
 
     //update all customer upload status to 2 after sync
@@ -3671,43 +3729,49 @@ public class Home extends AppCompatActivity
 
     //update incident upload status
     public void updateIncStat(ArrayList<String> id){
-        SQLiteDatabase db = gendata.getWritableDatabase();
-        for (String ids : id) {
-            ContentValues cv = new ContentValues();
-            cv.put(gendata.inc_upds, "2");
-            db.update(gendata.tbname_incident, cv,
-                    gendata.inc_id+" = '"+ids+"' AND "+
-                            gendata.inc_upds + " = '1'", null);
-            Log.e("upload", "uploaded incidents");
+        if (id.size() != 0) {
+            SQLiteDatabase db = gendata.getWritableDatabase();
+            for (String ids : id) {
+                ContentValues cv = new ContentValues();
+                cv.put(gendata.inc_upds, "2");
+                db.update(gendata.tbname_incident, cv,
+                        gendata.inc_id + " = '" + ids + "' AND " +
+                                gendata.inc_upds + " = '1'", null);
+                Log.e("upload", "uploaded incidents");
+            }
+            db.close();
         }
-        db.close();
     }
 
     //update loading uploads
     public void updateLoadsStat(ArrayList<String> id){
-        SQLiteDatabase db = ratesDB.getWritableDatabase();
-        for (String ids : id) {
-            ContentValues cv = new ContentValues();
-            cv.put(ratesDB.load_upds, "2");
-            db.update(ratesDB.tb_loading, cv,
-                    ratesDB.load_id+" = '"+ids+"' AND "+
-                            ratesDB.load_upds + " = '1'", null);
-            Log.e("upload", "uploaded loading");
+        if (id.size() != 0) {
+            SQLiteDatabase db = ratesDB.getWritableDatabase();
+            for (String ids : id) {
+                ContentValues cv = new ContentValues();
+                cv.put(ratesDB.load_upds, "2");
+                db.update(ratesDB.tb_loading, cv,
+                        ratesDB.load_id + " = '" + ids + "' AND " +
+                                ratesDB.load_upds + " = '1'", null);
+                Log.e("upload", "uploaded loading");
+            }
+            db.close();
         }
-        db.close();
     }
 
     //update unloading uploads
     public void updateunLoadsStat(ArrayList<String> id){
-        SQLiteDatabase db = gendata.getWritableDatabase();
-        for (String ids : id) {
-            ContentValues cv = new ContentValues();
-            cv.put(gendata.unload_upds, "2");
-            db.update(gendata.tb_unload, cv,gendata.unload_id+" = '"+ids+"' AND "+
-                    gendata.unload_upds + " = '1'", null);
-            Log.e("upload", "uploaded unloading");
+        if (id.size() != 0) {
+            SQLiteDatabase db = gendata.getWritableDatabase();
+            for (String ids : id) {
+                ContentValues cv = new ContentValues();
+                cv.put(gendata.unload_upds, "2");
+                db.update(gendata.tb_unload, cv, gendata.unload_id + " = '" + ids + "' AND " +
+                        gendata.unload_upds + " = '1'", null);
+                Log.e("upload", "uploaded unloading");
+            }
+            db.close();
         }
-        db.close();
     }
 
     //update warehouse uploads
@@ -3723,16 +3787,18 @@ public class Home extends AppCompatActivity
 
     //update booking upload status
     public void updateBookingStat(ArrayList<String> trans){
-        SQLiteDatabase db = gendata.getWritableDatabase();
-        for (String tr : trans) {
-            ContentValues cv = new ContentValues();
-            cv.put(gendata.book_upds, "2");
-            db.update(gendata.tbname_booking, cv,
-                    gendata.book_transaction_no+" = '"+tr+"' AND "+
-                            gendata.book_upds + " = '1'", null);
-            Log.e("upload", "uploaded booking");
+        if (trans.size() != 0) {
+            SQLiteDatabase db = gendata.getWritableDatabase();
+            for (String tr : trans) {
+                ContentValues cv = new ContentValues();
+                cv.put(gendata.book_upds, "2");
+                db.update(gendata.tbname_booking, cv,
+                        gendata.book_transaction_no + " = '" + tr + "' AND " +
+                                gendata.book_upds + " = '1'", null);
+                Log.e("upload", "uploaded booking");
+            }
+            db.close();
         }
-        db.close();
     }
 
     public boolean checkIfInInventory(String bn){

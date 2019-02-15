@@ -147,6 +147,14 @@ public class Booking_payment extends Fragment implements Runnable {
     public static byte[] FEED_LINE = {10};
     OutputStream os;
 
+    //image trans
+    ArrayList<HomeList> stored_image;
+    ArrayList<byte[]> capt_images;
+    GridView grimm;
+    TextView hints;
+    FloatingActionButton getimgg;
+    AlertDialog alertd;
+
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container,
@@ -174,6 +182,8 @@ public class Booking_payment extends Fragment implements Runnable {
         mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         //initBluetooth();
         sendername.setText(book.getFullname());
+        capt_images = new ArrayList<>();
+        stored_image = new ArrayList<HomeList>();
 
         customtype();
         //for bluetooth printing(comment for now)
@@ -515,7 +525,7 @@ public class Booking_payment extends Fragment implements Runnable {
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
         if (id == R.id.savebooking){
-            viewReceipt();
+            viewGenericImage();
         }
         return super.onOptionsItemSelected(item);
     }
@@ -582,7 +592,9 @@ public class Booking_payment extends Fragment implements Runnable {
                             gen.addRemitAmount(finalamount + "", transno, "0",
                                     helper.logcount() + "", dateOnly());
                         }
-
+                        for (byte[] img : capt_images){
+                            rate.addGenericImage("booking", transno, img);
+                        }
                         Log.e("wthoutres_amount", finalamount+"");
 
                         book.setAccntno(null);
@@ -590,6 +602,8 @@ public class Booking_payment extends Fragment implements Runnable {
                         book.setFullname(null);
                         book.setTransNo(null);
                         book.setPayamount(0);
+                        capt_images.clear();
+                        stored_image.clear();
                     } else {
                         gen.addBooking(transno, reserveno, custno,
                                 bookdate, bookstat, type, createdby, "1");
@@ -603,6 +617,9 @@ public class Booking_payment extends Fragment implements Runnable {
                             gen.addRemitAmount(finalamount + "", transno, "0",
                                     helper.logcount() + "", dateOnly());
                         }
+                        for (byte[] img : capt_images){
+                            rate.addGenericImage("booking", transno, img);
+                        }
                         Log.e("notinbook_finamount", finalamount+"");
 
                         book.setAccntno(null);
@@ -610,6 +627,8 @@ public class Booking_payment extends Fragment implements Runnable {
                         book.setFullname(null);
                         book.setTransNo(null);
                         book.setPayamount(0);
+                        capt_images.clear();
+                        stored_image.clear();
                     }
                 } else {
                     gen.updateReservationNumber(reserveno, "2");
@@ -642,11 +661,16 @@ public class Booking_payment extends Fragment implements Runnable {
                             gen.addRemitAmount(finalamount + "", transno, "0",
                                     helper.logcount() + "", dateOnly());
                         }
+                        for (byte[] img : capt_images){
+                            rate.addGenericImage("booking", transno, img);
+                        }
                         book.setAccntno(null);
                         book.setReserveno(null);
                         book.setFullname(null);
                         book.setTransNo(null);
                         book.setPayamount(0);
+                        capt_images.clear();
+                        stored_image.clear();
                     } else {
                         gen.addBooking(transno, reserveno, custno,
                                 bookdate, bookstat, type, createdby, "1");
@@ -662,11 +686,16 @@ public class Booking_payment extends Fragment implements Runnable {
                             gen.addRemitAmount(finalamount + "", transno, "0",
                                     helper.logcount() + "", dateOnly());
                         }
+                        for (byte[] img : capt_images){
+                            rate.addGenericImage("booking", transno, img);
+                        }
                         book.setAccntno(null);
                         book.setReserveno(null);
                         book.setFullname(null);
                         book.setTransNo(null);
                         book.setPayamount(0);
+                        capt_images.clear();
+                        stored_image.clear();
                     }
                 }
             }
@@ -1107,15 +1136,10 @@ public class Booking_payment extends Fragment implements Runnable {
                     ByteArrayOutputStream stream = new ByteArrayOutputStream();
                     photo.compress(Bitmap.CompressFormat.PNG, 100, stream);
                     byte[] bytimg = stream.toByteArray();
-                    if(rate.addReserveImage(book.getTransNo(), bytimg)){
-                        String x = "Image has been saved.";
-                        customToast(x);
-                        viewgrid();
-                    }else{
-                        String x = "Image save failed.";
-                        customToast(x);
-                    }
-                    Log.e("camera", "success " + bytimg + " / " + book.getTransNo());
+                    HomeList list = new HomeList(bytimg, capt_images.size()+"");
+                    capt_images.add(bytimg);
+                    stored_image.add(list);
+                    viewGenericImage();
                 }
             }else if(requestCode == REQUEST_CONNECT_DEVICE){
                 if (resultCode == Activity.RESULT_OK) {
@@ -1159,28 +1183,8 @@ public class Booking_payment extends Fragment implements Runnable {
         }
     }
 
-    public void viewgrid(){
-        try {
-            final ArrayList<HomeList> listitem = rate.getBookingImages(book.getTransNo());
-            ImageAdapter myAdapter = new ImageAdapter(getContext(), listitem);
-            grimg.setAdapter(myAdapter);
-            if (grimg.getAdapter().getCount() > 0) {
-                hint.setVisibility(View.INVISIBLE);
-            } else {
-                hint.setVisibility(View.VISIBLE);
-            }
-            grimg.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-                @Override
-                public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                    byte[] getitem = listitem.get(position).getTopitem();
-                    String iditem = listitem.get(position).getSubitem();
-                    alertImage(getitem, iditem);
-                }
-            });
-        }catch (Exception e){}
-    }
 
-    public void alertImage(byte[] image, final String idt){
+    public void alertImage(final byte[] image, final int idt){
         try {
             AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(getContext());
             LayoutInflater inflater = this.getLayoutInflater();
@@ -1198,7 +1202,8 @@ public class Booking_payment extends Fragment implements Runnable {
             del.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    rate.deleteImageBooking(idt);
+                    capt_images.remove(image);
+                    stored_image.remove(idt);
                     viewgrid();
                     alertDialog.dismiss();
                 }
@@ -1562,6 +1567,80 @@ public class Booking_payment extends Fragment implements Runnable {
             Log.e(TAG, "Exception during write", e);
             return false;
         }
+    }
+
+    //image generic transactions
+    public void viewgrid(){
+        try {
+            final ArrayList<HomeList> listitem = stored_image;
+            ImageAdapter myAdapter = new ImageAdapter(getContext(), listitem);
+            grimm.setAdapter(myAdapter);
+            if (capt_images.size() > 0) {
+                hint.setVisibility(View.INVISIBLE);
+            } else {
+                hint.setVisibility(View.VISIBLE);
+            }
+            grimm.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                @Override
+                public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                    byte[] getitem = listitem.get(position).getTopitem();
+                    alertImage(getitem, position);
+                }
+            });
+        }catch (Exception e){}
+    }
+
+    public void viewGenericImage(){
+        try {
+            final AlertDialog.Builder views = new AlertDialog.Builder(getContext());
+            LayoutInflater inflater = getLayoutInflater();
+            View d = inflater.inflate(R.layout.generic_image, null);
+            views.setView(d);
+            //initialize variables
+            grimm = (GridView) d.findViewById(R.id.grid);
+            hints = (TextView) d.findViewById(R.id.imageshint);
+            Button ok = (Button) d.findViewById(R.id.confirm);
+            Button canc = (Button) d.findViewById(R.id.cancel);
+            getimgg = (FloatingActionButton) d.findViewById(R.id.addimage);
+            alertd = views.create();
+            alertd.show();
+            getimgg.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    if (capt_images.size() >= 5) {
+                        String ty = "Maximum image attachment has been reached.";
+                        customToast(ty);
+                    } else {
+                        alertd.dismiss();
+                        camera_capture();
+                    }
+                }
+            });
+            viewgrid();
+            ok.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    if (capt_images.size() == 0) {
+                        String ty = "Please add image proof.";
+                        customToast(ty);
+                    } else {
+                        viewReceipt();
+                        alertd.dismiss();
+                    }
+                }
+            });
+            canc.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    alertd.dismiss();
+                }
+            });
+            views.setCancelable(true);
+            Log.e("images", capt_images.size() + "");
+        }catch (Exception e){
+            Log.e("error", e.getMessage());
+        }
+
     }
 
 }

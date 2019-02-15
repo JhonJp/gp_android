@@ -1,16 +1,24 @@
 package com.example.admin.gpxbymodule;
 
+import android.Manifest;
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.Build;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.RequiresApi;
+import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.NavigationView;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
@@ -32,12 +40,15 @@ import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.GridView;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.io.ByteArrayOutputStream;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -68,6 +79,13 @@ public class Acceptance_empty extends Fragment {
     String trans;
     LinearList adapter;
     ArrayList<String> boxnames, quantities;
+    int camera_request = 1;
+    ArrayList<HomeList> stored_image;
+    ArrayList<byte[]> capt_images;
+    GridView grim;
+    TextView hint;
+    FloatingActionButton getimg;
+    AlertDialog alert;
 
     @Nullable
     @Override
@@ -93,6 +111,8 @@ public class Acceptance_empty extends Fragment {
         spinwarehouse = (Spinner)v.findViewById(R.id.warehouse);
         boxnames = new ArrayList<>();
         quantities = new ArrayList<>();
+        capt_images = new ArrayList<>();
+        stored_image = new ArrayList<HomeList>();
 
         if (helper.logcount() != 0){
             role = helper.getRole(helper.logcount());
@@ -110,6 +130,9 @@ public class Acceptance_empty extends Fragment {
         acc();
         addMan();
         scrolllist();
+
+        //logs
+        Log.e("images", capt_images.size()+"");
 
         return v;
     }
@@ -282,6 +305,9 @@ public class Acceptance_empty extends Fragment {
                     " = '"+trans+"'", null);
             if (x.getCount() == 0 ) {
                 for (int i = 0; i < boxnames.size(); i++){
+                    for (byte[] img : capt_images){
+                        rate.addGenericImage("acceptance_empty", getTrans(), img);
+                    }
                     gen.addAcceptanceEmpty( getTrans(), wareid+"",
                             name, getBoxId(boxnames.get(i))+""
                             , quantities.get(i), datereturn(), helper.logcount()+"",
@@ -292,6 +318,8 @@ public class Acceptance_empty extends Fragment {
                 gen.addTransactions("Acceptance", helper.logcount()+"",
                         "Acceptance from "+name, datereturn(), returntime());
             }
+            capt_images.clear();
+            stored_image.clear();
         }catch (Exception e){}
 
     }
@@ -418,13 +446,7 @@ public class Acceptance_empty extends Fragment {
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
         if (id == R.id.saveoicacceptance) {
-                floatadd();
-                boxnames.clear();
-                quantities.clear();
-                getActivity().recreate();
-                String ty = "Transaction has been successful, thank you.";
-                customToast(ty);
-
+            viewGenericImage();
         }else if (id == R.id.acceptancelist) {
             Intent i = new Intent(getContext(), Acceptancelist.class);
             //Create the bundle to pass
@@ -474,6 +496,167 @@ public class Acceptance_empty extends Fragment {
 
     public void setTrans(String trans) {
         this.trans = trans;
+    }
+
+    //image generic transactions
+    public void viewgrid(){
+        try {
+            final ArrayList<HomeList> listitem = stored_image;
+            ImageAdapter myAdapter = new ImageAdapter(getContext(), listitem);
+            grim.setAdapter(myAdapter);
+            if (capt_images.size() > 0) {
+                hint.setVisibility(View.INVISIBLE);
+            } else {
+                hint.setVisibility(View.VISIBLE);
+            }
+            grim.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                @Override
+                public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                    byte[] getitem = listitem.get(position).getTopitem();
+                    alertImage(getitem, position);
+                }
+            });
+        }catch (Exception e){}
+    }
+
+    public void viewGenericImage(){
+        try {
+            final AlertDialog.Builder views = new AlertDialog.Builder(getContext());
+            LayoutInflater inflater = getLayoutInflater();
+            View d = inflater.inflate(R.layout.generic_image, null);
+            views.setView(d);
+            //initialize variables
+            grim = (GridView) d.findViewById(R.id.grid);
+            hint = (TextView) d.findViewById(R.id.imageshint);
+            Button ok = (Button) d.findViewById(R.id.confirm);
+            Button canc = (Button) d.findViewById(R.id.cancel);
+            getimg = (FloatingActionButton) d.findViewById(R.id.addimage);
+            alert = views.create();
+            alert.show();
+            getimg.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    if (capt_images.size() >= 3) {
+                        String ty = "Maximum image attachment has been reached.";
+                        customToast(ty);
+                    } else {
+                        alert.dismiss();
+                        camera_capture();
+                    }
+                }
+            });
+            viewgrid();
+            ok.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    if (capt_images.size() == 0) {
+                        String ty = "Please add image of purchase order.";
+                        customToast(ty);
+                    } else {
+                        floatadd();
+                        boxnames.clear();
+                        quantities.clear();
+                        Intent i = new Intent(getContext(), Acceptancelist.class);
+                        //Create the bundle to pass
+                        Bundle bundle = new Bundle();
+                        //Add your data from getFactualResults method to bundle
+                        bundle.putString("type", "0");
+                        i.putExtras(bundle);
+                        startActivity(i);
+                        getActivity().finish();
+                        alert.dismiss();
+                    }
+                }
+            });
+            canc.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    alert.dismiss();
+                }
+            });
+            views.setCancelable(true);
+            Log.e("images", capt_images.size() + "");
+        }catch (Exception e){
+            Log.e("error", e.getMessage());
+        }
+
+    }
+
+    public void camera_capture() {
+        try {
+            Intent cameraIntent = new Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
+            startActivityForResult(cameraIntent, camera_request);
+        } catch (Exception e) {
+            ActivityCompat.requestPermissions(getActivity(),
+                    new String[]{Manifest.permission.CAMERA}, camera_request);
+        }
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data){
+        try {
+            if (requestCode == camera_request) {
+                if (requestCode == camera_request && resultCode == Activity.RESULT_OK) {
+                    Bitmap photo = (Bitmap) data.getExtras().get("data");
+                    ByteArrayOutputStream stream = new ByteArrayOutputStream();
+                    photo.compress(Bitmap.CompressFormat.PNG, 100, stream);
+                    byte[] bytimg = stream.toByteArray();
+                    HomeList list = new HomeList(bytimg, capt_images.size()+"");
+                    capt_images.add(bytimg);
+                    stored_image.add(list);
+                    viewGenericImage();
+                }
+            } else {
+            }
+        }catch (Exception e){
+            Log.e("error", e.getMessage());}
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
+                                           @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == camera_request) {
+            if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                Toast.makeText(getContext(), "camera permission granted", Toast.LENGTH_LONG).show();
+            } else {
+                Toast.makeText(getContext(), "camera permission denied", Toast.LENGTH_LONG).show();
+            }
+        }
+    }
+
+    public void alertImage(final byte[] image, final int idt){
+        try {
+            AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(getContext());
+            LayoutInflater inflater = this.getLayoutInflater();
+            View d = inflater.inflate(R.layout.imagefullview, null);
+            Button del = (Button) d.findViewById(R.id.delete);
+            Button cancel = (Button) d.findViewById(R.id.cancel);
+            final ImageView img = (ImageView) d.findViewById(R.id.imagefull);
+
+            Bitmap bm = BitmapFactory.decodeByteArray(image, 0, image.length);
+            img.setImageBitmap(bm);
+
+            dialogBuilder.setView(d);
+            final AlertDialog alertDialog = dialogBuilder.show();
+
+            del.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    capt_images.remove(image);
+                    stored_image.remove(idt);
+                    viewgrid();
+                    alertDialog.dismiss();
+                }
+            });
+
+            cancel.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    alertDialog.dismiss();
+                }
+            });
+        }catch (Exception e){}
     }
 
 }

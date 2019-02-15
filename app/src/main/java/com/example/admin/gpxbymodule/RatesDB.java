@@ -524,6 +524,20 @@ public class RatesDB extends SQLiteOpenHelper {
             + emp_branch+ " INTEGER )";
     public String dropemp = "DROP TABLE IF EXISTS " + tbname_employee;
 
+    //generic image database
+    public final String tbname_generic_imagedb = "gpx_all_image";
+    public final String gen_id = "id";
+    public final String gen_module = "module";
+    public final String gen_trans = "transaction_no";
+    public final String gen_image = "image";
+    public String createGeneircImageDb = " CREATE TABLE " + tbname_generic_imagedb + "("
+            + gen_id + " INTEGER PRIMARY KEY AUTOINCREMENT,"
+            + gen_module + " TEXT, "
+            + gen_trans + " TEXT, "
+            + gen_image+ " BLOB )";
+    public String dropGenericImageDb = "DROP TABLE IF EXISTS " + tbname_employee;
+
+
     public RatesDB(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
     }
@@ -570,6 +584,7 @@ public class RatesDB extends SQLiteOpenHelper {
         db.execSQL(pacc_createAcc);
         db.execSQL(pacc_createAcc_box);
         db.execSQL(partnerbox_createTable);
+        db.execSQL(createGeneircImageDb);
 
         //db.execSQL(moduleInsert);
         Log.d("database", "Database has been created.");
@@ -609,6 +624,7 @@ public class RatesDB extends SQLiteOpenHelper {
         db.execSQL(drop_partnerbox);
         db.execSQL(dropDirect);
         db.execSQL(dropUnbi);
+        db.execSQL(dropGenericImageDb);
 
         // Create tables again
         onCreate(db);
@@ -1452,6 +1468,18 @@ public class RatesDB extends SQLiteOpenHelper {
         cv.put(barcodeDriverInv_status, stat);
         db.update(tbname_barcode_driver_inventory, cv, barcodeDriverInv_boxnumber+" = '"+bn+"'", null);
         Log.e("upd_driver_inv", bn);
+        db.close();
+    }
+
+    //adding new image to generic table
+    public void addGenericImage(String module, String transaction_no, byte[] image){
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues cv = new ContentValues();
+            cv.put(gen_module, module);
+            cv.put(gen_trans, transaction_no);
+            cv.put(gen_image, image);
+        db.insert(tbname_generic_imagedb, null, cv);
+        Log.e("new_image","module-"+module+",trans-"+transaction_no);
         db.close();
     }
 

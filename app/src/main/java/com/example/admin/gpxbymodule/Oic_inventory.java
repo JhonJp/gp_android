@@ -8,6 +8,8 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Bundle;
@@ -16,6 +18,7 @@ import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.ActionBar;
 import android.text.Html;
+import android.util.Base64;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.MotionEvent;
@@ -37,8 +40,10 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -694,6 +699,7 @@ public class Oic_inventory extends AppCompatActivity
                 json.put("createddate", date);
                 json.put("createdby", by);
                 json.put("price", totalp);
+                json.put("purchase_order", getEmptyAcceptanceImage(id));
                 resultSet.put(json);
 
                 cursor.moveToNext();
@@ -703,6 +709,47 @@ public class Oic_inventory extends AppCompatActivity
         cursor.close();
         //Log.e("result set", resultSet.toString());
         return resultSet;
+    }
+
+    public JSONArray getEmptyAcceptanceImage(String trans) {
+        SQLiteDatabase myDataBase = rate.getReadableDatabase();
+        String raw = " SELECT * FROM " + rate.tbname_generic_imagedb
+                +" WHERE "+rate.gen_trans+" = '"+trans+"' AND "+rate.gen_module+" = 'acceptance_empty'";
+        Cursor cursor = myDataBase.rawQuery(raw, null);
+        JSONArray resultSet = new JSONArray();
+        cursor.moveToFirst();
+        try {
+            while (!cursor.isAfterLast()) {
+                JSONObject js = new JSONObject();
+                String tr = cursor.getString(cursor.getColumnIndex(rate.gen_trans));
+                String module = cursor.getString(cursor.getColumnIndex(rate.gen_module));
+                byte[] image = cursor.getBlob(cursor.getColumnIndex(rate.gen_image));
+                Bitmap bitmap = BitmapFactory.decodeByteArray(image, 0, image.length);
+                byte[] bitmapdata = getBytesFromBitmap(bitmap);
+
+                // get the base 64 string
+                String imgString = Base64.encodeToString(bitmapdata, Base64.NO_WRAP);
+
+                js.put("transaction_number", tr);
+                js.put("module", module);
+                js.put("image", imgString);
+                resultSet.put(js);
+                cursor.moveToNext();
+            }
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+        cursor.close();
+//Log.e("result set", resultSet.toString());
+        return resultSet;
+    }
+
+    // convert from bitmap to byte array
+    public byte[] getBytesFromBitmap(Bitmap bitmap) {
+        ByteArrayOutputStream stream = new ByteArrayOutputStream();
+        bitmap.compress(Bitmap.CompressFormat.JPEG, 80, stream);
+        return stream.toByteArray();
     }
 
     public void updateWarehouseInv(String stat){

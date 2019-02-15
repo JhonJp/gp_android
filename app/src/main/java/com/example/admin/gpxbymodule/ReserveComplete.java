@@ -421,7 +421,7 @@ public class ReserveComplete extends Fragment {
 
                     pay = gendata.getResultsPayment(reserveno);
                     json.put("payment", pay);
-                    json.put("image", getImage(reserveno));
+                    json.put("reservation_image", getImage(reserveno));
                     trns.add(reserveno);
                     finalarray.put(json);
                     c.moveToNext();
@@ -517,7 +517,7 @@ public class ReserveComplete extends Fragment {
         if (cx.getCount() != 0) {
             try {
                 String link = helper.getUrl();
-                URL url = new URL("http://" + link + "/api/ticket/save.php");
+                URL url = new URL("http://" + link + "/api/customer/save.php");
                 HttpURLConnection conn = (HttpURLConnection) url.openConnection();
                 conn.setRequestMethod("POST");
                 conn.setRequestProperty("Content-Type", "application/json;charset=UTF-8");
@@ -576,20 +576,22 @@ public class ReserveComplete extends Fragment {
 
     public JSONArray getImage(String id) {
         SQLiteDatabase myDataBase = rate.getReadableDatabase();
-        String raw = "SELECT * FROM " + rate.tbname_reserve_image
-                + " WHERE "+rate.res_img_trans+" = '"+id+"' LIMIT 3";
+        String raw = "SELECT * FROM " + rate.tbname_generic_imagedb
+                + " WHERE "+rate.gen_trans+" = '"+id+"' AND "+rate.gen_module+" = 'reservation'";
         Cursor c = myDataBase.rawQuery(raw, null);
         JSONArray resultSet = new JSONArray();
         c.moveToFirst();
         try {
             while (!c.isAfterLast()) {
                 JSONObject js = new JSONObject();
-                byte[] image = c.getBlob(c.getColumnIndex(rate.res_img_image));
+                String module = c.getString(c.getColumnIndex(rate.gen_module));
+                byte[] image = c.getBlob(c.getColumnIndex(rate.gen_image));
                 Bitmap bitmap = BitmapFactory.decodeByteArray(image, 0, image.length);
                 byte[] bitmapdata = getBytesFromBitmap(bitmap);
                 // get the base 64 string
                 String imgString = Base64.encodeToString(bitmapdata, Base64.NO_WRAP);
-                js.put("reservation_image", imgString);
+                js.put("module", module);
+                js.put("image", imgString);
                 resultSet.put(js);
                 c.moveToNext();
             }

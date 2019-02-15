@@ -703,16 +703,18 @@ public class Loadinglist extends AppCompatActivity
     }
 
     public void updateLoadsStat(ArrayList<String> id){
-        SQLiteDatabase db = rate.getWritableDatabase();
-        for (String ids : id) {
-            ContentValues cv = new ContentValues();
-            cv.put(rate.load_upds, "2");
-            db.update(rate.tb_loading, cv,
-                    rate.load_id+" = '"+ids+"' AND "+
-                            rate.load_upds + " = '1'", null);
-            Log.e("upload", "uploaded loading");
+        if (id.size() != 0) {
+            SQLiteDatabase db = rate.getWritableDatabase();
+            for (String ids : id) {
+                ContentValues cv = new ContentValues();
+                cv.put(rate.load_upds, "2");
+                db.update(rate.tb_loading, cv,
+                        rate.load_id + " = '" + ids + "' AND " +
+                                rate.load_upds + " = '1'", null);
+                Log.e("upload", "uploaded loading");
+            }
+            db.close();
         }
-        db.close();
     }
 
 }

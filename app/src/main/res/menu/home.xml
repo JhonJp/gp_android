@@ -3,6 +3,13 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <item
+        android:id="@+id/syncdown"
+        android:icon="@android:drawable/stat_sys_download"
+        android:orderInCategory="100"
+        android:title="@string/update_data"
+        app:showAsAction="ifRoom" />
+
+    <item
         android:id="@+id/drop_sync"
         android:orderInCategory="100"
         android:title="@string/sync_now"

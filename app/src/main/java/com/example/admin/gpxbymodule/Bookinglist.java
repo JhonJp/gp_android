@@ -439,7 +439,8 @@ public class Bookinglist extends AppCompatActivity
             TextView address = (TextView) d.findViewById(R.id.own_addressinput);
             TextView stat = (TextView) d.findViewById(R.id.stat);
             TextView restat = (TextView) d.findViewById(R.id.reserve_stat);
-            restat.setText(Html.fromHtml(" for Acceptance "));
+            restat.setVisibility(View.INVISIBLE);
+            stat.setText("Box status");
 
             ListView poplist = (ListView) d.findViewById(R.id.list);
             poparray = generaldb.getAllBoxInTransaNo(mtop);
@@ -766,7 +767,7 @@ public class Bookinglist extends AppCompatActivity
         if (cx.getCount() != 0) {
             try {
                 String link = helper.getUrl();
-                URL url = new URL("http://" + link + "/api/ticket/save.php");
+                URL url = new URL("http://" + link + "/api/customer/save.php");
                 HttpURLConnection conn = (HttpURLConnection) url.openConnection();
                 conn.setRequestMethod("POST");
                 conn.setRequestProperty("Content-Type", "application/json;charset=UTF-8");
@@ -974,16 +975,55 @@ public class Bookinglist extends AppCompatActivity
 
     //update booking upload status
     public void updateBookingStat(ArrayList<String> trans){
-        SQLiteDatabase db = generaldb.getWritableDatabase();
-        for (String tr : trans) {
-            ContentValues cv = new ContentValues();
-            cv.put(generaldb.book_upds, "2");
-            db.update(generaldb.tbname_booking, cv,
-                    generaldb.book_transaction_no+" = '"+tr+"' AND "+
-                            generaldb.book_upds + " = '1'", null);
-            Log.e("upload", "uploaded booking");
+        if (trans.size() != 0) {
+            SQLiteDatabase db = generaldb.getWritableDatabase();
+            for (String tr : trans) {
+                ContentValues cv = new ContentValues();
+                cv.put(generaldb.book_upds, "2");
+                db.update(generaldb.tbname_booking, cv,
+                        generaldb.book_transaction_no + " = '" + tr + "' AND " +
+                                generaldb.book_upds + " = '1'", null);
+                Log.e("upload", "uploaded booking");
+            }
+            db.close();
         }
-        db.close();
+    }
+
+    //get booking status
+    public String getStatus(String trans){
+        String stat = "For Acceptance";
+        SQLiteDatabase db = generaldb.getReadableDatabase();
+        Cursor res = db.rawQuery(" SELECT * FROM "
+                + generaldb.tbname_booking + " WHERE "
+                + generaldb.book_transaction_no + " = '" + trans + "'", null);
+        if (res.moveToNext()){
+            int a = res.getInt(res.getColumnIndex(generaldb.book_booking_status));
+            switch(a){
+                case 1:
+                    stat = "For Acceptance";
+                    break;
+                case 2:
+                    stat = "Accepted";
+                    break;
+                case 3:
+                    stat = "Loaded";
+                    break;
+                case 4:
+                    stat = "Unloaded";
+                    break;
+                case 5:
+                    stat = "Distributed";
+                    break;
+                case 6:
+                    stat = "Delivered";
+                    break;
+                case 7:
+                    stat = "In-Transit";
+                    break;
+                    default:break;
+            }
+        }
+        return stat;
     }
 
 }

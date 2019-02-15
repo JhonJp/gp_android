@@ -712,16 +712,18 @@ public class BoxReleaseList extends AppCompatActivity
 
     //update booking upload status
     public void updateReleaseList(ArrayList<String> trans){
-        SQLiteDatabase db = rate.getWritableDatabase();
-        for (String tr : trans) {
-            ContentValues cv = new ContentValues();
-            cv.put(rate.bardist_upds, "2");
-            db.update(rate.tbname_barcode_dist, cv,
-                    rate.bardist_trans+" = '"+tr+"' AND "+
-                            rate.bardist_upds + " = '1'", null);
-            Log.e("upload", "uploaded barcode release");
+        if (trans.size() != 0) {
+            SQLiteDatabase db = rate.getWritableDatabase();
+            for (String tr : trans) {
+                ContentValues cv = new ContentValues();
+                cv.put(rate.bardist_upds, "2");
+                db.update(rate.tbname_barcode_dist, cv,
+                        rate.bardist_trans + " = '" + tr + "' AND " +
+                                rate.bardist_upds + " = '1'", null);
+                Log.e("upload", "uploaded barcode release");
+            }
+            db.close();
         }
-        db.close();
     }
 
     public JSONArray getAllBoxNum(String id) {
