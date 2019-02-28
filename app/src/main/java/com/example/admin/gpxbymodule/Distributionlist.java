@@ -303,41 +303,29 @@ public class Distributionlist extends Fragment {
 
                     TableAdapter tb = new TableAdapter(getContext(), poparray);
                     poplist.setAdapter(tb);
+                    if(checkIfDirect(ids)){
+                        whom.setText(getdriverDirect(ids));
+                    }else{
+                        whom.setText(mtop);
+                    }
 
-                    whom.setText(Html.fromHtml("" + mtop + ""));
                     truck.setText(Html.fromHtml("<b>" + getTrucknumPartner(ids) + "</b>" +
                             "<br>" +
                             "<br>" +
                             "<br>" +
                             "<b>Remarks : </b><br>" +
-                            "<t>" + getRemarksPartner(ids) + ""));
+                            "<p>" + getRemarksPartner(ids) + "</p>"));
 
                     Button close = (Button) dialog.findViewById(R.id.close);
-                    if (getAccStatPartner(ids) == 0){
-                        close.setText("Confirm transaction");
-                        close.setTextColor(getResources().getColor(R.color.textcolor));
-                        close.setBackgroundColor(getResources().getColor(R.color.colorPrimary));
-                        close.setOnClickListener(new View.OnClickListener() {
-                            @Override
-                            public void onClick(View v) {
-                                dx = new Dialog(getContext());
-                                // Removing the features of Normal Dialogs
-                                dx.requestWindowFeature(Window.FEATURE_NO_TITLE);
-                                dx.setContentView(R.layout.capture_sign);
-                                dx.setCancelable(true);
-                                dialogsign(ids,0);
-                                dialog.dismiss();
-                            }
-                        });
-                    }else{
-                        close.setText("Close");
-                        close.setOnClickListener(new View.OnClickListener() {
-                            @Override
-                            public void onClick(View v) {
-                                dialog.dismiss();
-                            }
-                        });
-                    }
+
+                    close.setText("Close");
+                    close.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            dialog.dismiss();
+                        }
+                    });
+
                     dialog.setCancelable(true);
                     dialog.show();
                 }
@@ -575,6 +563,39 @@ public class Distributionlist extends Fragment {
             Log.e("boxname", name);
         }
         return name;
+    }
+
+    public String getdriverDirect(String trans){
+        String y = null;
+        SQLiteDatabase db = rate.getReadableDatabase();
+        String x = " SELECT "+rate.partdist_drivername+" FROM "+rate.tbname_part_distribution
+                +" WHERE "+rate.partdist_transactionnumber+" = '"+trans+"'";
+        Cursor c = db.rawQuery(x, null);
+        if (c.moveToNext()){
+            y = c.getString(c.getColumnIndex(rate.partdist_drivername));
+        }
+        c.close();
+        db.close();
+        return y;
+    }
+
+    public boolean checkIfDirect(String ids){
+        boolean ok = false;
+        SQLiteDatabase db = rate.getReadableDatabase();
+        String x = " SELECT "+rate.partdist_type+" FROM "+rate.tbname_part_distribution
+                +" WHERE "+rate.partdist_transactionnumber+" = '"+ids+"'";
+        Cursor c = db.rawQuery(x, null);
+        if (c.moveToNext()){
+            String i = c.getString(c.getColumnIndex(rate.partdist_type)).toLowerCase();
+            if (i.equals("direct")){
+                ok = true;
+            }else{
+                ok = false;
+            }
+        }
+        c.close();
+        db.close();
+        return ok;
     }
 
     public int getAccStat(String trans){
@@ -868,8 +889,6 @@ public class Distributionlist extends Fragment {
         } catch (Exception e)
         {
             e.printStackTrace();
-            Toast.makeText(getContext(), "Could not initiate File System.. Is Sdcard mounted properly?",
-                    Toast.LENGTH_LONG).show();
             return false;
         }
     }

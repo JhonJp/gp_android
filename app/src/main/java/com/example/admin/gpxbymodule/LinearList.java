@@ -37,6 +37,8 @@ public class LinearList extends BaseAdapter implements Filterable {
         return position;
     }
 
+    private int lastPosition = -1;
+
     public View getView(int position, View convertView, ViewGroup parent) {
         ViewHolder holder;
         if (convertView == null) {

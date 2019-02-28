@@ -4,6 +4,7 @@ import android.Manifest;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
+import android.app.ProgressDialog;
 import android.content.ContentValues;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -13,6 +14,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
@@ -61,6 +63,11 @@ public class Destination_info extends Fragment {
     int wareid;
     TextView hint;
 
+    //image
+    ArrayList<HomeList> stored_image;
+    ArrayList<byte[]> capt_images;
+    ProgressDialog progressBar;
+
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container,
@@ -78,6 +85,14 @@ public class Destination_info extends Fragment {
         rate = new RatesDB(getContext());
         rates = new RatesDB(getContext());
         helper = new HomeDatabase(getContext());
+        capt_images = new ArrayList<>();
+        stored_image = new ArrayList<HomeList>();
+        if (dist.getCapt_images() != null){
+            capt_images = dist.getCapt_images();
+        }
+        if (dist.getStoreimages() != null){
+            stored_image = dist.getStoreimages();
+        }
         capt();
         viewgrid();
 
@@ -87,6 +102,8 @@ public class Destination_info extends Fragment {
             dist.setTrans(dist.getTrans());
             Log.e("transactionnum", dist.getTrans());
         }
+
+        Log.e("numbers", dist.getBoxnumbers()+"");
         return view;
     }
 
@@ -119,6 +136,12 @@ public class Destination_info extends Fragment {
             if (dist.getTrans() != null) {
                 dist.setTrans(dist.getTrans());
             }
+            if (stored_image.size() != 0){
+                dist.setStoreimages(stored_image);
+            }
+            if (capt_images.size() != 0){
+                dist.setCapt_images(capt_images);
+            }
 
             dist.setDisttrucknumber(trucknum.getText().toString());
             dist.setRemarks(remarks.getText().toString());
@@ -133,8 +156,18 @@ public class Destination_info extends Fragment {
                 @Override
                 public void onClick(View v) {
                     try {
-                        Intent cameraIntent = new Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
-                        startActivityForResult(cameraIntent, CAMERA_REQUEST);
+                    if (capt_images.size() >= 5){
+                        String ty = "Maximum image attachment has been reached.";
+                        customToast(ty);
+                    }else {
+                        try{
+                            Intent cameraIntent = new Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
+                            startActivityForResult(cameraIntent, CAMERA_REQUEST);
+                            } catch (Exception e) {
+                                    ActivityCompat.requestPermissions(getActivity(),
+                                            new String[]{Manifest.permission.CAMERA}, CAMERA_REQUEST);
+                        }
+                    }
                     } catch (Exception e) {
                         ActivityCompat.requestPermissions(getActivity(),
                                 new String[]{Manifest.permission.CAMERA}, CAMERA_REQUEST);
@@ -148,9 +181,61 @@ public class Destination_info extends Fragment {
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
         if (id == R.id.action_savedistribute){
-            extendconfirm();
+            if (capt_images.size() == 0 || stored_image.size() == 0){
+                String x = "Please add image attachment for this transaction.";
+                customToast(x);
+            }else {
+                extendconfirm();
+            }
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    public void loadingPost(final View v){
+        // prepare for a progress bar dialog
+        int max = 100;
+        progressBar = new ProgressDialog(v.getContext());
+        progressBar.setCancelable(false);
+        progressBar.setMessage("In Progress ...");
+        progressBar.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+        progressBar.setMax(max);
+        for (int i = 0; i <= max; i++) {
+            progressBar.setProgress(i);
+            if (i == max ){
+                progressBar.dismiss();
+            }
+            progressBar.show();
+        }
+        // Create a Handler instance on the main thread
+        final Handler handler = new Handler();
+
+// Create and start a new Thread
+        new Thread(new Runnable() {
+            public void run() {
+                try{
+                    Thread.sleep(3000);
+                }
+                catch (Exception e) { } // Just catch the InterruptedException
+
+                handler.post(new Runnable() {
+                    public void run() {
+                        progressBar.dismiss();
+                        final AlertDialog.Builder builder = new AlertDialog.Builder(v.getContext());
+                        builder.setTitle("Information confirmation")
+                                .setMessage("Data has been saved successfully, thank you.")
+                                .setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+                                    public void onClick(DialogInterface dialog, int id) {
+                                        startActivity(new Intent(getContext(), Distribution.class));
+                                        getActivity().finish();
+                                        dialog.dismiss();
+                                    }
+                                });
+                        // Create the AlertDialog object and show it
+                        builder.create().show();
+                    }
+                });
+            }
+        }).start();
     }
 
     @Override
@@ -178,12 +263,11 @@ public class Destination_info extends Fragment {
                 Bitmap photo = (Bitmap) data.getExtras().get("data");
                 ByteArrayOutputStream stream = new ByteArrayOutputStream();
                 photo.compress(Bitmap.CompressFormat.PNG, 100, stream);
-
                 byte[] bytimg = stream.toByteArray();
-
                 String trans = dist.getTrans();
-                rates.addDistImage(trans, bytimg);
-
+                HomeList list = new HomeList(bytimg, capt_images.size()+"");
+                capt_images.add(bytimg);
+                stored_image.add(list);
                 viewgrid();
                 Log.e("camera", "success " + bytimg + " / " + trans);
             }
@@ -192,10 +276,10 @@ public class Destination_info extends Fragment {
 
     public void viewgrid(){
         try {
-            final ArrayList<HomeList> listitem = rates.getImagesDist(dist.getTrans());
+            final ArrayList<HomeList> listitem = stored_image;
             ImageAdapter myAdapter = new ImageAdapter(getContext(), listitem);
             grid.setAdapter(myAdapter);
-            if (grid.getAdapter().getCount() > 0) {
+            if (capt_images.size() > 0) {
                 hint.setVisibility(View.INVISIBLE);
             } else {
                 hint.setVisibility(View.VISIBLE);
@@ -204,15 +288,13 @@ public class Destination_info extends Fragment {
                 @Override
                 public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                     byte[] getitem = listitem.get(position).getTopitem();
-                    String iditem = listitem.get(position).getSubitem();
-
-                    alertImage(getitem, iditem);
+                    alertImage(getitem, position);
                 }
             });
         }catch (Exception e){}
     }
 
-    public void alertImage(byte[] image, final String idt){
+    public void alertImage(final byte[] image, final int idt){
         try {
             AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(getContext());
             LayoutInflater inflater = this.getLayoutInflater();
@@ -230,7 +312,8 @@ public class Destination_info extends Fragment {
             del.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    rates.deleteDistImage(idt);
+                    capt_images.remove(image);
+                    stored_image.remove(idt);
                     viewgrid();
                     alertDialog.dismiss();
                 }
@@ -274,10 +357,17 @@ public class Destination_info extends Fragment {
 
                             for (String bn : dist.getBoxnumbers()){
                                 updateBxInv(bn);
+                                updBarcodeInv(bn);
+                            }
+
+                            for (byte[] img : capt_images){
+                                rate.addGenericImage("distribution", f_trans, img);
                             }
 
                             //lopp through boxnumbers and save to distribution table
                             for (int i = 0; i < dist.getBoxIDS().size(); i++){
+                                gen.addtoCheckerInv(dist.getBoxIDS().get(i),
+                                        dist.getBoxnumbers().get(i),"1","1");
                                 gen.addTempBoxDist(dist.getTrans(),
                                         dist.getBoxIDS().get(i),
                                         dist.getInventoryIDS().get(i),
@@ -305,10 +395,16 @@ public class Destination_info extends Fragment {
                             dist.setBoxnumbers(null);
                             dist.setBoxIDS(null);
                             dist.setInventoryIDS(null);
+                            dist.setCapt_images(null);
+                            dist.setStoreimages(null);
+                            capt_images.clear();
+                            stored_image.clear();
 
-                            alert(0);
+                            loadingPost(getView());
+
                         } else {
-                            alert(1);
+                            String a = "Transaction failed, please try again.";
+                            customToast(a);
                         }
                     }
                 }
@@ -322,6 +418,17 @@ public class Destination_info extends Fragment {
         cv.put(gen.chinv_stat, "1");
         db.update(gen.tbname_checker_inventory, cv,
                 gen.chinv_boxnumber+" = '"+bn+"'", null);
+        db.close();
+    }
+
+    public void updBarcodeInv(String bn){
+        SQLiteDatabase db = rate.getWritableDatabase();
+        ContentValues cv = new ContentValues();
+        cv.put(rate.barcodeinv_boxnumber, bn);
+        cv.put(rate.barcodeinv_status, "1");
+        db.update(rate.tbname_barcode_inventory, cv,
+                rate.barcodeinv_boxnumber+" = '"+bn+"'", null);
+        Log.e("barcode_inv_update", bn);
         db.close();
     }
 

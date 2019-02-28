@@ -6,6 +6,8 @@ import android.graphics.BitmapFactory;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
 import android.widget.BaseAdapter;
 import android.widget.FrameLayout;
 import android.widget.GridView;
@@ -52,6 +54,7 @@ public class HomeAdapter extends BaseAdapter {
             holder = (ViewHolder) convertView.getTag();
         }
 
+
         byte[] image = listData.get(position).getTopitem();
 
         Bitmap bm = BitmapFactory.decodeByteArray(image,0,image.length);
@@ -92,4 +95,5 @@ public class HomeAdapter extends BaseAdapter {
         TextView text;
         FrameLayout frame;
     }
+
 }

@@ -109,6 +109,7 @@ public class BoxReleaseList extends AppCompatActivity
         }
         scroll();
         customtype();
+
         //floating action button
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
@@ -229,7 +230,7 @@ public class BoxReleaseList extends AppCompatActivity
                     truck.setText(Html.fromHtml("<b>" + getDriverName(getCreatedby(ids)) + "</b>" + ""));
 
                     Button close = (Button) dialog.findViewById(R.id.close);
-                    if (getAccStat(mtop) == 0){
+                    if (getAccStat(ids).equals("0")){
                         close.setText("Confirm transaction");
                         close.setTextColor(getResources().getColor(R.color.textcolor));
                         close.setBackgroundColor(getResources().getColor(R.color.colorPrimary));
@@ -285,7 +286,9 @@ public class BoxReleaseList extends AppCompatActivity
                     return true;
                 }
             });
-        }catch (Exception e){}
+        }catch (Exception e){
+            Log.e("error", e.getMessage());
+        }
     }
 
     public ArrayList<ListItem> getDistBoxes(String trans){
@@ -696,7 +699,7 @@ public class BoxReleaseList extends AppCompatActivity
                     progressBar.dismiss();
                     final AlertDialog.Builder builder = new AlertDialog.Builder(BoxReleaseList.this);
                     builder.setTitle("Information confirmation")
-                            .setMessage("You dont have data to be uploaded yet, please add new transactions. Thank you.")
+                            .setMessage("You dont have data to be uploaded yet, please confirm your transactions. Thank you.")
                             .setPositiveButton("Ok", new DialogInterface.OnClickListener() {
                                 public void onClick(DialogInterface dialog, int id) {
                                     dialog.dismiss();
@@ -759,21 +762,18 @@ public class BoxReleaseList extends AppCompatActivity
         return resultSet;
     }
 
-    public int getAccStat(String trans){
-        int x = 0;
+    public String getAccStat(String trans){
+        String i = null;
         SQLiteDatabase db = rate.getReadableDatabase();
         String query = "SELECT * FROM "+rate.tbname_barcode_dist
                 +" WHERE "+rate.bardist_trans+" = '"+trans+"'";
         Cursor c = db.rawQuery(query, null);
         if (c.moveToNext()){
-            int i  = c.getInt(c.getColumnIndex(rate.bardist_accptstat));
-            if (i == 0){
-                x = 0;
-            }else{
-                x = i;
-            }
+            i = c.getString(c.getColumnIndex(rate.bardist_accptstat));
         }
-        return x;
+        c.close();
+        db.close();
+        return i;
     }
 
     public String getDriverId(String trans){
@@ -829,7 +829,6 @@ public class BoxReleaseList extends AppCompatActivity
         Log.e("upd_dist", trans);
         db.close();
     }
-
 
     //signature view
     // Function for Digital Signature
@@ -1084,8 +1083,7 @@ public class BoxReleaseList extends AppCompatActivity
         } catch (Exception e)
         {
             e.printStackTrace();
-            Toast.makeText(BoxReleaseList.this, "Could not initiate File System.. Is Sdcard mounted properly?",
-                    Toast.LENGTH_LONG).show();
+
             return false;
         }
     }

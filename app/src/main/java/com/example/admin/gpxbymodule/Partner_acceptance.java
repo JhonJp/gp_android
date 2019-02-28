@@ -35,6 +35,7 @@ import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
@@ -48,6 +49,7 @@ import com.google.zxing.integration.android.IntentResult;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.TimeZone;
@@ -66,7 +68,7 @@ public class Partner_acceptance extends AppCompatActivity
     String[] warehouses;
     String selectedwarehouse;
     Spinner ware;
-    EditText drivername;
+    AutoCompleteTextView drivername;
     int requestcode = 100;
     IntentIntegrator scanIntegrator;
     TextView tot, ybranch;
@@ -90,7 +92,7 @@ public class Partner_acceptance extends AppCompatActivity
         container = (EditText)findViewById(R.id.accept_container_input);
         transactionnum = (EditText)findViewById(R.id.accept_transactionnum);
         lv = (ListView)findViewById(R.id.lv);
-        drivername = (EditText) findViewById(R.id.drivername_input);
+        drivername = (AutoCompleteTextView) findViewById(R.id.drivername_input);
         ware = (Spinner)findViewById(R.id.idwarehouse);
         add = (Button)findViewById(R.id.accept_add);
         boxnumbers = new ArrayList<>();
@@ -119,6 +121,7 @@ public class Partner_acceptance extends AppCompatActivity
         setNameMail();
         scrolllist();
         checkTransNull();
+        autoNameDriver();
         transactionnum.setOnFocusChangeListener(new View.OnFocusChangeListener() {
             @Override
             public void onFocusChange(View v, boolean hasFocus) {
@@ -579,24 +582,32 @@ public class Partner_acceptance extends AppCompatActivity
             }else {
                 if (checkNumFromDist(bn)) {
                     if (getBranch().equals(getDestinationOfBox(bn))) {
-                        if (getDistTypeByBN(bn).equals("Direct")) {
+
                             if (!boxnumbers.contains(bn)) {
                                 boxnumbers.add(bn);
                                 //addBoxnum(bn);
                                 customtype();
                             }
-                        }else{
-                            if (!boxnumbers.contains(bn)) {
-                                boxnumbers.add(bn);
-                                //addBoxnum(bn);
-                                customtype();
-                            }
-                        }
+
                     } else {
                         String h = "Box number destination error, please try another boxnumber.";
                         customToast(h);
                     }
-                } else {
+                } else if(checkNumFromUndelivered(bn)){
+                    if (getBranch().equals(getDestinationOfBox(bn))) {
+
+                            if (!boxnumbers.contains(bn)) {
+                                boxnumbers.add(bn);
+                                //addBoxnum(bn);
+                                customtype();
+                            }
+
+                    } else {
+                        String h = "Box number destination error, please try another boxnumber.";
+                        customToast(h);
+                    }
+                }
+                else {
                     String h = "Box number is not in distribution records, please try again.";
                     customToast(h);
                 }
@@ -717,6 +728,17 @@ public class Partner_acceptance extends AppCompatActivity
         }
     }
 
+    public boolean checkNumFromUndelivered(String bn){
+        SQLiteDatabase db = gen.getReadableDatabase();
+        Cursor x = db.rawQuery(" SELECT * FROM "+gen.tbname_undelivered
+        +" WHERE "+gen.und_bn+" = '"+bn+"'", null);
+        if (x.getCount() == 0){
+            return false;
+        }else{
+            return true;
+        }
+    }
+
     public String getDestinationOfBox(String bn){
         String dest = null;
         SQLiteDatabase db = gen.getReadableDatabase();
@@ -747,6 +769,7 @@ public class Partner_acceptance extends AppCompatActivity
 
     public int saveAcceptance(){
         int ok = 0;
+        try {
             String trans = getTrans();
             String driver = drivername.getText().toString();
             String warehouse = getWarehouseID(ybranch.getText().toString()) + "";
@@ -763,14 +786,16 @@ public class Partner_acceptance extends AppCompatActivity
                     ok = 0;
                 } else {
                     for (String bn : boxnumbers) {
-                        if (!checkNum(bn)){
+                        if (!checkNum(bn)) {
                             gen.addAcceptanceBoxnumber(trans, getBox(bn),
                                     bn, "2");
                             updateInventory(bn);
-                        }else {
+                            deleteInUndelivered(bn);
+                        } else {
                             gen.addAcceptanceBoxnumber(trans, getBox(bn),
                                     bn, "2");
                             saveInventory(bn);
+                            deleteInUndelivered(bn);
                         }
                     }
                     gen.addNewAcceptance(trans, driver, warehouse,
@@ -787,7 +812,11 @@ public class Partner_acceptance extends AppCompatActivity
                     ok = 1;
                 }
             }
+        }catch (Exception e){
+            Log.e("partner-acceptance", e.getMessage());
+        }
             return ok;
+
     }
 
     @Override
@@ -829,26 +858,43 @@ public class Partner_acceptance extends AppCompatActivity
         return id;
     }
 
-    public ArrayList<LinearItem> getSalesDriver(String post, String branch) {
+    public String[] getSalesDriver(String post, String branch) {
         SQLiteDatabase db = gen.getReadableDatabase();
-        ArrayList<LinearItem> numbers = new ArrayList<LinearItem>();
+        ArrayList<String> names = new ArrayList<String>();
         Cursor c = db.rawQuery(" SELECT * FROM " + gen.tbname_employee
                 +" LEFT JOIN "+gen.tbname_branch
                 +" ON "+gen.tbname_branch+"."+gen.branch_id+" = "+gen.tbname_employee+"."+gen.emp_branch
-                +" WHERE "+gen.emp_post+" = '"+post+"' AND "+gen.branch_type
-                +" LIKE '%Partner%'", null);
+                +" WHERE "+gen.emp_post+" = '"+post+"' AND "+gen.emp_branch+" = '"+branch+"'", null);
         c.moveToFirst();
         while (!c.isAfterLast()) {
-            String id = c.getString(c.getColumnIndex(gen.emp_id));
             String name = c.getString(c.getColumnIndex(gen.emp_first))+" "
                     +c.getString(c.getColumnIndex(gen.emp_last));
-            String sub = c.getString(c.getColumnIndex(gen.branch_name));
-            Log.e("name", name);
-            LinearItem list = new LinearItem(id, name, sub);
-            numbers.add(list);
+            names.add(name);
             c.moveToNext();
         }
-        return numbers;
+        c.close();
+        return names.toArray(new String[names.size()]);
+    }
+
+    public void autoNameDriver(){
+        try {
+            String[] names = getSalesDriver("Partner Driver", helper.getBranch(helper.logcount()+""));
+            ArrayAdapter<String> adapter = new ArrayAdapter<String>
+                    (getApplicationContext(), android.R.layout.simple_list_item_1, names);
+            drivername.setThreshold(1);
+            drivername.setAdapter(adapter);
+            drivername.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                @Override
+                public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                    String val = (String) parent.getItemAtPosition(position);
+                    drivername.setText(val);
+                }
+            });
+            Log.e("drivers", Arrays.toString(names)+" ,"+helper.getBranch(helper.logcount()+""));
+
+        }catch (Exception e){
+            Log.e("error", e.getMessage());
+        }
     }
 
     public boolean checkifTransNull() {
@@ -926,6 +972,13 @@ public class Partner_acceptance extends AppCompatActivity
             name = c.getString(c.getColumnIndex(rate.partdist_drivername));
         }
         return name;
+    }
+
+    public void deleteInUndelivered(String bn){
+        SQLiteDatabase db = gen.getWritableDatabase();
+        db.delete(gen.tbname_undelivered, gen.und_bn+" = '"+bn+"'",null);
+        Log.e("delete","undelivered "+bn);
+        db.close();
     }
 
 }

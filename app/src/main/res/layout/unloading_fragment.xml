@@ -310,7 +310,7 @@
                             android:id="@+id/containernuminput"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:hint="Container serial number "
+                            android:hint="Container number "
                             android:inputType="text" />
                     </android.support.design.widget.TextInputLayout>
                 </FrameLayout>
@@ -335,7 +335,7 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:hint="Driver Name"
-                            android:inputType="text" />
+                            android:inputType="textCapWords" />
                     </android.support.design.widget.TextInputLayout>
                 </FrameLayout>
 

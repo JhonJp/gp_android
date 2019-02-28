@@ -471,7 +471,7 @@ public class Acceptancefilled extends Fragment {
             public void run() {
                 try{
                     sendPost();
-                    Thread.sleep(5000);
+                    Thread.sleep(3500);
                 }
                 catch (Exception e) { } // Just catch the InterruptedException
 
@@ -483,7 +483,6 @@ public class Acceptancefilled extends Fragment {
                                 .setMessage("Data has been sync, thank you.")
                                 .setPositiveButton("Ok", new DialogInterface.OnClickListener() {
                                     public void onClick(DialogInterface dialog, int id) {
-
                                         dialog.dismiss();
                                     }
                                 });
@@ -663,7 +662,7 @@ public class Acceptancefilled extends Fragment {
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        getActivity().setTitle("Acceptance");
+        getActivity().setTitle("Filled Acceptance");
         setHasOptionsMenu(true);
     }
 

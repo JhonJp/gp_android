@@ -2,6 +2,7 @@ package com.example.admin.gpxbymodule;
 
 import android.Manifest;
 import android.app.AlertDialog;
+import android.app.ProgressDialog;
 import android.content.ContentValues;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -10,6 +11,7 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.hardware.Camera;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
@@ -69,6 +71,7 @@ public class Partdist_transactioninfo extends Fragment {
     ListViewItemCheckboxBaseAdapter adapter;
     ArrayList<String> ware;
     IntentIntegrator scanIntegrator;
+    ProgressDialog progressBar;
 
 
     @Nullable
@@ -284,11 +287,12 @@ public class Partdist_transactioninfo extends Fragment {
                 String f_trans = "";
                 String f_type = dist.getDisttype();
                 if (f_type.equals("Partner - Hub")){
-                    f_trans = dist.getTransactionnumhub();
+                    f_trans = "PARTD-"+dist.getTransactionnumhub();
                 }else{
                     f_trans = dist.getTrans();
                 }
                 String mode = dist.getMode();
+                String etd = dist.getEtdnow();
                 String eta = dist.getEtanow();
                 String f_driver = dist.getDrivername();
                 String f_name = dist.getDistname();
@@ -305,8 +309,8 @@ public class Partdist_transactioninfo extends Fragment {
                         String x = "Please add box number to be distributed.";
                         customToast(x);
                     } else if (rate.addDistribution(f_trans, f_type, mode, f_name, f_driver, f_truck,
-                            f_remarks, eta,"1", "1", datereturn(),
-                            helper.logcount() + "", "1", 0, null)) {
+                            f_remarks,etd, eta,"1", "1", datereturn(),
+                            helper.logcount() + "", "1", 1, null)) {
                         if (f_type.equals("Direct")){
                             for (String bn : numbers){
                                 rate.addPartDistributionBox(f_trans,
@@ -332,9 +336,8 @@ public class Partdist_transactioninfo extends Fragment {
                         dist.setDisttrucknumber(null);
                         dist.setDistname(null);
                         dist.setDisttype(null);
-                        alert(0);
-                    } else {
-                        alert(1);
+
+                        loadingSave(getView());
                     }
                 }
             }
@@ -393,6 +396,53 @@ public class Partdist_transactioninfo extends Fragment {
         menu.findItem(R.id.distnext).setVisible(false);
         menu.findItem(R.id.syncdist).setVisible(false);
         super.onPrepareOptionsMenu(menu);
+    }
+
+    public void loadingSave(final View v){
+        // prepare for a progress bar dialog
+        int max = 100;
+        progressBar = new ProgressDialog(v.getContext());
+        progressBar.setCancelable(false);
+        progressBar.setMessage("In Progress ...");
+        progressBar.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+        progressBar.setMax(max);
+        for (int i = 0; i <= max; i++) {
+            progressBar.setProgress(i);
+            if (i == max ){
+                progressBar.dismiss();
+            }
+            progressBar.show();
+        }
+        // Create a Handler instance on the main thread
+        final Handler handler = new Handler();
+
+// Create and start a new Thread
+        new Thread(new Runnable() {
+            public void run() {
+                try{
+                    Thread.sleep(3000);
+                }
+                catch (Exception e) { } // Just catch the InterruptedException
+
+                handler.post(new Runnable() {
+                    public void run() {
+                        progressBar.dismiss();
+                        final AlertDialog.Builder builder = new AlertDialog.Builder(v.getContext());
+                        builder.setTitle("Information confirmation")
+                                .setMessage("Data has been saved successfully, thank you.")
+                                .setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+                                    public void onClick(DialogInterface dialog, int id) {
+                                        startActivity(new Intent(getContext(), Partner_distribution.class));
+                                        getActivity().finish();
+                                        dialog.dismiss();
+                                    }
+                                });
+                        // Create the AlertDialog object and show it
+                        builder.create().show();
+                    }
+                });
+            }
+        }).start();
     }
 
     @Override

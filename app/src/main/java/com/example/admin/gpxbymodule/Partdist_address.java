@@ -30,6 +30,7 @@ import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.DatePicker;
 import android.widget.EditText;
@@ -50,6 +51,7 @@ import com.google.zxing.integration.android.IntentResult;
 import java.io.ByteArrayOutputStream;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.TimeZone;
@@ -65,19 +67,20 @@ public class Partdist_address extends Fragment {
     String[] name;
     int CAMERA_REQUEST = 1;
     Partner_distribution dist;
-    EditText trans, drivern;
+    EditText trans;
+    AutoCompleteTextView drivern;
     RatesDB rates;
     int wareid;
-    TextView hint, hintdriver, eta;
+    TextView hint, etd, eta;
     Spinner distname, spin, drive;
     ArrayList<LinearItem> drivernames;
     IntentIntegrator scanIntegrator;
     LinearLayout dummy;
     Spinner modes;
-    DatePickerFragment dateeta;
+    DatePickerFragment dateeta,dateetd;
     Calendar calendar;
     TimePickerDialog timePickerDialog;
-    ImageButton adeta;
+    ImageButton adeta,adetd;
 
     @Nullable
     @Override
@@ -86,16 +89,18 @@ public class Partdist_address extends Fragment {
         View view = inflater.inflate(R.layout.partdist_address, null);
         trucknum = (EditText)view.findViewById(R.id.trucknumber);
         remarks = (EditText)view.findViewById(R.id.dist_boxremarks_input);
-        drivern = (EditText)view.findViewById(R.id.drivername_input);
+        drivern = (AutoCompleteTextView)view.findViewById(R.id.drivername_input);
         trans = (EditText)view.findViewById(R.id.transnuminput);
         hint = (TextView)view.findViewById(R.id.imageshint);
         eta = (TextView)view.findViewById(R.id.etainput);
+        etd = (TextView)view.findViewById(R.id.etdinput);
         distname = (Spinner)view.findViewById(R.id.distnameinput);
         spin = (Spinner)view.findViewById(R.id.trans);
         modes = (Spinner)view.findViewById(R.id.modeship);
         dist = (Partner_distribution) getActivity();
         dummy = (LinearLayout)view.findViewById(R.id.dummyfocus);
         adeta = (ImageButton)view.findViewById(R.id.addeta);
+        adetd = (ImageButton)view.findViewById(R.id.addetd);
 
         gen = new GenDatabase(getContext());
         rate = new RatesDB(getContext());
@@ -136,6 +141,8 @@ public class Partdist_address extends Fragment {
             dist.setBoxnums(dist.getBoxnums());
         }
         spinnerlist();
+        autoNameDriver();
+
         eta.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -148,6 +155,19 @@ public class Partdist_address extends Fragment {
                 showDateETA();
             }
         });
+        etd.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                showDateETD();
+            }
+        });
+        adetd.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                showDateETD();
+            }
+        });
+
         capt();
         return  view;
     }
@@ -228,6 +248,18 @@ public class Partdist_address extends Fragment {
         dateeta.show(getFragmentManager(), "Date Picker");
     }
 
+    private void showDateETD() {
+        dateetd = new DatePickerFragment();
+        Calendar calender = Calendar.getInstance();
+        Bundle args = new Bundle();
+        args.putInt("year", calender.get(Calendar.YEAR));
+        args.putInt("month", calender.get(Calendar.MONTH));
+        args.putInt("day", calender.get(Calendar.DAY_OF_MONTH));
+        dateetd.setArguments(args);
+        dateetd.setCallBack(datetd);
+        dateetd.show(getFragmentManager(), "Date Picker");
+    }
+
     DatePickerDialog.OnDateSetListener datei = new DatePickerDialog.OnDateSetListener() {
         public void onDateSet(DatePicker view, final int year, final int monthOfYear,
                               final int dayOfMonth) {
@@ -241,6 +273,22 @@ public class Partdist_address extends Fragment {
             }, calendar.get(Calendar.HOUR_OF_DAY),calendar.get(Calendar.MINUTE), false);
             timePickerDialog.show();
             dateeta.dismiss();
+        }
+    };
+
+    DatePickerDialog.OnDateSetListener datetd = new DatePickerDialog.OnDateSetListener() {
+        public void onDateSet(DatePicker view, final int year, final int monthOfYear,
+                              final int dayOfMonth) {
+            calendar = Calendar.getInstance();
+            timePickerDialog = new TimePickerDialog(getContext(), new TimePickerDialog.OnTimeSetListener() {
+                @Override
+                public void onTimeSet(TimePicker timePicker, int hourOfDay, int minutes) {
+                    etd.setText(String.valueOf(year) + "-" + String.valueOf(monthOfYear+1)
+                            + "-" + String.valueOf(dayOfMonth)+" "+hourOfDay+":"+minutes);
+                }
+            }, calendar.get(Calendar.HOUR_OF_DAY),calendar.get(Calendar.MINUTE), false);
+            timePickerDialog.show();
+            dateetd.dismiss();
         }
     };
 
@@ -331,6 +379,7 @@ public class Partdist_address extends Fragment {
     public void onPause(){
         try {
             String eata = eta.getText().toString();
+            String eatd = etd.getText().toString();
             String truck = trucknum.getText().toString();
             String rem = remarks.getText().toString();
             String driver = drivern.getText().toString();
@@ -339,6 +388,10 @@ public class Partdist_address extends Fragment {
 
             if ((truck.equals("")) || (driver.equals(""))) {
                 String x = "Driver name and truck number is required.";
+                customToast(x);
+            }
+            if ((eata.equals("ETA")) || (eatd.equals("ETD"))) {
+                String x = "Please indicate ETA and ETD.";
                 customToast(x);
             }
             if (dist.getTrans() != null) {
@@ -358,6 +411,7 @@ public class Partdist_address extends Fragment {
             }
 
             dist.setEtanow(eata);
+            dist.setEtdnow(eatd);
             dist.setMode(mode);
             dist.setTransactionnumhub(transactionnum);
             dist.setDrivername(driver);
@@ -556,6 +610,45 @@ public class Partdist_address extends Fragment {
         }else{
             Log.e("focus", drivern.hasFocus()+"");
             return false;
+        }
+    }
+
+    public String[] getSalesDriver(String post, String branch) {
+        SQLiteDatabase db = gen.getReadableDatabase();
+        ArrayList<String> names = new ArrayList<String>();
+        Cursor c = db.rawQuery(" SELECT * FROM " + gen.tbname_employee
+                +" LEFT JOIN "+gen.tbname_branch
+                +" ON "+gen.tbname_branch+"."+gen.branch_id+" = "+gen.tbname_employee+"."+gen.emp_branch
+                +" WHERE "+gen.emp_post+" = '"+post+"' AND "+gen.emp_branch+" = '"+branch+"'", null);
+        c.moveToFirst();
+        while (!c.isAfterLast()) {
+            String name = c.getString(c.getColumnIndex(gen.emp_first))+" "
+                    +c.getString(c.getColumnIndex(gen.emp_last));
+            names.add(name);
+            c.moveToNext();
+        }
+        c.close();
+        return names.toArray(new String[names.size()]);
+    }
+
+    public void autoNameDriver(){
+        try {
+            String[] names = getSalesDriver("Partner Driver", helper.getBranch(helper.logcount()+""));
+            ArrayAdapter<String> adapter = new ArrayAdapter<String>
+                    (getContext(), android.R.layout.simple_list_item_1, names);
+            drivern.setThreshold(1);
+            drivern.setAdapter(adapter);
+            drivern.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                @Override
+                public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                    String val = (String) parent.getItemAtPosition(position);
+                    drivern.setText(val);
+                }
+            });
+            Log.e("drivers", Arrays.toString(names)+" ,"+helper.getBranch(helper.logcount()+""));
+
+        }catch (Exception e){
+            Log.e("error", e.getMessage());
         }
     }
 

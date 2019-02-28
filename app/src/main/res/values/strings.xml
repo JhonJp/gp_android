@@ -66,7 +66,7 @@
     <string name="title_activity_loadinglist">Loading list</string>
     <string name="title_activity_unloadinglist">Unloading list</string>
     <string name="title_activity_deliverycontent">Delivery Info</string>
-    <string name="title_activity_remittancetooic">Remittance to OIC</string>
+    <string name="title_activity_remittancetooic">Remittance</string>
     <string name="totalamount">0.00</string>
     <string name="amountntotal">The amount stated above is the collected amount in total</string>
     <string name="submitremittanceoic"> Remit this amount</string>
@@ -81,4 +81,5 @@
     <string name="title_activity_box_release_list">Barcode Released List</string>
     <string name="sync_data">Sync data</string>
     <string name="update_data">Update Data</string>
+    <string name="title_activity_remitt">"Remittance "</string>
 </resources>

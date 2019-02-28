@@ -357,32 +357,6 @@ public class Acceptancelist extends AppCompatActivity
                     extendViewing(view, "1");
                 }
             });
-            lv.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
-                @Override
-                public boolean onItemLongClick(AdapterView<?> parent, View view, final int position, long id) {
-                    final AlertDialog.Builder builder = new AlertDialog.Builder(Acceptancelist.this);
-                    builder.setTitle("Information")
-                            .setMessage(Html.fromHtml("<b>note : </b>" +
-                                    "Are you sure you want to delete this data? " +
-                                    "Once deleted, the data cannot be retrieved."))
-                            .setPositiveButton("Ok", new DialogInterface.OnClickListener() {
-                                public void onClick(DialogInterface dialog, int id) {
-                                    delAccBox(result.get(position).getTopitem());
-                                    delAcc(result.get(position).getTopitem());
-                                    customtype();
-                                    dialog.dismiss();
-                                }
-                            })
-                            .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialog, int which) {
-                                    dialog.dismiss();
-                                }
-                            });
-                    builder.create().show();
-                    return true;
-                }
-            });
         }
     }
 
@@ -423,7 +397,7 @@ public class Acceptancelist extends AppCompatActivity
             });
             dialog.show();
         }else if (t.equals("1")){
-            TextView textView = (TextView) v.findViewById(R.id.c_account);
+            TextView textView = (TextView) v.findViewById(R.id.dataid);
             mtop = textView.getText().toString();
             ArrayList<ListItem> poparray;
             final Dialog dialog = new Dialog(Acceptancelist.this);
@@ -548,12 +522,19 @@ public class Acceptancelist extends AppCompatActivity
     public ArrayList<LinearItem> getAllAcceptance(){
         ArrayList<LinearItem> results = new ArrayList<>();
         SQLiteDatabase db = gen.getReadableDatabase();
-        Cursor res = db.rawQuery(" SELECT * FROM " + gen.tbname_check_acceptance
-                +" WHERE "+gen.accept_createdby+" = '"+helper.logcount()+"'", null);
+        Cursor res = db.rawQuery(" SELECT * FROM " + gen.tbname_check_acceptance+" tca "
+                +" LEFT JOIN "+gen.tbname_employee+" ge ON ge."+gen.emp_id+" = tca."+gen.accept_drivername
+                +" WHERE tca."+gen.accept_createdby+" = '"+helper.logcount()+"'", null);
         res.moveToFirst();
+        String topitem = null;
         while (!res.isAfterLast()) {
-            String id = res.getString(res.getColumnIndex(gen.accept_id));
-            String topitem = res.getString(res.getColumnIndex(gen.accept_transactionid));
+            String id = res.getString(res.getColumnIndex(gen.accept_transactionid));
+            if (value.equals("Partner Portal") || value.equals("Partner Driver")){
+                topitem = res.getString(res.getColumnIndex(gen.accept_drivername));
+            }else {
+                topitem = res.getString(res.getColumnIndex(gen.emp_first)) + " "
+                        + res.getString(res.getColumnIndex(gen.emp_last));
+            }
             String sub = res.getString(res.getColumnIndex(gen.accept_date));
             LinearItem list = new LinearItem(id, topitem, sub);
             results.add(list);
@@ -569,7 +550,7 @@ public class Acceptancelist extends AppCompatActivity
         SQLiteDatabase db = gen.getReadableDatabase();
         Cursor res = db.rawQuery(" SELECT * FROM " + gen.tb_acceptance
                 +" WHERE "+gen.acc_createdby+" = '"+helper.logcount()+"' GROUP BY "
-                +gen.acc_name, null);
+                +gen.acc_createddate+" AND "+gen.acc_name, null);
         res.moveToFirst();
         while (!res.isAfterLast()) {
             String id = res.getString(res.getColumnIndex(gen.acc_id));

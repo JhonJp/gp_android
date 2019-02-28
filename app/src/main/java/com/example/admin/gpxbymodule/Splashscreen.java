@@ -219,6 +219,7 @@ public class Splashscreen extends AppCompatActivity {
             progress.setMax(jsonArray.length() - 1);
             for (int i = 0; i < jsonArray.length(); i++) {
                 progress.setProgress(i);
+
                 JSONObject json_data = jsonArray.getJSONObject(i);
                 String name = json_data.getString("citymunDesc");
                 String code = json_data.getString("provCode");
@@ -278,11 +279,7 @@ public class Splashscreen extends AppCompatActivity {
                 String citycode = json_data.getString("citymunCode");
 
                 rates.addBrgy(code, name, procode, citycode);
-
-                db = rates.getReadableDatabase();
-                Cursor c = db.rawQuery(" SELECT * FROM " + rates.tbname_brgy, null);
-                Log.e("progress", c.getCount()+"");
-                c.close();
+                Log.e("progress", name+" || "+progress.getProgress());
                 if (progress.getProgress() == progress.getMax()) {
                     startActivity(new Intent(this, Login.class));
                     finish();
@@ -292,7 +289,6 @@ public class Splashscreen extends AppCompatActivity {
 
         } catch (final JSONException e) {
             Log.e("data", "Json parsing error: " + e.getMessage());
-
         }
 
     }

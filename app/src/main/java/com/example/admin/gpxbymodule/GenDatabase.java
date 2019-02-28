@@ -547,6 +547,7 @@ public class GenDatabase extends SQLiteOpenHelper {
     public final String del_notes = "notes";
     public final String del_createdby = "createdby";
     public final String del_upds = "upload_status";
+    public final String del_mainstat = "main_status";
     public String createDel = " CREATE TABLE " + tbname_delivery + "("
             + del_id + " TEXT PRIMARY KEY UNIQUE, "
             + del_customer + " TEXT, "
@@ -558,6 +559,7 @@ public class GenDatabase extends SQLiteOpenHelper {
             + del_receivedby + " TEXT, "
             + del_relationship + " TEXT, "
             + del_upds + " TEXT, "
+            + del_mainstat + " TEXT, "
             + del_createdby + " TEXT ) ";
     public String dropDel = " DROP TABLE IF EXISTS " + tbname_delivery;
 
@@ -750,6 +752,15 @@ public class GenDatabase extends SQLiteOpenHelper {
             +nsbr_rate+" TEXT )";
     public String dropNSBrate = " DROP TABLE IF EXISTS "+tbname_nsbrate;
 
+    //undelivered boxnumbers
+    public final String tbname_undelivered = "gpx_undelivered";
+    public final String und_id = "id";
+    public final String und_bn = "boxnumber";
+    public String createUnd = " CREATE TABLE "+tbname_undelivered+" ("
+            +und_id+" INTEGER PRIMARY KEY AUTOINCREMENT, "
+            +und_bn+" TEXT UNIQUE )";
+    public String dropUndelivered = " DROP TABLE IF EXISTS "+tbname_undelivered;
+
 
     public GenDatabase(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
@@ -773,6 +784,7 @@ public class GenDatabase extends SQLiteOpenHelper {
         db.execSQL(createPartInv);
         db.execSQL(createBranch);
         db.execSQL(createDiscount);
+        db.execSQL(createUnd);
 
         //temporaries
         db.execSQL(createTempReserve);
@@ -821,6 +833,7 @@ public class GenDatabase extends SQLiteOpenHelper {
         db.execSQL(dropTBpayment);
         db.execSQL(dropAccept);
         db.execSQL(dropemp);
+        db.execSQL(dropUndelivered);
         db.execSQL(dropReserveBoxtypeBoxnumber);
         db.execSQL(dropNSBrate);
         db.execSQL(droppart_inv);
@@ -1154,7 +1167,7 @@ public class GenDatabase extends SQLiteOpenHelper {
         values.put(dboxtemp_boxnumber, boxnumber);
         values.put(dboxtemp_stat, stat);
         db.insert(tbname_tempboxes, null, values);
-        Log.e("dbox", ""+invid);
+        Log.e("dbox", ""+boxnumber);
         db.close();
 
     }
@@ -1767,7 +1780,7 @@ public class GenDatabase extends SQLiteOpenHelper {
         Cursor xc = db.rawQuery(que, null);
         xc.moveToFirst();
         while (!xc.isAfterLast()) {
-            String accid = xc.getString(xc.getColumnIndex(box_id));
+            String accid = xc.getString(xc.getColumnIndex(chinv_id));
             String boxtype = xc.getString(xc.getColumnIndex(box_name));
             String sub = xc.getString(0);
             String len = xc.getString(xc.getColumnIndex(box_length));
@@ -2038,7 +2051,9 @@ public class GenDatabase extends SQLiteOpenHelper {
                 case 7:
                     finstat = "In-Transit";
                     break;
-                default:break;
+                default:
+                    finstat = "For Acceptance";
+                    break;
             }
             ListItem list = new ListItem(ids, sub, finstat, a);
             results.add(list);
@@ -2399,7 +2414,7 @@ public class GenDatabase extends SQLiteOpenHelper {
     public void addDelivery(String id, String booknum, String customer,
                             String date, byte[] sign, String by,
                             String upds, String rating, String notes,
-                            String receivedby, String relationship)
+                            String receivedby, String relationship, String mainstat)
     {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues cv = new ContentValues();
@@ -2414,6 +2429,7 @@ public class GenDatabase extends SQLiteOpenHelper {
         cv.put(del_upds, upds);
         cv.put(del_receiverrate, rating);
         cv.put(del_notes, notes);
+        cv.put(del_mainstat, mainstat);
         db.insert(tbname_delivery, null, cv);
         db.close();
         Log.e("deliveryadded", id);
@@ -2928,6 +2944,15 @@ public class GenDatabase extends SQLiteOpenHelper {
                 +nsbr_sourceid+" = '"+sourceid+"' AND "+nsbr_destid+" = '"+destinationid+"' AND "
                 +nsbr_rate+" = '"+rate+"'",null);
         Log.e("nsb_rate_update",boxid);
+        db.close();
+    }
+
+    public void addUndelivered(String bn){
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues cv = new ContentValues();
+        cv.put(und_bn, bn);
+        db.insert(tbname_undelivered, null, cv);
+        Log.e("undelivered", bn);
         db.close();
     }
 

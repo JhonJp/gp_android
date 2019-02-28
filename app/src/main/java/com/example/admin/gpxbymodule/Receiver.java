@@ -139,7 +139,7 @@ public class Receiver extends Fragment {
     public void withReservation(){
         try{
             if (book.getTransNo() != null ) {
-                result = gen.getAllBoxInTransaNo(book.getTransNo());
+                result = getAllBoxInTransNo(book.getTransNo());
                 ListAdapter adapter = new ListAdapter(getContext(), result);
                 lv.setAdapter(adapter);
                 lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
@@ -268,7 +268,6 @@ public class Receiver extends Fragment {
                     if (getBoxNumber(bn)) {
                         if (!checkBoxnum(bn)) {
                             if (!checkBoxnumOne(bn)) {
-                                boxid = getBoxName(bn);
                                 boxnum.setText(bn);
                             } else {
                                 delExistStatOne(bn);
@@ -514,36 +513,8 @@ public class Receiver extends Fragment {
                 SQLiteDatabase gx = gen.getWritableDatabase();
                 Cursor getb = gx.rawQuery(" SELECT * FROM "+gen.tbname_booking_consignee_box
                         +" WHERE "+gen.book_con_box_number+" = '"+bnumber+"'", null);
-                if (getb.moveToNext()){
-                    String bnum = getb.getString(getb.getColumnIndex(gen.book_con_box_number));
-                    String receiver = getb.getString(getb.getColumnIndex(gen.book_con_box_account_no));
-                    SQLiteDatabase getexist = gen.getWritableDatabase();
-                        Cursor exist = getexist.rawQuery(" SELECT * FROM "+gen.tbname_booking_consignee_box
-                        +" WHERE "+gen.book_con_box_number+" = '"+bnum+"'", null);
-                        if (exist.getCount() == 0 ) {
-                            gen.addConsigneeBooking(receiver, bt, "", "", transactionum, bnum, "1", "0", "");
-                        }else{
-                            exist.moveToNext();
-                            String id = exist.getString(exist.getColumnIndex(gen.book_con_box_id));
-                            String b = exist.getString(exist.getColumnIndex(gen.book_con_box_number));
-                            String rec = exist.getString(exist.getColumnIndex(gen.book_con_box_account_no));
-                            String t = exist.getString(exist.getColumnIndex(gen.book_con_transaction_no));
-                            String orig = exist.getString(exist.getColumnIndex(gen.book_con_origin));
-                            String dest = exist.getString(exist.getColumnIndex(gen.book_con_destination));
-                            String btype = exist.getString(exist.getColumnIndex(gen.book_con_boxtype));
-                            String hard = exist.getString(exist.getColumnIndex(gen.book_con_hardport));
-                            String bc = exist.getString(exist.getColumnIndex(gen.book_con_boxcont));
-                            book.setTransNo(t);
-                            //gen.deleteConsigneeTemp(b);
-                            if (rec.equals("")) {
-                                gen.deleteConsigneeTemp(b);
-                                gen.addConsigneeBooking(rec, btype, orig, dest, t, b, "1", hard,bc);
-                            }
-                            withReservation();
-                        }
-                    Log.e("boxnum", bnum);
-                }else{
-                    gen.addConsigneeBooking(null, bt,"", "", transactionum, bnumber,"1", "0", "");
+                if (getb.getCount() == 0){
+                    gen.addConsigneeBooking(null, bt,"", "", transactionum, bnumber,"0", "0", "");
                 }
                 getb.close();
 
@@ -605,11 +576,12 @@ public class Receiver extends Fragment {
         confirm.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                Log.e("box_type_id", boxid+"");
                 if (checkIFNSB(boxid)){
                     addlengthwidth();
                     alertDialog.dismiss();
                 }else{
-                    newboxsourcedes();
+                    newboxsourcedes(0);
                     alertDialog.dismiss();
                 }
             }
@@ -639,7 +611,7 @@ public class Receiver extends Fragment {
                 len = l.getText().toString();
                 wid = w.getText().toString();
                 hei = h.getText().toString();
-                newboxsourcedes();
+                newboxsourcedes(1);
                 di.dismiss();
             }
         });
@@ -654,7 +626,7 @@ public class Receiver extends Fragment {
 
     }
 
-    public void newboxsourcedes(){
+    public void newboxsourcedes(final int i){
         AlertDialog.Builder dlwh = new AlertDialog.Builder(getContext());
         LayoutInflater inflater = Receiver.this.getLayoutInflater();
         View d = inflater.inflate(R.layout.nsbsourcedest, null);
@@ -688,8 +660,7 @@ public class Receiver extends Fragment {
         //populate destinations
         String[] des = rate.getDest();
         ArrayAdapter<String> destadapter =
-                new ArrayAdapter<>(getContext(), R.layout.spinneritem,
-                        des);
+                new ArrayAdapter<>(getContext(), R.layout.spinneritem, des);
         dest.setAdapter(destadapter);
         destadapter.setDropDownViewResource(android.R.layout.select_dialog_singlechoice);
         dest.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
@@ -709,7 +680,8 @@ public class Receiver extends Fragment {
         dlwh.setPositiveButton("Confirm", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface di, int which) {
-                if (checkIFNSB(boxid)){
+                Log.e("box_type_id", boxid+"");
+                if (i == 1){
                     savePartialConsigneeNSB();
                 }else{
                     savePartialConsignee();
@@ -742,7 +714,8 @@ public class Receiver extends Fragment {
         SQLiteDatabase db = rate.getReadableDatabase();
         Cursor x = db.rawQuery(" SELECT * FROM " + rate.tbname_rates
                 + " WHERE " + rate.rate_boxtype + " = '" + t + "' AND " + rate.rate_source_id + " = '" + sid + "' AND " + rate.rate_destination_id + " = '" + did + "'", null);
-        if (x.moveToNext()) {
+        if (x.getCount() != 0) {
+            x.moveToNext();
             rateval = x.getString(x.getColumnIndex(rate.rate_amount));
         }
         return rateval;
@@ -921,7 +894,6 @@ public class Receiver extends Fragment {
     public ArrayList<LinearItem> getNSBboxes() {
         ArrayList<LinearItem> result = new ArrayList<>();
         SQLiteDatabase dbrate = rate.getReadableDatabase();
-//        String x = " SELECT * FROM "+rate.tbname_boxes;
         String x = " SELECT * FROM "+rate.tbname_boxes;
         Cursor xc = dbrate.rawQuery( x, null);
         xc.moveToFirst();
@@ -1027,20 +999,21 @@ public class Receiver extends Fragment {
                     boxnumbers.add(bnum);
                 }
                 boxesids.add(boxid);
+                Log.e("boxesids", boxesids.toString());
                 boolean feed = checkHardPort(getProvince(getAccntNo(receivername.getText().toString())));
                 if (feed == true) {
                     gen.addConsigneeBooking(re, getBoxNameIDused(boxid), sourceid + "", destid + "",
-                            book.getTransNo(), bnum, "1", "1", bcont);
+                            book.getTransNo(), bnum, "0", "1", bcont);
                     clickids.add(getLastId() + "");
                     Log.e("ids", clickids.toString() + "");
                 } else {
                     gen.addConsigneeBooking(re, getBoxNameIDused(boxid), sourceid + "", destid + "",
-                            book.getTransNo(), bnum, "1", "0", bcont);
+                            book.getTransNo(), bnum, "0", "0", bcont);
                     clickids.add(getLastId() + "");
                     Log.e("ids", clickids.toString() + "");
                 }
                 if (book.getPayamount() == 0) {
-                    String calc = calculate(selectedbt + "",
+                    String calc = calculate(boxid + "",
                             sourceid + "", destid + "");
                     if (calc != null){
                         book.setPayamount(Double.valueOf(calc));
@@ -1048,7 +1021,7 @@ public class Receiver extends Fragment {
                     }
                     Log.e("rate", calc+ "");
                 } else {
-                    String calc = calculate(selectedbt + "",
+                    String calc = calculate(boxid + "",
                             sourceid + "", destid + "");
                     if (calc != null){
                         Double famount = ((book.getPayamount()) + (Double.valueOf(calc)));
@@ -1085,15 +1058,16 @@ public class Receiver extends Fragment {
                     boxnumbers.add(bnum);
                 }
                 boxesids.add(boxid);
+                Log.e("boxesids", boxesids.toString());
                 boolean feed = checkHardPort(getProvince(getAccntNo(receivername.getText().toString())));
                 if (feed == true) {
                     gen.addConsigneeBooking(re, getBoxNameIDused(boxid), sourceid + "", destid + "",
-                            book.getTransNo(), bnum, "1", "1", bcont);
+                            book.getTransNo(), bnum, "0", "1", bcont);
                     clickids.add(getLastId()+"");
                     Log.e("ids", clickids.toString() + "");
                 }else{
                     gen.addConsigneeBooking(re, getBoxNameIDused(boxid), sourceid + "", destid + "",
-                            book.getTransNo(), bnum, "1", "0",bcont);
+                            book.getTransNo(), bnum, "0", "0",bcont);
                     clickids.add(getLastId()+"");
                     Log.e("ids", clickids.toString() + "");
                 }
@@ -1144,6 +1118,33 @@ public class Receiver extends Fragment {
             rate = x.getString(x.getColumnIndex(gen.nsbr_rate));
         }
         return rate;
+    }
+
+    //get booking boxes by transaction number
+    public ArrayList<ListItem> getAllBoxInTransNo(String trans){
+        ArrayList<ListItem> results = new ArrayList<>();
+        SQLiteDatabase db = gen.getReadableDatabase();
+        Cursor res = db.rawQuery(" SELECT * FROM " + gen.tbname_booking_consignee_box + " WHERE "
+                + gen.book_con_transaction_no + " = '" + trans + "'", null);
+        res.moveToFirst();
+        while (!res.isAfterLast()) {
+            String acount = res.getString(res.getColumnIndex(gen.book_con_box_account_no));
+            String ids = res.getString(res.getColumnIndex(gen.book_con_box_id));
+            String sub = res.getString(res.getColumnIndex(gen.book_con_box_number));
+            String a = res.getString(res.getColumnIndex(gen.book_con_boxtype));
+            String topitem = "", temptop = "";
+            Cursor getname = db.rawQuery("SELECT " + gen.cust_fullname + " FROM " + gen.tbname_customers
+                    + " WHERE " + gen.cust_accountnumber + " = '" + acount + "'", null);
+            if (getname.moveToNext()) {
+                temptop = getname.getString(getname.getColumnIndex(gen.cust_fullname));
+            }
+            ListItem list = new ListItem(ids, temptop, sub, a);
+            results.add(list);
+            res.moveToNext();
+        }
+        res.close();
+        // Add some more dummy data for testing
+        return results;
     }
 
 }

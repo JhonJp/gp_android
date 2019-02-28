@@ -4,9 +4,9 @@
 
     <item
         android:id="@+id/drop_sync_get"
+        android:icon="@drawable/dlwhite"
         android:orderInCategory="100"
         android:title="Download data"
-        android:icon="@android:drawable/stat_sys_download"
         app:showAsAction="ifRoom" />
 
     <item

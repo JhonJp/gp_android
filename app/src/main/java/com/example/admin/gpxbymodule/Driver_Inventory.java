@@ -17,6 +17,7 @@ import android.support.design.widget.Snackbar;
 import android.text.Html;
 import android.util.Log;
 import android.view.Gravity;
+import android.view.MotionEvent;
 import android.view.View;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
@@ -70,7 +71,7 @@ public class Driver_Inventory extends AppCompatActivity
     TextView topt,subt;
     String topi;
     int equals = 0;
-
+    TableAdapter ad;
     @Override
     protected void onCreate(Bundle savedInstanceState){
         super.onCreate(savedInstanceState);
@@ -102,170 +103,11 @@ public class Driver_Inventory extends AppCompatActivity
         navigationView.setNavigationItemSelectedListener(this);
         getBoxesFromDistribution(helper.getFullname(helper.logcount()+""));
         Log.e("drivername", helper.getFullname(helper.logcount()+""));
+        scrolllist();
         spinnerlist();
         setNameMail();
         sidenavMain();
         subMenu();
-    }
-
-    public void all(String x){
-        try {
-            if (x.equals("Empty box")) {
-                topt.setText("Boxtype");
-                subt.setText("Quantity");
-                listitem = getEmptyBoxes("0", "0");
-                TableAdapter ad = new TableAdapter(this, listitem);
-                lv.setAdapter(ad);
-                lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-                    @Override
-                    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                        String topi = listitem.get(position).getTopitem();
-                        returnViewItems(topi,"0", "0");
-                        Log.e("topiteminvemp", topi);
-                    }
-                });
-                to.setVisibility(View.VISIBLE);
-                to.setText(Html.fromHtml("<small>Overall total: </small>" +
-                        "<b>" + countAll("0", "0") + " box(s) </b>"));
-            }else {
-                topt.setText("Boxtype");
-                subt.setText("Action");
-                listitem = getFilledNotInAcceptance("1", "2");
-                TableAdapter ad = new TableAdapter(this, listitem);
-                lv.setAdapter(ad);
-                lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-                    @Override
-                    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                        topi = listitem.get(position).getTopitem();
-                        returnViewItems(topi,"1", "2");
-                        Log.e("topiteminvemp", topi);
-                    }
-                });
-                to.setVisibility(View.INVISIBLE);
-            }
-        }catch (Exception e){}
-    }
-
-    public void returnViewItems(String id,String type, String s){
-        ArrayList<ListItem> poparray;
-        final Dialog dialog = new Dialog(Driver_Inventory.this);
-        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
-        dialog.setCancelable(false);
-        dialog.setContentView(R.layout.driver_inventoryview);
-
-        final TextView bt = (TextView) dialog.findViewById(R.id.btypetitle);
-        ListView poplist = (ListView)dialog.findViewById(R.id.list);
-
-        poparray = getBoxesNumbers(getIDBoxItem(id), type, s);
-
-        TableAdapter tb = new TableAdapter(getApplicationContext(), poparray);
-        poplist.setAdapter(tb);
-
-        bt.setText(id);
-
-        ImageButton close = (ImageButton) dialog.findViewById(R.id.close);
-        close.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                dialog.dismiss();
-            }
-        });
-        dialog.show();
-    }
-
-    public ArrayList<ListItem> getBoxesNumbers(String id, String type, String stat) {
-        ArrayList<ListItem> result = new ArrayList<>();
-        SQLiteDatabase db = gendata.getReadableDatabase();
-        String get = " SELECT * FROM "+gendata.tbname_driver_inventory
-                +" LEFT JOIN "+gendata.tbname_boxes+" ON "+gendata.tbname_boxes
-                +"."+gendata.box_id+" = "+gendata.tbname_driver_inventory+"."+gendata.sdinv_boxtype
-                +" WHERE "+gendata.sdinv_boxtype+" = '"+id+"' AND "+gendata.tbname_driver_inventory
-                +"."+gendata.sdinv_stat+" = '"+stat+"' AND "+gendata.tbname_driver_inventory
-                +"."+gendata.sdinv_boxtype_fillempty+" = '"+type+"'";
-        Cursor f = db.rawQuery(get, null);
-        f.moveToFirst();
-        int i = 1;
-        while (!f.isAfterLast()){
-            String bid = f.getString(f.getColumnIndex(gendata.sdinv_id));
-            String bname = f.getString(f.getColumnIndex(gendata.box_name));
-            String bnum = f.getString(f.getColumnIndex(gendata.sdinv_boxnumber));
-            if (!checkAcceptance(bnum)) {
-                ListItem item = new ListItem(bid, i + "", bnum, "");
-                result.add(item);
-                equals = i;
-                i++;
-            }
-            f.moveToNext();
-        }
-        return result;
-    }
-
-    public void setNameMail(){
-        RatesDB rate = new RatesDB(getApplicationContext());
-        String branchname = null;
-        View header = navigationView.getHeaderView(0);
-        TextView user = (TextView)header.findViewById(R.id.yourname);
-        TextView mail = (TextView)header.findViewById(R.id.yourmail);
-        user.setText(helper.getFullname(helper.logcount()+""));
-        SQLiteDatabase db = rate.getReadableDatabase();
-        Cursor x = db.rawQuery(" SELECT * FROM "+rate.tbname_branch
-                +" WHERE "+rate.branch_id+" = '"+helper.getBranch(""+helper.logcount())+"'", null);
-        if (x.moveToNext()){
-            branchname = x.getString(x.getColumnIndex(rate.branch_name));
-        }
-        x.close();
-        mail.setText(helper.getRole(helper.logcount())+" / "+branchname);
-
-    }
-
-    public void spinnerlist(){
-        try {
-            String[] items = new String[]{"Empty box", "Filled box","Barcodes"};
-            ArrayAdapter<String> adapter =
-                    new ArrayAdapter<>(getApplicationContext(), R.layout.spinneritem,
-                            items);
-            spin.setAdapter(adapter);
-            adapter.setDropDownViewResource(android.R.layout.select_dialog_singlechoice);
-
-            spin.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-                @Override
-                public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                    String x = spin.getSelectedItem().toString();
-                    switch (x) {
-                        case "Empty box":
-                            all(x);
-                            break;
-                        case "Filled box":
-                            all(x);
-                            break;
-                        case "Barcodes":
-                            topt.setText("#");
-                            subt.setText("Box No.");
-                            listitem = getBarcodes("0");
-                            TableAdapter ad = new TableAdapter(Driver_Inventory.this, listitem);
-                            lv.setAdapter(ad);
-                            lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-                                @Override
-                                public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                                    Log.e("clicked", "no");
-                                }
-                            });
-                            to.setVisibility(View.VISIBLE);
-                            to.setText(Html.fromHtml("<small>Overall total: </small>" +
-                                    "<b>" + countAllBarcode("0") + " pcs. </b>"));
-                            break;
-                        default :
-                            all("Empty box");
-                            break;
-                    }
-                }
-
-                @Override
-                public void onNothingSelected(AdapterView<?> parent) {
-                    all("Empty box");
-                }
-            });
-        }catch (Exception e){}
     }
 
     public void sidenavMain(){
@@ -436,6 +278,198 @@ public class Driver_Inventory extends AppCompatActivity
         }
     }
 
+    public void returnViewItems(String id,String type, String s){
+        ArrayList<ListItem> poparray;
+        final Dialog dialog = new Dialog(Driver_Inventory.this);
+        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+        dialog.setCancelable(false);
+        dialog.setContentView(R.layout.driver_inventoryview);
+
+        final TextView bt = (TextView) dialog.findViewById(R.id.btypetitle);
+        ListView poplist = (ListView)dialog.findViewById(R.id.list);
+
+        poparray = getBoxesNumbers(getIDBoxItem(id), type, s);
+
+        TableAdapter tb = new TableAdapter(getApplicationContext(), poparray);
+        poplist.setAdapter(tb);
+
+        bt.setText(id);
+
+        ImageButton close = (ImageButton) dialog.findViewById(R.id.close);
+        close.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                dialog.dismiss();
+            }
+        });
+        dialog.show();
+    }
+
+    public void scrolllist(){
+        lv.setOnTouchListener(new View.OnTouchListener() {
+            // Setting on Touch Listener for handling the touch inside ScrollView
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                v.getParent().requestDisallowInterceptTouchEvent(true);
+                return false;
+            }
+        });
+    }
+
+    public ArrayList<ListItem> getBoxesNumbers(String id, String type, String stat) {
+        ArrayList<ListItem> result = new ArrayList<>();
+        SQLiteDatabase db = gendata.getReadableDatabase();
+        String get = " SELECT * FROM "+gendata.tbname_driver_inventory
+                +" LEFT JOIN "+gendata.tbname_boxes+" ON "+gendata.tbname_boxes
+                +"."+gendata.box_id+" = "+gendata.tbname_driver_inventory+"."+gendata.sdinv_boxtype
+                +" WHERE "+gendata.sdinv_boxtype+" = '"+id+"' AND "+gendata.tbname_driver_inventory
+                +"."+gendata.sdinv_stat+" = '"+stat+"' AND "+gendata.tbname_driver_inventory
+                +"."+gendata.sdinv_boxtype_fillempty+" = '"+type+"'";
+        Cursor f = db.rawQuery(get, null);
+        f.moveToFirst();
+        int i = 1;
+        while (!f.isAfterLast()){
+            String bid = f.getString(f.getColumnIndex(gendata.sdinv_id));
+            String bname = f.getString(f.getColumnIndex(gendata.box_name));
+            String bnum = f.getString(f.getColumnIndex(gendata.sdinv_boxnumber));
+            if (!checkAcceptance(bnum)) {
+                ListItem item = new ListItem(bid, i + "", bnum, "");
+                result.add(item);
+                equals = i;
+                i++;
+            }
+            f.moveToNext();
+        }
+        return result;
+    }
+
+    public void setNameMail(){
+        RatesDB rate = new RatesDB(getApplicationContext());
+        String branchname = null;
+        View header = navigationView.getHeaderView(0);
+        TextView user = (TextView)header.findViewById(R.id.yourname);
+        TextView mail = (TextView)header.findViewById(R.id.yourmail);
+        user.setText(helper.getFullname(helper.logcount()+""));
+        SQLiteDatabase db = rate.getReadableDatabase();
+        Cursor x = db.rawQuery(" SELECT * FROM "+rate.tbname_branch
+                +" WHERE "+rate.branch_id+" = '"+helper.getBranch(""+helper.logcount())+"'", null);
+        if (x.moveToNext()){
+            branchname = x.getString(x.getColumnIndex(rate.branch_name));
+        }
+        x.close();
+        mail.setText(helper.getRole(helper.logcount())+" / "+branchname);
+
+    }
+
+    public void spinnerlist(){
+        try {
+            String[] items = new String[]{"Empty box", "Filled box","Barcodes"};
+            ArrayAdapter<String> adapter =
+                    new ArrayAdapter<>(getApplicationContext(), R.layout.spinneritem,
+                            items);
+            spin.setAdapter(adapter);
+            adapter.setDropDownViewResource(android.R.layout.select_dialog_singlechoice);
+
+            spin.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+                @Override
+                public void onItemSelected(AdapterView<?> parent,
+                                           View view, int position, long id) {
+                    String x = spin.getSelectedItem().toString();
+                    switch (x) {
+                        case "Empty box":
+                            topt.setText("Boxtype");
+                            subt.setText("Quantity");
+                            listitem = getEmptyBoxes("0", "0");
+                            ad = new TableAdapter(getApplicationContext(), listitem);
+                            lv.setAdapter(ad);
+                            lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                                @Override
+                                public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                                    String topi = listitem.get(position).getTopitem();
+                                    returnViewItems(topi,"0", "0");
+                                    Log.e("topiteminvemp", topi);
+                                }
+                            });
+                            to.setVisibility(View.VISIBLE);
+                            to.setText(Html.fromHtml("<small>Overall total: </small>" +
+                                    "<b>" + countAll("0", "0") + " box(s) </b>"));
+                            break;
+                        case "Filled box":
+                            topt.setText("Boxtype");
+                            subt.setText("Action");
+                            listitem = getFilledNotInAcceptance("1", "2");
+                            ad = new TableAdapter(getApplicationContext(), listitem);
+                            lv.setAdapter(ad);
+                            lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                                @Override
+                                public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                                    topi = listitem.get(position).getTopitem();
+                                    returnViewItems(topi,"1", "2");
+                                    Log.e("topiteminvemp", topi);
+                                }
+                            });
+                            to.setVisibility(View.INVISIBLE);
+                            break;
+                        case "Barcodes":
+                            topt.setText("Boxtype");
+                            subt.setText("Box No.");
+                            listitem = getBarcodes("0");
+                            TableAdapter ad = new TableAdapter(Driver_Inventory.this, listitem);
+                            lv.setAdapter(ad);
+                            lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                                @Override
+                                public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                                    Log.e("clicked", "no");
+                                }
+                            });
+                            to.setVisibility(View.VISIBLE);
+                            to.setText(Html.fromHtml("<small>Overall total: </small>" +
+                                    "<b>" + countAllBarcode("0") + " pcs. </b>"));
+                            break;
+                        default :
+                            topt.setText("Boxtype");
+                            subt.setText("Quantity");
+                            listitem = getEmptyBoxes("0", "0");
+                            ad = new TableAdapter(getApplicationContext(), listitem);
+                            lv.setAdapter(ad);
+                            lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                                @Override
+                                public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                                    String topi = listitem.get(position).getTopitem();
+                                    returnViewItems(topi,"0", "0");
+                                    Log.e("topiteminvemp", topi);
+                                }
+                            });
+                            to.setVisibility(View.VISIBLE);
+                            to.setText(Html.fromHtml("<small>Overall total: </small>" +
+                                    "<b>" + countAll("0", "0") + " box(s) </b>"));
+                            break;
+                    }
+                }
+
+                @Override
+                public void onNothingSelected(AdapterView<?> parent) {
+                    topt.setText("Boxtype");
+                    subt.setText("Quantity");
+                    listitem = getEmptyBoxes("0", "0");
+                    ad = new TableAdapter(getApplicationContext(), listitem);
+                    lv.setAdapter(ad);
+                    lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                        @Override
+                        public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                            String topi = listitem.get(position).getTopitem();
+                            returnViewItems(topi,"0", "0");
+                            Log.e("topiteminvemp", topi);
+                        }
+                    });
+                    to.setVisibility(View.VISIBLE);
+                    to.setText(Html.fromHtml("<small>Overall total: </small>" +
+                            "<b>" + countAll("0", "0") + " box(s) </b>"));
+                }
+            });
+        }catch (Exception e){}
+    }
+
     @Override
     public void onBackPressed() {
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
@@ -550,9 +584,13 @@ public class Driver_Inventory extends AppCompatActivity
             while (!c.isAfterLast()) {
                 String id = c.getString(c.getColumnIndex(rate.barcodeDriverInv_id));
                 String subitem = c.getString(c.getColumnIndex(rate.barcodeDriverInv_boxnumber));
-                ListItem list = new ListItem(id, i+"", subitem, null);
-                results.add(list);
-                i++;
+                if (checkInBooking(subitem)){
+                    rate.updateBarDriverInv(subitem,"1");
+                }else {
+                    ListItem list = new ListItem(id, i + ". Open", subitem, null);
+                    results.add(list);
+                    i++;
+                }
                 c.moveToNext();
             }
         }catch (Exception e){}
@@ -812,5 +850,16 @@ public class Driver_Inventory extends AppCompatActivity
         }
     }
 
+    public boolean checkInBooking(String bn){
+        SQLiteDatabase db = gendata.getReadableDatabase();
+        String x = " SELECT * FROM "+gendata.tbname_booking_consignee_box
+                +" WHERE "+gendata.book_con_box_number+" = '"+bn+"'";
+        Cursor c = db.rawQuery(x, null);
+        if (c.getCount() != 0 ){
+             return true;
+        }else{
+            return false;
+        }
+    }
 
 }

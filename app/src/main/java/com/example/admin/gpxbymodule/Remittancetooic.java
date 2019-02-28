@@ -154,13 +154,13 @@ public class Remittancetooic extends AppCompatActivity
         confirmRemit();
 
         if (value.equals("OIC")) {
-            this.setTitle("Remittance to BANK");
+            this.setTitle("Remittance");
             Log.e("expenses", sumExpense() + "");
             double amountwith = (sumFromDriver() - sumExpense());
             Log.e("fromDriver", sumFromDriver() + "");
             amounthold.setText((amountwith + getAllowance()) + "0");
         }else{
-            this.setTitle("Remittance to OIC");
+            this.setTitle("Remittance");
             //insertRemittanceDriverAmount();
             amounthold.setText((getAmounttoRemit() - sumExpense()) + (getAllowance()) + "0");
 
@@ -388,7 +388,7 @@ public class Remittancetooic extends AppCompatActivity
                 public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                     final String iddel = result.get(position).getId();
                     final AlertDialog.Builder builder = new AlertDialog.Builder(Remittancetooic.this);
-                    builder.setTitle("Delete thi data?");
+                    builder.setTitle("Delete this data?");
                     builder.setMessage("Please confirm to delete this data.");
                     builder.setPositiveButton("Delete", new DialogInterface.OnClickListener() {
                                 public void onClick(DialogInterface dialog, int id) {
@@ -577,7 +577,6 @@ public class Remittancetooic extends AppCompatActivity
         View d = inflater.inflate(R.layout.expenseadd,null);
         dialogBuilder.setView(d);
         final Spinner itemname = (Spinner)d.findViewById(R.id.items);
-        final ImageButton addi = (ImageButton)d.findViewById(R.id.additem);
         final EditText amount = (EditText)d.findViewById(R.id.amountinput);
         final EditText description = (EditText)d.findViewById(R.id.descrip);
         eximg = (TextView) d.findViewById(R.id.expimg);
@@ -629,13 +628,6 @@ public class Remittancetooic extends AppCompatActivity
         dialogBuilder.setTitle("Add new expense");
         final AlertDialog td = dialogBuilder.create();
         td.show();
-        addi.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                addnewItemExpense();
-                td.dismiss();
-            }
-        });
     }
 
     public void viewtoBank(){

@@ -1,0 +1,213 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    app:layout_behavior="@string/appbar_scrolling_view_behavior"
+    tools:context=".Remitt"
+    tools:showIn="@layout/app_bar_remitt">
+
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="120dp"
+                android:background="@color/colorPrimary">
+
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:orientation="vertical">
+
+                    <view
+                        class="android.support.v4.widget.Space"
+                        id="@+id/view3"
+                        android:layout_width="match_parent"
+                        android:layout_height="25dp" />
+
+                    <FrameLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="50dp"
+                        android:layout_gravity="center">
+
+                        <TextView
+                            android:id="@+id/amount"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:gravity="center_vertical|center_horizontal|center"
+                            android:text="@string/totalamount"
+                            android:textAppearance="@style/TextAppearance.AppCompat.Large"
+                            android:textColor="@color/textcolor"
+                            android:textStyle="bold" />
+                    </FrameLayout>
+
+                    <FrameLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent">
+
+                        <TextView
+                            android:id="@+id/hintamount"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:gravity="center"
+                            android:text="Total collected  amount (without expenses)"
+                            android:textColor="@color/gray"
+                            android:textSize="12sp"
+                            android:textStyle="italic" />
+                    </FrameLayout>
+
+                </LinearLayout>
+            </FrameLayout>
+
+            <TextView
+                android:id="@+id/textView35"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:text="Expenses breakdown" />
+
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="300dp">
+
+                <include
+                    layout="@layout/remit_list"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
+            </FrameLayout>
+
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_gravity="bottom"
+                android:background="@drawable/linebottom">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_gravity="bottom|center"
+                    android:gravity="bottom|center"
+                    android:orientation="vertical">
+
+                    <TableRow
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:background="@drawable/linebottom">
+
+                        <TextView
+                            android:id="@+id/toptype4"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="left"
+                            android:layout_weight="1"
+                            android:ellipsize="end"
+                            android:freezesText="true"
+                            android:gravity="left"
+                            android:paddingStart="10dp"
+                            android:text="Total Expenses"
+                            android:textAppearance="@android:style/TextAppearance.DeviceDefault.Small"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:id="@+id/total_exp"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:ellipsize="end"
+                            android:freezesText="true"
+                            android:gravity="right"
+                            android:paddingEnd="25dp"
+                            android:paddingStart="5dp"
+                            android:text="0.00"
+                            android:textAppearance="@android:style/TextAppearance.DeviceDefault.Small"
+                            android:textStyle="bold" />
+
+                    </TableRow>
+
+                    <TableRow
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:background="@drawable/linebottom">
+
+                        <TextView
+                            android:id="@+id/toptype6"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="left"
+                            android:layout_weight="1"
+                            android:ellipsize="end"
+                            android:freezesText="true"
+                            android:gravity="left"
+                            android:paddingStart="10dp"
+                            android:text="Net Collection"
+                            android:textAppearance="@android:style/TextAppearance.DeviceDefault.Small"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:id="@+id/net_collect"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:ellipsize="end"
+                            android:freezesText="true"
+                            android:gravity="right"
+                            android:paddingEnd="25dp"
+                            android:paddingStart="5dp"
+                            android:text="0.00"
+                            android:textAppearance="@android:style/TextAppearance.DeviceDefault.Small"
+                            android:textStyle="bold" />
+
+                    </TableRow>
+
+                    <TableRow
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:background="@drawable/linebottom">
+
+                        <TextView
+                            android:id="@+id/toptype8"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="left"
+                            android:layout_weight="1"
+                            android:ellipsize="end"
+                            android:freezesText="true"
+                            android:gravity="left"
+                            android:paddingStart="10dp"
+                            android:text="Amount Remitted"
+                            android:textAppearance="@android:style/TextAppearance.DeviceDefault.Small"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:id="@+id/rem_amount"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:ellipsize="end"
+                            android:freezesText="true"
+                            android:gravity="right"
+                            android:paddingEnd="25dp"
+                            android:paddingStart="5dp"
+                            android:text="0.00"
+                            android:textAppearance="@android:style/TextAppearance.DeviceDefault.Small"
+                            android:textStyle="bold" />
+
+                    </TableRow>
+
+                </LinearLayout>
+
+            </FrameLayout>
+
+        </LinearLayout>
+    </ScrollView>
+</RelativeLayout>

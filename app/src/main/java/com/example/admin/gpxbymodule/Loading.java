@@ -7,6 +7,7 @@ import android.app.DatePickerDialog;
 import android.app.Dialog;
 import android.app.ProgressDialog;
 import android.content.ContentValues;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -506,6 +507,15 @@ public class Loading extends Fragment {
         return findate;
     }
 
+    public String timereturn(){
+        Date datetalaga = Calendar.getInstance().getTime();
+        SimpleDateFormat writeDate = new SimpleDateFormat("hh:mm:ss a");
+        writeDate.setTimeZone(TimeZone.getTimeZone("GMT+8"));
+        String findate = writeDate.format(datetalaga);
+
+        return findate;
+    }
+
     public boolean checkBoxnum(String bn){
         SQLiteDatabase db = rate.getReadableDatabase();
         Cursor x = db.rawQuery(" SELECT * FROM "+rate.tb_loadbox
@@ -519,11 +529,11 @@ public class Loading extends Fragment {
 
     public void checkFieldsAndSave(){
         try {
-            String ldate = loaddate.getText().toString();
+            String ldate = loaddate.getText().toString()+" "+timereturn();
             String shname = shipper.getText().toString();
             String cont = contain.getText().toString();
-            String etafield = eta.getText().toString();
-            String etdfield = etd.getText().toString();
+            String etafield = eta.getText().toString()+" "+timereturn();
+            String etdfield = etd.getText().toString()+" "+timereturn();
 
             if ((ldate.equals("")) || (shname.equals("")) || (cont.equals("")) ||
                     (etafield.equals("")) || (etdfield.equals(""))) {
@@ -542,6 +552,7 @@ public class Loading extends Fragment {
                 }else {
                     for (String bn : boxes){
                         rate.addload(loadhome.getLoadtrans(), bn , "2");
+                        updateBn(bn);
                     }
                     rate.addFinalload(loadhome.getLoadtrans(), ldate, shname,
                             cont, etafield, etdfield, helper.logcount() + "", "1", "1");
@@ -557,7 +568,9 @@ public class Loading extends Fragment {
                     dum.requestFocus();
                 }
             }
-        }catch (Exception e){}
+        }catch (Exception e){
+            Log.e("error", e.getMessage());
+        }
     }
 
     public void loadingPost(final View v){
@@ -605,6 +618,15 @@ public class Loading extends Fragment {
                 });
             }
         }).start();
+    }
+
+    public void updateBn(String bn){
+        SQLiteDatabase db = gen.getWritableDatabase();
+        ContentValues cv = new ContentValues();
+        cv.put(gen.acc_box_stat, "10");
+        db.update(gen.tbname_accept_boxes, cv, gen.acc_box_boxnumber+" = '"+bn+"'", null);
+        Log.e("update", bn);
+        db.close();
     }
 
 }

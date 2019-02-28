@@ -14,6 +14,8 @@ import android.text.TextWatcher;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.Animation;
@@ -39,7 +41,6 @@ public class AddReceiver extends Fragment {
             unit, pnum,mobnum,email, postal, sendaccount, secondnum, thrnum;
     TextView birthdate;
     RatesDB rates;
-    AddCustomer cust;
     HomeDatabase helper;
     GenDatabase generaldb;
     Spinner selectgender, province, city, brgy;
@@ -56,15 +57,6 @@ public class AddReceiver extends Fragment {
         rates = new RatesDB(getContext());
         helper = new HomeDatabase(getContext());
         generaldb = new GenDatabase(getContext());
-        cust = (AddCustomer)getActivity();
-
-        cust.fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                checking();
-                Log.e("fragment", "new receiver");
-            }
-        });
 
         selectgender = (Spinner)view.findViewById(R.id.gender);
         bdate = (ImageButton) view.findViewById(R.id.addate);
@@ -97,8 +89,8 @@ public class AddReceiver extends Fragment {
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        getActivity().setTitle("New Customer");
-        setHasOptionsMenu(false);
+        getActivity().setTitle("New Receiver");
+        setHasOptionsMenu(true);
     }
 
     public void spinnerGender(){
@@ -204,7 +196,7 @@ public class AddReceiver extends Fragment {
 
     public void checking(){
         try {
-            String variable = cust.customtype.getSelectedItem().toString();
+            String variable = "receiver";
             String acc = sendaccount.getText().toString();
             String first = fname.getText().toString();
             String mname = midname.getText().toString();
@@ -381,6 +373,21 @@ public class AddReceiver extends Fragment {
             }
         }catch (Exception e){}
         return code;
+    }
+
+    @Override
+    public void onPrepareOptionsMenu(Menu menu) {
+        menu.findItem(R.id.savecustomer).setVisible(false);
+        super.onPrepareOptionsMenu(menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        int id = item.getItemId();
+        if (id == R.id.savereceiver) {
+            checking();
+        }
+        return super.onOptionsItemSelected(item);
     }
 
 }

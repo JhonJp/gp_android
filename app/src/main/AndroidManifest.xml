@@ -158,13 +158,8 @@
             android:screenOrientation="portrait"
             android:theme="@style/AppTheme.NoActionBar" />
         <activity
-            android:name=".Deliverycontent"
-            android:label="@string/title_activity_deliverycontent"
-            android:screenOrientation="portrait"
-            android:theme="@style/AppTheme.NoActionBar" />
-        <activity
             android:name=".Remittancetooic"
-            android:label="@string/title_activity_remittancetooic"
+            android:label="@string/title_activity_remittance"
             android:screenOrientation="portrait"
             android:theme="@style/AppTheme.NoActionBar" />
         <activity
@@ -199,8 +194,14 @@
             android:theme="@style/AppTheme.NoActionBar" />
         <activity
             android:name=".BoxReleaseList"
+            android:screenOrientation="portrait"
             android:label="@string/title_activity_box_release_list"
-            android:theme="@style/AppTheme.NoActionBar"></activity>
+            android:theme="@style/AppTheme.NoActionBar" />
+        <activity
+            android:name=".Remitt"
+            android:label="@string/title_activity_remitt"
+            android:screenOrientation="portrait"
+            android:theme="@style/AppTheme.NoActionBar" />
     </application>
 
 </manifest>

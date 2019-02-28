@@ -123,8 +123,9 @@
                                 android:id="@+id/customermobileinput"
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:hint="Mobile Number"
-                                android:inputType="text|number" />
+                                android:hint="Mobile number (63+11digits)"
+                                android:inputType="text|number"
+                                android:maxLength="12" />
                         </android.support.design.widget.TextInputLayout>
                     </FrameLayout>
 
@@ -141,8 +142,9 @@
                                 android:id="@+id/sec_numberinput"
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:hint="Secondary Number"
-                                android:inputType="text|number" />
+                                android:hint="Secondary Number (63+11digits)"
+                                android:inputType="text|number"
+                                android:maxLength="12" />
                         </android.support.design.widget.TextInputLayout>
                     </FrameLayout>
 
@@ -159,8 +161,9 @@
                                 android:id="@+id/an_numberinput"
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:hint="Another Number"
-                                android:inputType="text|number" />
+                                android:hint="Another Number  (63+11digits)"
+                                android:inputType="text|number"
+                                android:maxLength="12" />
                         </android.support.design.widget.TextInputLayout>
                     </FrameLayout>
 

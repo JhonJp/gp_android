@@ -13,7 +13,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:paddingBottom="65dp"
+            android:paddingBottom="70dp"
             android:paddingEnd="5dp"
             android:paddingStart="5dp">
 
@@ -129,6 +129,21 @@
                     android:layout_height="wrap_content"
                     android:paddingStart="10dp">
 
+                </android.support.design.widget.TextInputLayout>
+
+            </FrameLayout>
+
+            <FrameLayout
+                android:id="@+id/transout"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+
+                <android.support.design.widget.TextInputLayout
+                    android:id="@+id/transnumtitle"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:paddingStart="10dp">
+
                     <EditText
                         android:id="@+id/transnuminput"
                         android:layout_width="match_parent"
@@ -151,7 +166,7 @@
                     android:layout_height="wrap_content"
                     android:paddingStart="10dp">
 
-                    <EditText
+                    <AutoCompleteTextView
                         android:id="@+id/drivername_input"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -242,6 +257,60 @@
                         android:orientation="vertical">
 
                         <TextView
+                            android:id="@+id/etdtitle"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="ETD" />
+
+                        <TextView
+                            android:id="@+id/etdinput"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="ETD"
+                            android:textAppearance="@style/TextAppearance.AppCompat.Medium" />
+
+                        <View
+                            android:layout_width="match_parent"
+                            android:layout_height="1dp"
+                            android:layout_weight="1"
+                            android:background="@android:color/darker_gray" />
+
+                    </LinearLayout>
+
+                    <ImageButton
+                        android:id="@+id/addetd"
+                        android:layout_width="60dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="0.3"
+                        android:background="@android:color/transparent"
+                        app:srcCompat="@android:drawable/ic_menu_my_calendar" />
+
+                </LinearLayout>
+
+            </FrameLayout>
+
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_marginBottom="5dp"
+                android:layout_marginTop="5dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:orientation="horizontal"
+                    android:paddingEnd="12dp"
+                    android:paddingStart="12dp">
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
                             android:id="@+id/etatitle"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
@@ -293,7 +362,7 @@
                         android:layout_height="match_parent"
                         android:gravity="start"
                         android:hint="Remarks"
-                        android:inputType="text|textMultiLine"
+                        android:inputType="textCapWords|textMultiLine"
                         android:maxLength="250"
                         android:minHeight="100dp" />
                 </android.support.design.widget.TextInputLayout>

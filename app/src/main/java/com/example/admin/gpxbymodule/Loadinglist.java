@@ -617,7 +617,6 @@ public class Loadinglist extends AppCompatActivity
                                     .setMessage("Data upload has been successful, thank you.")
                                     .setPositiveButton("Ok", new DialogInterface.OnClickListener() {
                                         public void onClick(DialogInterface dialog, int id) {
-                                            recreate();
                                             dialog.dismiss();
                                         }
                                     });

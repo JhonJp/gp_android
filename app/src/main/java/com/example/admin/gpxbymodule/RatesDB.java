@@ -297,6 +297,7 @@ public class RatesDB extends SQLiteOpenHelper {
     public final String partdist_transactionnumber = "transaction_no";
     public final String partdist_type = "type";
     public final String partdist_mode = "shipment_mode";
+    public final String partdist_etd = "etd";
     public final String partdist_eta = "eta";
     public final String partdist_typename = "typename";
     public final String partdist_trucknum = "trucknumber";
@@ -316,6 +317,7 @@ public class RatesDB extends SQLiteOpenHelper {
             + partdist_typename + " TEXT, "
             + partdist_drivername+ " TEXT, "
             + partdist_trucknum + " TEXT, "
+            + partdist_etd + " TEXT, "
             + partdist_eta + " TEXT, "
             + partdist_remarks + " TEXT, "
             + partdist_status + " TEXT, "
@@ -452,7 +454,7 @@ public class RatesDB extends SQLiteOpenHelper {
             +bardist_driverid+" INTEGER, "
             +bardist_createddate+" TEXT, "
             +bardist_upds+" INTEGER, "
-            +bardist_accptstat+" INTEGER, "
+            +bardist_accptstat+" TEXT, "
             +bardist_createdby+" TEXT )";
     public final String dropBarcodeDist = " DROP TABLE IF EXISTS "+tbname_barcode_dist;
 
@@ -537,6 +539,17 @@ public class RatesDB extends SQLiteOpenHelper {
             + gen_image+ " BLOB )";
     public String dropGenericImageDb = "DROP TABLE IF EXISTS " + tbname_employee;
 
+    //dummy data for unloading to resume
+    public final String tbname_unloaddummy = "unload_dummy";
+    public final String unldummy_id = "id";
+    public final String unldummy_boxnumber = "box_number";
+    public final String unldummy_image = "image";
+    public String createDummyTable = " CREATE TABLE " + tbname_unloaddummy + "("
+            + unldummy_id + " INTEGER PRIMARY KEY AUTOINCREMENT,"
+            + unldummy_boxnumber + " TEXT, "
+            + unldummy_image+ " BLOB )";
+    public String dropDummyTable = "DROP TABLE IF EXISTS " + tbname_unloaddummy;
+
 
     public RatesDB(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
@@ -559,6 +572,7 @@ public class RatesDB extends SQLiteOpenHelper {
         db.execSQL(createDelSubStat);
         db.execSQL(createUnbi);
         db.execSQL(createBCont);
+        db.execSQL(createDummyTable);
 
         //province
         db.execSQL(createProvinces);
@@ -619,6 +633,7 @@ public class RatesDB extends SQLiteOpenHelper {
         db.execSQL(dropexpit);
         db.execSQL(drop_part_dist);
         db.execSQL(drop_part_dist_box);
+        db.execSQL(dropDummyTable);
         db.execSQL(drop_pacc);
         db.execSQL(drop_pacc_box);
         db.execSQL(drop_partnerbox);
@@ -751,7 +766,7 @@ public class RatesDB extends SQLiteOpenHelper {
 
     public String[] getAllBranch(String type, String branch){
         Cursor cursor = getReadableDatabase().rawQuery("SELECT "+branch_name+" FROM "
-                + tbname_branch+" WHERE "+branch_type+" = '"+type+"'", null);
+                + tbname_branch+" WHERE "+branch_type+" = '"+type+"' AND "+branch_id+" != '"+branch+"'", null);
         cursor.moveToFirst();
         ArrayList<String> names = new ArrayList<String>();
         while(!cursor.isAfterLast()) {
@@ -956,7 +971,7 @@ public class RatesDB extends SQLiteOpenHelper {
         cv.put(load_box_stat, stat);
 
         db.insert(tb_loadbox, null, cv);
-        Log.e("added", box_num);
+        Log.e("added_loadbox", box_num);
         db.close();
     }
 
@@ -1133,7 +1148,7 @@ public class RatesDB extends SQLiteOpenHelper {
     }
 
     public boolean addDistribution(String trans, String type,String mode, String typename,String driver,
-                                   String truck, String rem,String eta, String status, String upstat,
+                                   String truck, String rem,String etd, String eta, String status, String upstat,
                                    String date, String by, String upds, int sac, byte[] sign) {
         SQLiteDatabase db = this.getWritableDatabase();
 
@@ -1145,6 +1160,7 @@ public class RatesDB extends SQLiteOpenHelper {
         cv.put(partdist_drivername, driver);
         cv.put(partdist_trucknum, truck);
         cv.put(partdist_remarks, rem);
+        cv.put(partdist_etd, etd);
         cv.put(partdist_eta, eta);
         cv.put(partdist_status, status);
         cv.put(partdist_uploadstat, upstat);
@@ -1173,12 +1189,19 @@ public class RatesDB extends SQLiteOpenHelper {
             String ac = res.getString(res.getColumnIndex(partdist_typename));
             String id = res.getString(res.getColumnIndex(partdist_transactionnumber));
             String sub = res.getString(res.getColumnIndex(partdist_trucknum));
-            String topitem = res.getString(res.getColumnIndex(partdist_typename));
+            String topitem = null;
+            String dest = res.getString(res.getColumnIndex(partdist_type));
+            String driver = res.getString(res.getColumnIndex(partdist_drivername));
             String quant = "";
             Cursor aX = db.rawQuery(" SELECT COUNT("+partdist_box_boxid+") FROM "+tbname_part_distribution_box
                     +" WHERE "+partdist_box_distributionid+" = '"+id+"' GROUP BY "+partdist_box_distributionid, null);
             if (aX.moveToFirst()){
                 quant = aX.getString(0);
+            }
+            if (dest.toLowerCase().equals("direct")){
+                topitem = driver;
+            }else{
+                topitem = ac;
             }
             ThreeWayHolder list = new ThreeWayHolder(id, topitem, sub, quant);
             results.add(list);
@@ -1480,6 +1503,17 @@ public class RatesDB extends SQLiteOpenHelper {
             cv.put(gen_image, image);
         db.insert(tbname_generic_imagedb, null, cv);
         Log.e("new_image","module-"+module+",trans-"+transaction_no);
+        db.close();
+    }
+
+    //add dummy data
+    public void addDummy(String boxnumber, byte[] image){
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues cv = new ContentValues();
+        cv.put(unldummy_boxnumber, boxnumber);
+        cv.put(unldummy_image, image);
+        db.insert(tbname_unloaddummy, null, cv);
+        Log.e("dummy_data", boxnumber);
         db.close();
     }
 

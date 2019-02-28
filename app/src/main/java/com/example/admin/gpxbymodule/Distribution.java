@@ -80,6 +80,8 @@ public class Distribution extends AppCompatActivity
     ArrayList<String> inventoryIDS;
     ArrayList<String> boxIDS;
     ArrayList<String> transnums;
+    ArrayList<HomeList> storeimages;
+    ArrayList<byte[]> capt_images;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -287,35 +289,45 @@ public class Distribution extends AppCompatActivity
 
     @Override
     public void onBackPressed() {
-        int id = bottomnav.getSelectedItemId();
-        if (id == R.id.transactioninfo ) {
-            final AlertDialog.Builder builder = new AlertDialog.Builder(this);
-            builder.setTitle("Cancel transaction?")
-                    .setPositiveButton("Ok", new DialogInterface.OnClickListener() {
-                        public void onClick(DialogInterface dialog, int id) {
-                            if (getInventoryIDS() != null){
-                                for (String inds : getInventoryIDS()){
-                                    //addQuan(inds, "1");
+        try {
+            int id = bottomnav.getSelectedItemId();
+            if (id == R.id.transactioninfo) {
+                final AlertDialog.Builder builder = new AlertDialog.Builder(this);
+                builder.setTitle("Cancel transaction?")
+                        .setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int id) {
+                                if (getBoxnumbers() != null) {
+                                    if (getBoxnumbers().size() != 0) {
+                                        for (String bn : getBoxnumbers()) {
+                                            updateBxInv(bn, "0");
+                                        }
+                                    } else {
+                                    }
                                 }
-                                getBoxIDS().clear();
-                                getInventoryIDS().clear();
-                                getBoxnumbers().clear();
+                                if (getInventoryIDS() != null) {
+                                    for (String inds : getInventoryIDS()) {
+                                        addQuan(inds);
+                                    }
+                                    getBoxIDS().clear();
+                                    getInventoryIDS().clear();
+                                    getBoxnumbers().clear();
+                                }
+                                startActivity(new Intent(getApplicationContext(), Home.class));
+                                finish();
                             }
-                            startActivity(new Intent(getApplicationContext(), Home.class));
-                            finish();
-                        }
-                    })
-                    .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-                        public void onClick(DialogInterface dialog, int id) {
-                            dialog.dismiss();
-                        }
-                    });
-            // Create the AlertDialog object and show it
-            builder.create().show();
-        }else{
-            startActivity(new Intent(getApplicationContext(), Home.class));
-            finish();
-        }
+                        })
+                        .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int id) {
+                                dialog.dismiss();
+                            }
+                        });
+                // Create the AlertDialog object and show it
+                builder.create().show();
+            } else {
+                startActivity(new Intent(getApplicationContext(), Home.class));
+                finish();
+            }
+        }catch(Exception e){}
     }
 
     private boolean loadFragment(Fragment fragment) {
@@ -476,6 +488,16 @@ public class Distribution extends AppCompatActivity
         db.close();
     }
 
+    public void updateBxInv(String bn, String stat){
+        SQLiteDatabase db = gen.getWritableDatabase();
+        ContentValues cv = new ContentValues();
+        cv.put(gen.chinv_stat, stat);
+        db.update(gen.tbname_checker_inventory, cv,
+                gen.chinv_boxnumber+" = '"+bn+"'", null);
+        Log.e("update_inv",bn);
+        db.close();
+    }
+
     @Override
     protected void onDestroy() {
         if (getInventoryIDS() != null){
@@ -627,6 +649,8 @@ public class Distribution extends AppCompatActivity
                     json.put("driver_name", "");
                     json.put("truck_no", truck);
                     json.put("remarks", remarks);
+                    json.put("etd", "");
+                    json.put("eta", "");
                     json.put("created_date", d);
                     json.put("created_by", by);
                     json.put("acceptance_status", accstat);
@@ -697,7 +721,7 @@ public class Distribution extends AppCompatActivity
                         progressBar.dismiss();
                         final AlertDialog.Builder builder = new AlertDialog.Builder(Distribution.this);
                         builder.setTitle("Information notification")
-                                .setMessage("You dont have enough data to be uploaded yet, please try again later.")
+                                .setMessage("You dont have enough data to be uploaded yet, please confirm your transactions first.")
                                 .setPositiveButton("Ok", new DialogInterface.OnClickListener() {
                                     public void onClick(DialogInterface dialog, int id) {
                                         dialog.dismiss();
@@ -747,17 +771,18 @@ public class Distribution extends AppCompatActivity
 
     public JSONArray getDistributionImage(String id) {
         SQLiteDatabase myDataBase = rate.getReadableDatabase();
-        String raw = "SELECT * FROM " + rate.tbname_dstimages
-                + " WHERE "+rate.distimage_trans+" = '"+id+"'";
+        String raw = "SELECT * FROM " + rate.tbname_generic_imagedb
+                + " WHERE "+rate.gen_trans+" = '"+id+"' AND "+rate.gen_module+" = 'distribution'";
         Cursor c = myDataBase.rawQuery(raw, null);
         JSONArray resultSet = new JSONArray();
         c.moveToFirst();
         try {
             while (!c.isAfterLast()) {
                 JSONObject js = new JSONObject();
-                String ids = c.getString(c.getColumnIndex(rate.distimage_id));
-                String tr = c.getString(c.getColumnIndex(rate.distimage_trans));
-                byte[] im = c.getBlob(c.getColumnIndex(rate.distimage_image));
+                String ids = c.getString(c.getColumnIndex(rate.gen_id));
+                String tr = c.getString(c.getColumnIndex(rate.gen_trans));
+                String module = c.getString(c.getColumnIndex(rate.gen_module));
+                byte[] im = c.getBlob(c.getColumnIndex(rate.gen_image));
                 Bitmap bitmap = BitmapFactory.decodeByteArray(im, 0, im.length);
                 byte[] bitmapdata = getBytesFromBitmap(bitmap);
                 // get the base 64 string
@@ -765,6 +790,7 @@ public class Distribution extends AppCompatActivity
 
                 js.put("id", ids);
                 js.put("distribution_id", tr);
+                js.put("module", module);
                 js.put("image", imgString);
 
                 resultSet.put(js);
@@ -781,7 +807,7 @@ public class Distribution extends AppCompatActivity
     // convert from bitmap to byte array
     public byte[] getBytesFromBitmap(Bitmap bitmap) {
         ByteArrayOutputStream stream = new ByteArrayOutputStream();
-        bitmap.compress(Bitmap.CompressFormat.JPEG, 80, stream);
+        bitmap.compress(Bitmap.CompressFormat.JPEG, 100, stream);
         return stream.toByteArray();
     }
 
@@ -820,6 +846,22 @@ public class Distribution extends AppCompatActivity
 
     public void setBoxIDS(ArrayList<String> boxIDS) {
         this.boxIDS = boxIDS;
+    }
+
+    public ArrayList<HomeList> getStoreimages() {
+        return storeimages;
+    }
+
+    public void setStoreimages(ArrayList<HomeList> storeimages) {
+        this.storeimages = storeimages;
+    }
+
+    public ArrayList<byte[]> getCapt_images() {
+        return capt_images;
+    }
+
+    public void setCapt_images(ArrayList<byte[]> capt_images) {
+        this.capt_images = capt_images;
     }
 
 

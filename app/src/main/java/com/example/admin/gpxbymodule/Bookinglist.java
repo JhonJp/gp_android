@@ -86,16 +86,15 @@ public class Bookinglist extends AppCompatActivity
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        helper = new HomeDatabase(getApplicationContext());
-        generaldb = new GenDatabase(getApplicationContext());
-        rate = new RatesDB(getApplicationContext());
+        helper = new HomeDatabase(this);
+        generaldb = new GenDatabase(this);
+        rate = new RatesDB(this);
         lv = (ListView)findViewById(R.id.lv);
         search = (AutoCompleteTextView)findViewById(R.id.searchableinput);
         search.setSelected(false);
         link = helper.getUrl();
         bookids = new ArrayList<>();
 
-        scroll();
         customtype();
         try {
             search.addTextChangedListener(new TextWatcher() {
@@ -116,43 +115,49 @@ public class Bookinglist extends AppCompatActivity
                     Log.e("text watch", "after change");
                 }
             });
-        }catch (Exception e){}
 
-        if (helper.logcount() != 0){
-            value = helper.getRole(helper.logcount());
-            Log.e("role ", value);
+            scroll();
+            if (helper.logcount() != 0){
+                value = helper.getRole(helper.logcount());
+                Log.e("role ", value);
+            }
+
+            FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.addbooking);
+            fab.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    try {
+                        Intent i = new Intent(getApplicationContext(), Booking.class);
+                        Bundle bundle = new Bundle();
+                        //Add your data from getFactualResults method to bundle
+                        bundle.putString("transno", null);
+                        bundle.putString("fullname", null);
+                        //Add the bundle to the intent
+                        i.putExtras(bundle);
+                        startActivity(i);
+                        finish();
+                    }catch (Exception e){}
+                }
+            });
+
+            DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+            ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
+                    this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
+            drawer.addDrawerListener(toggle);
+            toggle.syncState();
+
+            navigationView = (NavigationView) findViewById(R.id.nav_view);
+            navigationView.setNavigationItemSelectedListener(this);
+
+            setNameMail();
+            sidenavMain();
+            subMenu();
+
+        }catch (Exception e){
+            Log.e("error",e.getMessage());
         }
 
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.addbooking);
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                try {
-                    Intent i = new Intent(getApplicationContext(), Booking.class);
-                    Bundle bundle = new Bundle();
-                    //Add your data from getFactualResults method to bundle
-                    bundle.putString("transno", null);
-                    bundle.putString("fullname", null);
-                    //Add the bundle to the intent
-                    i.putExtras(bundle);
-                    startActivity(i);
-                    finish();
-                }catch (Exception e){}
-            }
-        });
 
-        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
-        ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
-                this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
-        drawer.addDrawerListener(toggle);
-        toggle.syncState();
-
-        navigationView = (NavigationView) findViewById(R.id.nav_view);
-        navigationView.setNavigationItemSelectedListener(this);
-
-        setNameMail();
-        sidenavMain();
-        subMenu();
     }
 
     public void setNameMail(){
@@ -190,8 +195,8 @@ public class Bookinglist extends AppCompatActivity
     public void customtype(){
         try {
             final ArrayList<LinearItem> result = generaldb.getAllBooking(helper.logcount() + "");
-            LinearList ad = new LinearList(getApplicationContext(), result);
-            lv.setAdapter(ad);
+            adapter = new LinearList(getApplicationContext(), result);
+            lv.setAdapter(adapter);
             lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
                 @Override
                 public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
@@ -924,20 +929,23 @@ public class Bookinglist extends AppCompatActivity
 
     public JSONArray getBookingImage(String id) {
         SQLiteDatabase myDataBase = rate.getReadableDatabase();
-        String raw = "SELECT * FROM " + rate.tbname_reserve_image
-                + " WHERE "+rate.res_img_trans+" = '"+id+"'";
+        String raw = "SELECT * FROM " + rate.tbname_generic_imagedb
+                + " WHERE "+rate.gen_trans+" = '"+id+"' AND "+rate.gen_module+" = 'booking'";
         Cursor c = myDataBase.rawQuery(raw, null);
         JSONArray resultSet = new JSONArray();
         c.moveToFirst();
         try {
             while (!c.isAfterLast()) {
                 JSONObject js = new JSONObject();
-                byte[] image = c.getBlob(c.getColumnIndex(rate.res_img_image));
+                String module = c.getString(c.getColumnIndex(rate.gen_module));
+                String trans = c.getString(c.getColumnIndex(rate.gen_trans));
+                byte[] image = c.getBlob(c.getColumnIndex(rate.gen_image));
                 Bitmap bitmap = BitmapFactory.decodeByteArray(image, 0, image.length);
                 byte[] bitmapdata = getBytesFromBitmap(bitmap);
 
                 // get the base 64 string
                 String imgString = Base64.encodeToString(bitmapdata, Base64.NO_WRAP);
+                js.put("module", module);
                 js.put("image", imgString);
                 resultSet.put(js);
                 c.moveToNext();
@@ -946,14 +954,14 @@ public class Bookinglist extends AppCompatActivity
             e.printStackTrace();
         }
         c.close();
-        //Log.e("result_set", resultSet.toString());
+        Log.e("result_set", resultSet.toString());
         return resultSet;
     }
 
     // convert from bitmap to byte array
     public byte[] getBytesFromBitmap(Bitmap bitmap) {
         ByteArrayOutputStream stream = new ByteArrayOutputStream();
-        bitmap.compress(Bitmap.CompressFormat.JPEG, 80, stream);
+        bitmap.compress(Bitmap.CompressFormat.JPEG, 100, stream);
         return stream.toByteArray();
     }
 

@@ -78,6 +78,7 @@ public class Partner_distribution extends AppCompatActivity
     ArrayList<String> booktrans;
     String frag;
     String etanow;
+    String etdnow;
     String mode;
 
     public String getEtanow() {
@@ -540,6 +541,8 @@ public class Partner_distribution extends AppCompatActivity
                     String remarks = c.getString(c.getColumnIndex(rate.partdist_remarks));
                     String d = c.getString(c.getColumnIndex(rate.partdist_createdate));
                     String by = c.getString(c.getColumnIndex(rate.partdist_createby));
+                    String eta = c.getString(c.getColumnIndex(rate.partdist_eta));
+                    String etd = c.getString(c.getColumnIndex(rate.partdist_etd));
                     String accstat = c.getString(c.getColumnIndex(rate.partdist_acceptstat));
                     json.put("id", trans);
                     json.put("mode_of_shipment", mode);
@@ -550,6 +553,8 @@ public class Partner_distribution extends AppCompatActivity
                     json.put("remarks", remarks);
                     json.put("created_date", d);
                     json.put("created_by", by);
+                    json.put("eta", eta);
+                    json.put("etd", etd);
                     json.put("acceptance_status", accstat);
                     reserve = rate.getDistributionsBox(trans);
                     img = getDistributionImage(trans);
@@ -700,7 +705,7 @@ public class Partner_distribution extends AppCompatActivity
     // convert from bitmap to byte array
     public byte[] getBytesFromBitmap(Bitmap bitmap) {
         ByteArrayOutputStream stream = new ByteArrayOutputStream();
-        bitmap.compress(Bitmap.CompressFormat.JPEG, 80, stream);
+        bitmap.compress(Bitmap.CompressFormat.JPEG, 100, stream);
         return stream.toByteArray();
     }
 
@@ -798,5 +803,14 @@ public class Partner_distribution extends AppCompatActivity
     public void setMode(String mode) {
         this.mode = mode;
     }
+
+    public String getEtdnow() {
+        return etdnow;
+    }
+
+    public void setEtdnow(String etdnow) {
+        this.etdnow = etdnow;
+    }
+
 
 }

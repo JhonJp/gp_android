@@ -310,7 +310,7 @@ public class Booking_payment extends Fragment implements Runnable {
                 final TextView disctext = (TextView)d.findViewById(R.id.disc_txt);
                 try {
                     if (book.getTransNo() != null) {
-                        result = gen.getAllBoxInTransaNo(book.getTransNo());
+                        result = getAllBox(book.getTransNo());
                     }
                     TableAdapter adapter = new TableAdapter(getContext(), result);
                     lvs.setAdapter(adapter);
@@ -390,7 +390,7 @@ public class Booking_payment extends Fragment implements Runnable {
     public void customtype(){
         try {
             if (book.getTransNo() != null) {
-                result = gen.getAllBoxInTransaNo(book.getTransNo());
+                result = getAllBox(book.getTransNo());
             }
             TableAdapter adapter = new TableAdapter(getContext(), result);
             lv.setAdapter(adapter);
@@ -566,10 +566,11 @@ public class Booking_payment extends Fragment implements Runnable {
                                 Log.e("bookids", book.getBoxids().toString());
                                 for (String i : book.getBoxids()){
                                     gen.addtoDriverInv(i+"", bn, "1", "2");
-                                    rate.updateBarDriverInv(bn,"1");
                                 }
                             }
+                            rate.updateBarDriverInv(bn,"1");
                         }
+
                     }
                     SQLiteDatabase db = gen.getWritableDatabase();
                     Cursor v = db.rawQuery(" SELECT * FROM "
@@ -584,7 +585,7 @@ public class Booking_payment extends Fragment implements Runnable {
                         gen.addBooking(transno, reserveno, custno,
                                 bookdate, bookstat, type, createdby, "1");
                         updatePayment(reserveno, transno, finalamount+"");
-                        updConsigneeBookingStat(transno, "2");
+                        updConsigneeBookingStat(transno, "1");
                         if (checkAmountTrans(transno)){
                             gen.updateRemAmount(transno, finalamount+"",
                                     helper.logcount()+"", "0");
@@ -609,7 +610,7 @@ public class Booking_payment extends Fragment implements Runnable {
                                 bookdate, bookstat, type, createdby, "1");
                         gen.addReservationPayment(null, transno, null, "Full",
                                 null, finalamount+"", createdby, datereturn());
-                        updConsigneeBookingStat(transno, "2");
+                        updConsigneeBookingStat(transno, "1");
                         if (checkAmountTrans(transno)){
                             gen.updateRemAmount(transno, finalamount+"",
                                     helper.logcount()+"", "0");
@@ -652,7 +653,7 @@ public class Booking_payment extends Fragment implements Runnable {
                         updatePayment(reserveno, transno, finalamount+"");
                         gen.addBooking(transno, reserveno, custno,
                                 bookdate, bookstat, type, createdby, "1");
-                        updConsigneeBookingStat(transno, "2");
+                        updConsigneeBookingStat(transno, "1");
                         String typo = "Booking";
                         if (checkAmountTrans(transno)){
                             gen.updateRemAmount(transno, finalamount+"",
@@ -673,8 +674,8 @@ public class Booking_payment extends Fragment implements Runnable {
                         stored_image.clear();
                     } else {
                         gen.addBooking(transno, reserveno, custno,
-                                bookdate, bookstat, type, createdby, "1");
-                        updConsigneeBookingStat(transno, "2");
+                                bookdate, "1", type, createdby, "1");
+                        updConsigneeBookingStat(transno, "1");
                         updatePayment(reserveno, transno, finalamount+"");
                         String typo = "Booking";
                         gen.addTransactions(typo, "" + helper.logcount(),
@@ -1024,8 +1025,7 @@ public class Booking_payment extends Fragment implements Runnable {
         } catch (Exception e)
         {
             e.printStackTrace();
-            Toast.makeText(getContext(), "Could not initiate File System.. Is Sdcard mounted properly?",
-                    Toast.LENGTH_LONG).show();
+
             return false;
         }
     }
@@ -1576,9 +1576,9 @@ public class Booking_payment extends Fragment implements Runnable {
             ImageAdapter myAdapter = new ImageAdapter(getContext(), listitem);
             grimm.setAdapter(myAdapter);
             if (capt_images.size() > 0) {
-                hint.setVisibility(View.INVISIBLE);
+                hints.setVisibility(View.INVISIBLE);
             } else {
-                hint.setVisibility(View.VISIBLE);
+                hints.setVisibility(View.VISIBLE);
             }
             grimm.setOnItemClickListener(new AdapterView.OnItemClickListener() {
                 @Override
@@ -1641,6 +1641,32 @@ public class Booking_payment extends Fragment implements Runnable {
             Log.e("error", e.getMessage());
         }
 
+    }
+
+    public ArrayList<ListItem> getAllBox(String trans){
+        ArrayList<ListItem> results = new ArrayList<>();
+        SQLiteDatabase db = gen.getReadableDatabase();
+        Cursor res = db.rawQuery(" SELECT * FROM " + gen.tbname_booking_consignee_box + " WHERE "
+                + gen.book_con_transaction_no + " = '" + trans + "'", null);
+        res.moveToFirst();
+        while (!res.isAfterLast()) {
+            String acount = res.getString(res.getColumnIndex(gen.book_con_box_account_no));
+            String ids = res.getString(res.getColumnIndex(gen.book_con_box_id));
+            String sub = res.getString(res.getColumnIndex(gen.book_con_box_number));
+            String a = res.getString(res.getColumnIndex(gen.book_con_boxtype));
+            String topitem = "", temptop = "";
+            Cursor getname = db.rawQuery("SELECT " + gen.cust_fullname + " FROM " + gen.tbname_customers
+                    + " WHERE " + gen.cust_accountnumber + " = '" + acount + "'", null);
+            if (getname.moveToNext()) {
+                temptop = getname.getString(getname.getColumnIndex(gen.cust_fullname));
+            }
+            ListItem list = new ListItem(ids, temptop, sub, a);
+            results.add(list);
+            res.moveToNext();
+        }
+        res.close();
+        // Add some more dummy data for testing
+        return results;
     }
 
 }

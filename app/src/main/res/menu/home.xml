@@ -4,7 +4,7 @@
 
     <item
         android:id="@+id/syncdown"
-        android:icon="@android:drawable/stat_sys_download"
+        android:icon="@drawable/dlwhite"
         android:orderInCategory="100"
         android:title="@string/update_data"
         app:showAsAction="ifRoom" />

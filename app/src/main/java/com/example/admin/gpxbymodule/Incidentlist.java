@@ -97,56 +97,57 @@ public class Incidentlist extends AppCompatActivity
         search.setSelected(false);
         ids = new ArrayList<>();
         incids = new ArrayList<>();
-
-        if (helper.logcount() != 0){
-            value = helper.getRole(helper.logcount());
-        }
-
-        search.addTextChangedListener(new TextWatcher() {
-            @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-                addList();
+        try {
+            if (helper.logcount() != 0) {
+                value = helper.getRole(helper.logcount());
             }
 
-            @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count) {
-                adapter.getFilter().filter(s.toString());
-            }
+            search.addTextChangedListener(new TextWatcher() {
+                @Override
+                public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+                    addList();
+                }
 
-            @Override
-            public void afterTextChanged(Editable s) {
-                Log.e("text watch","after change");
-            }
-        });
+                @Override
+                public void onTextChanged(CharSequence s, int start, int before, int count) {
+                    adapter.getFilter().filter(s.toString());
+                }
 
-        addList();
+                @Override
+                public void afterTextChanged(Editable s) {
+                    Log.e("text watch", "after change");
+                }
+            });
 
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Intent i = new Intent(getApplicationContext(), Incident.class);
-                Bundle bundle = new Bundle();
-                bundle.putString("module", null);
-                //Add the bundle to the intent
-                i.putExtras(bundle);
-                startActivity(i);
-                finish();
-            }
-        });
+            addList();
 
-        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
-        ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
-                this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
-        drawer.addDrawerListener(toggle);
-        toggle.syncState();
+            FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
+            fab.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    Intent i = new Intent(getApplicationContext(), Incident.class);
+                    Bundle bundle = new Bundle();
+                    bundle.putString("module", null);
+                    //Add the bundle to the intent
+                    i.putExtras(bundle);
+                    startActivity(i);
+                    finish();
+                }
+            });
 
-        navigationView = (NavigationView) findViewById(R.id.nav_view);
-        navigationView.setNavigationItemSelectedListener(this);
+            DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+            ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
+                    this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
+            drawer.addDrawerListener(toggle);
+            toggle.syncState();
 
-        sidenavMain();
-        subMenu();
-        setNameMail();
+            navigationView = (NavigationView) findViewById(R.id.nav_view);
+            navigationView.setNavigationItemSelectedListener(this);
+
+            sidenavMain();
+            subMenu();
+            setNameMail();
+        }catch(Exception e){}
     }
 
     public void addList() {
@@ -690,7 +691,7 @@ public class Incidentlist extends AppCompatActivity
     // convert from bitmap to byte array
     public byte[] getBytesFromBitmap(Bitmap bitmap) {
         ByteArrayOutputStream stream = new ByteArrayOutputStream();
-        bitmap.compress(Bitmap.CompressFormat.JPEG, 80, stream);
+        bitmap.compress(Bitmap.CompressFormat.JPEG, 100, stream);
         return stream.toByteArray();
     }
 

@@ -389,7 +389,8 @@ public class Oic_inventory extends AppCompatActivity
             w.setDropDownViewResource(android.R.layout.select_dialog_singlechoice);
             barcx.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
                 @Override
-                public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                public void onItemSelected(AdapterView<?> parent, View view,
+                                           int position, long id) {
                     String x = w.getItem(position);
                     TableAdapter ad;
                     final ArrayList<ListItem> item;
@@ -698,7 +699,8 @@ public class Oic_inventory extends AppCompatActivity
                 json.put("quantity", q);
                 json.put("createddate", date);
                 json.put("createdby", by);
-                json.put("price", totalp);
+                json.put("status", stat);
+                json.put("price", boxPrice(bty, Double.valueOf(q))+"");
                 json.put("purchase_order", getEmptyAcceptanceImage(id));
                 resultSet.put(json);
 
@@ -748,7 +750,7 @@ public class Oic_inventory extends AppCompatActivity
     // convert from bitmap to byte array
     public byte[] getBytesFromBitmap(Bitmap bitmap) {
         ByteArrayOutputStream stream = new ByteArrayOutputStream();
-        bitmap.compress(Bitmap.CompressFormat.JPEG, 80, stream);
+        bitmap.compress(Bitmap.CompressFormat.JPEG, 100, stream);
         return stream.toByteArray();
     }
 

@@ -149,6 +149,7 @@ public class Unload_main extends Fragment {
         textChanges();
         autoCom();
         bar();
+        checkUnfinishedUnload();
         unload();
         scrolllist();
 
@@ -161,6 +162,35 @@ public class Unload_main extends Fragment {
                 (getContext(), android.R.layout.select_dialog_item, numbers);
         forward.setThreshold(1);
         forward.setAdapter(adapter);
+    }
+
+    public void checkUnfinishedUnload(){
+        try {
+            SQLiteDatabase db = rate.getReadableDatabase();
+            Cursor c = db.rawQuery("SELECT * FROM " + rate.tbname_unloaddummy, null);
+            if (c.getCount() != 0) {
+                c.moveToFirst();
+                while (!c.isAfterLast()) {
+                    String boxnumber = c.getString(c.getColumnIndex(rate.unldummy_boxnumber));
+                    byte[] dummyimage = c.getBlob(c.getColumnIndex(rate.unldummy_image));
+
+                    if (!boxes.contains(boxnumber)) {
+                        boxes.add(boxnumber);
+                    }
+
+                    if (!imagesperbox.contains(dummyimage)) {
+                        imagesperbox.add(dummyimage);
+                    }
+                    c.moveToNext();
+                }
+            }
+            c.close();
+            db.close();
+
+        }catch (Exception e){
+            Log.e("error-unloading", e.getMessage());
+        }
+
     }
 
     public void unload () {
@@ -270,7 +300,7 @@ public class Unload_main extends Fragment {
                 dialog.dismiss();
             }
         });
-        denom.setTitle("Add new forwarder");
+        denom.setTitle("Add new shipper");
         denom.show();
     }
 
@@ -340,6 +370,7 @@ public class Unload_main extends Fragment {
         int id = item.getItemId();
         if (id == R.id.unloadfragsave) {
             checkFieldsAndSave();
+
         }
         else if (id == R.id.listunloads) {
             startActivity(new Intent(getContext(), Unloadinglist.class));
@@ -373,7 +404,7 @@ public class Unload_main extends Fragment {
             if (requestCode == CAMERA_REQUEST && resultCode == Activity.RESULT_OK) {
                 Bitmap photo = (Bitmap) data.getExtras().get("data");
                 ByteArrayOutputStream stream = new ByteArrayOutputStream();
-                photo.compress(Bitmap.CompressFormat.PNG, 100, stream);
+                photo.compress(Bitmap.CompressFormat.JPEG, 80, stream);
 
                 byte[] bytimg = stream.toByteArray();
                 Log.e("camera", "success " + bytimg + "/bn "+boxnumbertest);
@@ -387,6 +418,7 @@ public class Unload_main extends Fragment {
                     imgtest = bytimg;
                     viewBoxes(null, bytimg);
                 }
+
             }else{
                 Log.e("requestcode", requestCode + "");
                 if (result.getContents() != null) {
@@ -668,10 +700,16 @@ public class Unload_main extends Fragment {
                 customToast(fields);
             }
             else{
+
+                loadingPost(getView());
+
+                if (tend.equals("Time end")){
+                    tend = returntime();
+                }
+                for(int i = 0; i < boxes.size();i++){
+                    rate.addNewUnloadingImage(loadhome.getUnloadtrans(), boxes.get(i), imagesperbox.get(i));
+                }
                 for (String bn : boxes){
-                    for (byte[] im : imagesperbox) {
-                        rate.addNewUnloadingImage(loadhome.getUnloadtrans(), bn, im);
-                    }
                     gen.addUnload(loadhome.getUnloadtrans(), bn, "2");
                     saveInventory(bn);
                 }
@@ -688,7 +726,11 @@ public class Unload_main extends Fragment {
                 loadhome.setUnloadtrans(generateTrans());
                 dum.requestFocus();
                 unload();
-                loadingPost(getView());
+                boxes.clear();
+                imagesperbox.clear();
+
+                deleteAllDummy();
+
             }
         }catch (Exception e){
             Log.e("saving_trans", e.getMessage());
@@ -773,7 +815,7 @@ public class Unload_main extends Fragment {
 
     public String returnHourMin(){
         Date datetalaga = Calendar.getInstance().getTime();
-        SimpleDateFormat writeDate = new SimpleDateFormat("hh:mm");
+        SimpleDateFormat writeDate = new SimpleDateFormat("HH:mm");
         writeDate.setTimeZone(TimeZone.getTimeZone("GMT+8"));
         String time = writeDate.format(datetalaga);
 
@@ -802,7 +844,7 @@ public class Unload_main extends Fragment {
         new Thread(new Runnable() {
             public void run() {
                 try{
-                    Thread.sleep(5000);
+                    Thread.sleep(3000);
                 }
                 catch (Exception e) { } // Just catch the InterruptedException
 
@@ -814,12 +856,14 @@ public class Unload_main extends Fragment {
                                 .setMessage("Data has been saved successfully, thank you.")
                                 .setPositiveButton("Ok", new DialogInterface.OnClickListener() {
                                     public void onClick(DialogInterface dialog, int id) {
+                                        deleteAllDummy();
                                         startActivity(new Intent(getContext(), Unloadinglist.class));
                                         getActivity().finish();
                                         dialog.dismiss();
                                     }
                                 });
                         // Create the AlertDialog object and show it
+                        builder.setCancelable(false);
                         builder.create().show();
                     }
                 });
@@ -884,6 +928,20 @@ public class Unload_main extends Fragment {
             }
         },currentHour , currentMin, false);
         timePickerDialog.show();
+    }
+
+    public void deleteAllDummy(){
+        SQLiteDatabase db = rate.getWritableDatabase();
+        db.execSQL("DELETE FROM " + rate.tbname_unloaddummy);
+        db.close();
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        for(int i = 0; i < boxes.size();i++){
+            rate.addDummy(boxes.get(i), imagesperbox.get(i));
+        }
     }
 
 }

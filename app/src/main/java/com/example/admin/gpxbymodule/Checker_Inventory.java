@@ -71,6 +71,7 @@ public class Checker_Inventory extends AppCompatActivity
     Thread th;
     TextView tophead, subhead, pricehead, tprice;
     double totalp;
+    int equals = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -98,6 +99,7 @@ public class Checker_Inventory extends AppCompatActivity
             value = helper.getRole(helper.logcount());
             Log.e("role ", value);
         }
+        Log.e("branch", readBranch());
         getBoxesFromDistributionChecker(readBranch());
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
@@ -345,7 +347,8 @@ public class Checker_Inventory extends AppCompatActivity
             w.setDropDownViewResource(android.R.layout.select_dialog_singlechoice);
             bt.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
                 @Override
-                public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                public void onItemSelected(AdapterView<?> parent, View view,
+                                           int position, long id) {
                     String x = w.getItem(position);
                     Log.e("wareitem", x);
                     TableAdapter ad;
@@ -385,6 +388,13 @@ public class Checker_Inventory extends AppCompatActivity
                             three_ad = new Three_tableAd(getApplicationContext(), item);
                             three_ad.notifyDataSetChanged();
                             lv.setAdapter(three_ad);
+                            lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                                @Override
+                                public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                                    String topi = item.get(position).getSubitem();
+                                    returnViewItems(topi,"1", "0");
+                                }
+                            });
                             to.setText(Html.fromHtml("<small>Overall total: </small>" +
                                     "<b>" + countWithNum("1","0") + " box(s) </b>"));
                             tprice.setVisibility(View.INVISIBLE);
@@ -422,6 +432,45 @@ public class Checker_Inventory extends AppCompatActivity
                 }
             });
         }catch (Exception e){}
+    }
+
+    public void returnViewItems(String id,String type, String s){
+        ArrayList<ListItem> poparray;
+        final Dialog dx = new Dialog(Checker_Inventory.this);
+        dx.requestWindowFeature(Window.FEATURE_NO_TITLE);
+        dx.setCancelable(true);
+        dx.setContentView(R.layout.driver_inventoryview);
+
+        final TextView bt = (TextView) dx.findViewById(R.id.btypetitle);
+        ListView poplist = (ListView)dx.findViewById(R.id.list);
+
+        poparray = getBoxesNumbersBoxtypes(getIDBoxItem(id), type, s);
+
+        TableAdapter tb = new TableAdapter(getApplicationContext(), poparray);
+        poplist.setAdapter(tb);
+
+        bt.setText(id);
+
+        ImageButton close = (ImageButton) dx.findViewById(R.id.close);
+        close.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                dx.dismiss();
+            }
+        });
+        dx.show();
+    }
+
+    public String getIDBoxItem(String id){
+        String n = "";
+        SQLiteDatabase db = gendata.getReadableDatabase();
+        String x = " SELECT * FROM "+gendata.tbname_boxes
+                +" WHERE "+gendata.box_name+" = '"+id+"'";
+        Cursor v = db.rawQuery(x, null);
+        if (v.moveToNext()){
+            n = v.getString(v.getColumnIndex(gendata.box_id));
+        }
+        return n;
     }
 
     //get boxes from inventory
@@ -558,22 +607,27 @@ public class Checker_Inventory extends AppCompatActivity
     public int countWithNum(String type, String stat){
         int co = 0;
         SQLiteDatabase db = gendata.getReadableDatabase();
-        String r = " SELECT " + gendata.tbname_boxes + "." + gendata.box_name + ", "
-                + gendata.tbname_checker_inventory + "." + gendata.chinv_id + ", "
-                + gendata.tbname_checker_inventory + "." + gendata.chinv_boxtype + ", "
-                + " COUNT (" + gendata.tbname_checker_inventory + "." + gendata.chinv_boxtype + ")"
-                + " FROM " + gendata.tbname_checker_inventory
-                + " LEFT JOIN " + gendata.tbname_boxes + " ON "
-                + gendata.tbname_boxes + "." + gendata.box_id + " = " + gendata.tbname_checker_inventory
-                + "." + gendata.chinv_boxtype
-                + " WHERE " + gendata.chinv_boxtype_fillempty + " = '" + type + "' AND "
-                + gendata.chinv_stat + " = '" + stat + "'";
-        Cursor cur = db.rawQuery(r, null);
-        if(cur.moveToFirst())
-        {
-            co = cur.getInt(3);
+        ArrayList<ListItem> result = new ArrayList<>();
+        String get = " SELECT * FROM "+gendata.tbname_checker_inventory
+                +" LEFT JOIN "+gendata.tbname_boxes
+                +" ON "+gendata.tbname_boxes+"."+gendata.box_id+" = "+gendata.tbname_checker_inventory
+                +"."+gendata.chinv_boxtype
+                +" WHERE "+gendata.chinv_boxtype_fillempty+" = '"+type+"' AND "+gendata.tbname_checker_inventory
+                +"."+gendata.chinv_stat+" = '"+stat+"'";
+        Cursor f = db.rawQuery(get, null);
+        f.moveToFirst();
+        int i = 1;
+        while (!f.isAfterLast()){
+            String bid = f.getString(f.getColumnIndex(gendata.chinv_id));
+            String bname = f.getString(f.getColumnIndex(gendata.box_name));
+            String bnum = f.getString(f.getColumnIndex(gendata.chinv_boxnumber));
+            if(!checkAcceptance(bnum)) {
+                ListItem item = new ListItem(bid, i+"", bname, "");
+                result.add(item);
+            }
+            f.moveToNext();
         }
-        return co;
+        return result.size();
     }
 
     public ArrayList<ListItem>filledBox(String id, String wareid){
@@ -592,7 +646,8 @@ public class Checker_Inventory extends AppCompatActivity
                     + " ON " + gendata.tbname_boxes + "." + gendata.box_id + " = "
                     + gendata.tbname_accept_boxes + "." + gendata.acc_box_boxtype
                     + " WHERE " + gendata.tbname_check_acceptance + "." + gendata.accept_createdby + " = '" + id + "'" +
-                    "AND " + gendata.tbname_check_acceptance + "." + gendata.accept_warehouseid + " = '" + wareid + "' GROUP BY "
+                    "AND " + gendata.tbname_check_acceptance + "." + gendata.accept_warehouseid + " = '" + wareid + "' " +
+                    " AND "+ gendata.tbname_accept_boxes + "." + gendata.acc_box_stat +" != '10'"+" GROUP BY "
                     + gendata.tbname_accept_boxes + "." + gendata.acc_box_boxtype;
             Cursor c = db.rawQuery(r, null);
             if (c.getCount() != 0) {
@@ -616,31 +671,27 @@ public class Checker_Inventory extends AppCompatActivity
         ArrayList<ListItem> results = new ArrayList<>();
         try {
             SQLiteDatabase db = gendata.getReadableDatabase();
-            String r = " SELECT " + gendata.tbname_boxes + "." + gendata.box_name + ", "
-                    + gendata.tbname_checker_inventory + "." + gendata.chinv_id + ", "
-                    + gendata.tbname_checker_inventory + "." + gendata.chinv_boxtype + ", "
-                    + " COUNT (" + gendata.tbname_checker_inventory + "." + gendata.chinv_boxtype + ")"
-                    + " FROM " + gendata.tbname_checker_inventory
-                    + " LEFT JOIN " + gendata.tbname_boxes + " ON "
-                    + gendata.tbname_boxes + "." + gendata.box_id + " = " + gendata.tbname_checker_inventory
-                    + "." + gendata.chinv_boxtype
-                    + " WHERE " + gendata.chinv_boxtype_fillempty + " = '" + type + "' AND "
-                    + gendata.chinv_stat + " = '" + stat + "' GROUP BY " + gendata.chinv_boxtype;
-            Cursor c = db.rawQuery(r, null);
-            if (c.getCount() != 0 ) {
-                c.moveToFirst();
-                int i = 1;
-                while (!c.isAfterLast()) {
-                    String id = c.getString(1);
-                    String topitem = c.getString(0);
-                    String subitem = c.getString(3);
-                    String boxids = c.getString(2);
-                    ListItem list = new ListItem(id, i+"", topitem, subitem);
-                    results.add(list);
-                    i++;
-                    c.moveToNext();
+            String get = " SELECT * FROM "+gendata.tbname_checker_inventory
+                    +" LEFT JOIN "+gendata.tbname_boxes
+                    +" ON "+gendata.tbname_boxes+"."+gendata.box_id+" = "+gendata.tbname_checker_inventory
+                    +"."+gendata.chinv_boxtype
+                    +" WHERE "+gendata.chinv_boxtype_fillempty+" = '"+type+"' AND "+gendata.tbname_checker_inventory
+                    +"."+gendata.chinv_stat+" = '"+stat+"' GROUP BY "+gendata.tbname_boxes+"."+gendata.box_id;
+            Cursor f = db.rawQuery(get, null);
+            f.moveToFirst();
+            int i = 1;
+            while (!f.isAfterLast()){
+                String bid = f.getString(f.getColumnIndex(gendata.chinv_id));
+                String bname = f.getString(f.getColumnIndex(gendata.box_name));
+                String bnum = f.getString(f.getColumnIndex(gendata.chinv_boxnumber));
+                if(!checkAcceptance(bnum)) {
+                    ListItem item = new ListItem(bid, i+"", bname, countWithNum(type,stat)+"");
+                    results.add(item);
                 }
+                i++;
+                f.moveToNext();
             }
+
         }catch (Exception e){}
         return results;
     }
@@ -846,7 +897,7 @@ public class Checker_Inventory extends AppCompatActivity
     // convert from bitmap to byte array
     public byte[] getBytesFromBitmap(Bitmap bitmap) {
         ByteArrayOutputStream stream = new ByteArrayOutputStream();
-        bitmap.compress(Bitmap.CompressFormat.JPEG, 80, stream);
+        bitmap.compress(Bitmap.CompressFormat.JPEG, 100, stream);
         return stream.toByteArray();
     }
 
@@ -888,7 +939,7 @@ public class Checker_Inventory extends AppCompatActivity
                 json.put("createddate", date);
                 json.put("createdby", by);
                 json.put("status", stat);
-                json.put("price", totalp);
+                json.put("price", boxPrice(bty, Double.valueOf(q))+"");
                 json.put("purchase_order", getEmptyAcceptanceImage(id));
                 resultSet.put(json);
 
@@ -952,7 +1003,7 @@ public class Checker_Inventory extends AppCompatActivity
         final TextView bt = (TextView) dialog.findViewById(R.id.btypetitle);
         ListView poplist = (ListView)dialog.findViewById(R.id.list);
 
-        poparray = getBoxesNumbersBoxtypes(id);
+        poparray = getBoxesNumbersBoxtypes(id,"1","0");
 
         TableAdapter tb = new TableAdapter(getApplicationContext(), poparray);
         poplist.setAdapter(tb);
@@ -988,22 +1039,68 @@ public class Checker_Inventory extends AppCompatActivity
         return result;
     }
 
-    public ArrayList<ListItem> getBoxesNumbersBoxtypes(String id) {
+    public ArrayList<ListItem> getBoxesNumbersFilled(String id, String type, String stat) {
+        ArrayList<ListItem> result = new ArrayList<>();
+        SQLiteDatabase db = gendata.getReadableDatabase();
+        String get = " SELECT * FROM "+gendata.tbname_driver_inventory
+                +" LEFT JOIN "+gendata.tbname_boxes+" ON "+gendata.tbname_boxes
+                +"."+gendata.box_id+" = "+gendata.tbname_driver_inventory+"."+gendata.sdinv_boxtype
+                +" WHERE "+gendata.sdinv_boxtype+" = '"+id+"' AND "+gendata.tbname_driver_inventory
+                +"."+gendata.sdinv_stat+" = '"+stat+"' AND "+gendata.tbname_driver_inventory
+                +"."+gendata.sdinv_boxtype_fillempty+" = '"+type+"'";
+        Cursor f = db.rawQuery(get, null);
+        f.moveToFirst();
+        int i = 1;
+        while (!f.isAfterLast()){
+            String bid = f.getString(f.getColumnIndex(gendata.sdinv_id));
+            String bname = f.getString(f.getColumnIndex(gendata.box_name));
+            String bnum = f.getString(f.getColumnIndex(gendata.sdinv_boxnumber));
+            if (checkAcceptance(bnum)) {
+                f.moveToNext();
+            }else{
+                ListItem item = new ListItem(bid, i + "", bnum, "");
+                result.add(item);
+                equals = i;
+                i++;
+            }
+            f.moveToNext();
+        }
+        return result;
+    }
+
+    public boolean checkAcceptance(String bn){
+        SQLiteDatabase db = gendata.getReadableDatabase();
+        String x = " SELECT * FROM "+gendata.tbname_accept_boxes
+                +" WHERE "+gendata.acc_box_boxnumber+" = '"+bn+"'";
+        Cursor c = db.rawQuery(x, null);
+        if (c.getCount() != 0 ){
+            return true;
+        }else{
+            return false;
+        }
+    }
+
+    public ArrayList<ListItem> getBoxesNumbersBoxtypes(String id, String type, String stat) {
+        Log.e("boxtype",id);
         ArrayList<ListItem> result = new ArrayList<>();
         SQLiteDatabase db = gendata.getReadableDatabase();
         String get = " SELECT * FROM "+gendata.tbname_checker_inventory
                 +" LEFT JOIN "+gendata.tbname_boxes
                 +" ON "+gendata.tbname_boxes+"."+gendata.box_id+" = "+gendata.tbname_checker_inventory
                 +"."+gendata.chinv_boxtype
-                +" WHERE "+gendata.chinv_boxtype+" = '"+id+"'";
+                +" WHERE "+gendata.chinv_boxtype+" = '"+id+"' AND "+gendata.tbname_checker_inventory
+                +"."+gendata.chinv_boxtype_fillempty+" = '"+type+"' AND "+gendata.tbname_checker_inventory
+                +"."+gendata.chinv_stat+" = '"+stat+"'";
         Cursor f = db.rawQuery(get, null);
         f.moveToFirst();
         while (!f.isAfterLast()){
             String bid = f.getString(f.getColumnIndex(gendata.chinv_id));
             String bname = f.getString(f.getColumnIndex(gendata.box_name));
             String bnum = f.getString(f.getColumnIndex(gendata.chinv_boxnumber));
-            ListItem item = new ListItem(bid, bname, bnum,"");
-            result.add(item);
+            if(!checkAcceptance(bnum)) {
+                ListItem item = new ListItem(bid, bname, bnum, "");
+                result.add(item);
+            }
             f.moveToNext();
         }
         return result;
@@ -1022,15 +1119,19 @@ public class Checker_Inventory extends AppCompatActivity
 
     public void getBoxesFromDistributionChecker(String x){
             SQLiteDatabase db = gendata.getReadableDatabase();
-            Cursor c = db.rawQuery(" SELECT * FROM " + gendata.tbname_tempboxes
-                    + " JOIN " + gendata.tbname_tempDist
-                    + " WHERE " + gendata.tbname_tempDist + "."
-                    + gendata.temp_typename + " = '" + x + "'", null);
+            Cursor c = db.rawQuery(" SELECT gt.* FROM " + gendata.tbname_tempboxes+" gt "
+                    + " LEFT JOIN " + gendata.tbname_tempDist+" gtt ON gtt."+gendata.temp_transactionnumber
+                    +" = gt."+gendata.dboxtemp_distributionid
+                    + " WHERE gtt."+ gendata.temp_typename + " = '" + x + "'", null);
             c.moveToFirst();
             while (!c.isAfterLast()) {
                 String topitem = c.getString(c.getColumnIndex(gendata.dboxtemp_boxid));
                 String bnum = c.getString(c.getColumnIndex(gendata.dboxtemp_boxnumber));
-                gendata.addtoCheckerInv(topitem, bnum, "1", "0");
+                if (!checkAcceptance(bnum)) {
+                    gendata.addtoCheckerInv(topitem, bnum, "1", "0");
+                }else{
+                    gendata.addtoCheckerInv(topitem, bnum, "1", "1");
+                }
                 Log.e("boxtoinv", "type:" + topitem + ", boxnum: " + bnum);
                 c.moveToNext();
             }

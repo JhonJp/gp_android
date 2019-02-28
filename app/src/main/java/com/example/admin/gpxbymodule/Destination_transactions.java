@@ -13,6 +13,7 @@ import android.hardware.Camera;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.support.v4.content.ContextCompat;
@@ -32,6 +33,7 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.GridView;
 import android.widget.ListView;
 import android.widget.Spinner;
 import android.widget.TextView;
@@ -68,6 +70,11 @@ public class Destination_transactions extends Fragment {
     String spinid;
     ArrayList <String> numbers, boxids, invids;
     ThreeWayAdapter ad;
+
+    //alert items distribution to branch
+    AlertDialog alertd;
+    EditText starting, ending;
+    String quantity;
 
     @Nullable
     @Override
@@ -133,12 +140,17 @@ public class Destination_transactions extends Fragment {
             add.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    ArrayList<ThreeWayHolder> ware = gen.getBoxInv(helper.logcount() + "");
-                    if (ware.size() == 0) {
-                        String y = "You do not have enough inventory.";
-                        customToast(y);
-                    } else {
-                        barcode();
+                    if (spin.getSelectedItem().toString().equals("GP - Branch")){
+                        viewBulkBranch();
+                    }else {
+                        ArrayList<ThreeWayHolder> ware = gen.getBoxInv(helper.logcount() + "");
+                        //Log.e("ware_inv", ware.toString());
+                        if (Integer.valueOf(quantity) == 0) {
+                            String y = "You do not have enough inventory.";
+                            customToast(y);
+                        } else {
+                            barcode();
+                        }
                     }
                 }
             });
@@ -182,7 +194,11 @@ public class Destination_transactions extends Fragment {
                     selid = parent.getSelectedItemPosition();
                     tbox = ware.get(position).getId();
                     typ = ware.get(position).getTopitem();
+                    quantity = ware.get(position).getQuantity();
+                    sm = ware.get(position).getSubitem();
                     Log.e("selid", "" + selid);
+                    Log.e("invid", "" + tbox);
+                    Log.e("quantity", "" + quantity);
                 }
 
                 @Override
@@ -263,78 +279,108 @@ public class Destination_transactions extends Fragment {
     }
 
     public void customlists(){
-        final ArrayList<ListItem> results = new ArrayList<ListItem>();
-        final ArrayList<String> resultnums = numbers;
-        final ArrayList<String> resids = boxids;
-        final ArrayList<String> resinvids = invids;
-        if (resids.size() != 0) {
-            for (int i = 0; i < resids.size(); i++) {
-                ListItem list = new ListItem(i + "", getBoxname(resids.get(i)), resultnums.get(i), resinvids.get(i));
-                results.add(list);
+        try {
+            final ArrayList<ListItem> results = new ArrayList<ListItem>();
+            final ArrayList<String> resultnums = numbers;
+            final ArrayList<String> resids = boxids;
+            final ArrayList<String> resinvids = invids;
+            if (resultnums.size() != 0) {
+                for (int i = 0; i < resultnums.size(); i++) {
+                    ListItem list = new ListItem(i + "", getBoxname(resids.get(i)), resultnums.get(i), resinvids.get(i));
+                    results.add(list);
+                }
             }
+
+            final ListAdapter myAdapter = new ListAdapter(getContext(), results);
+            lv.setAdapter(myAdapter);
+            lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                @Override
+                public void onItemClick(AdapterView<?> parent, View view, final int position, long id) {
+                    final AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+                    final String ids = resids.get(position);
+                    final String numids = resultnums.get(position);
+                    final String bn = results.get(position).getSubitem();
+                    final String inv = resinvids.get(position);
+                    builder.setTitle("Delete this data ?")
+                            .setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+                                public void onClick(DialogInterface dialog, int id) {
+                                    results.remove(ids);
+                                    resids.remove(ids);
+                                    numbers.remove(bn);
+                                    addQuan(inv);
+                                    updateBxInv(bn, "0");
+                                    invids.remove(inv);
+                                    myAdapter.notifyDataSetChanged();
+                                    boxinventory();
+                                    customlists();
+                                    dialog.dismiss();
+                                }
+                            }).setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int id) {
+                            dialog.dismiss();
+                        }
+                    });
+                    // Create the AlertDialog object and show it
+                    builder.create().show();
+                }
+            });
+            t.setText(Html.fromHtml("<small>Total : </small>") + "" + resids.size() + " box(s) ");
+        }catch (Exception e){
+            Log.e("error", e.getMessage());
         }
-        final ListAdapter myAdapter = new ListAdapter(getContext(), results);
-        lv.setAdapter(myAdapter);
-        lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> parent, View view, final int position, long id) {
-                final AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
-                final String ids = resids.get(position);
-                final String numids = resultnums.get(position);
-                final String inv = resinvids.get(position);
-                builder.setTitle("Delete this data ?")
-                        .setPositiveButton("Ok", new DialogInterface.OnClickListener() {
-                            public void onClick(DialogInterface dialog, int id) {
-                                results.remove(ids);
-                                resids.remove(ids);
-                                resultnums.remove(numids);
-                                addQuan(inv);
-                                invids.remove(inv);
-                                myAdapter.notifyDataSetChanged();
-                                boxinventory();
-                                customlists();
-                                dialog.dismiss();
-                            }
-                        }).setNegativeButton("Cancel",new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int id) {
-                        dialog.dismiss();
-                    }});
-                // Create the AlertDialog object and show it
-                builder.create().show();
-            }
-        });
-        t.setText(Html.fromHtml("<small>Total : </small>")+""+resids.size()+" box(s) ");
     }
 
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data){
         try {
-            IntentResult result = IntentIntegrator.parseActivityResult(requestCode, resultCode, data);
-            if (result.getContents() != null) {
-                if (checkBnumFromInv(result.getContents())){
-                    String n = "with boxnumber";
-                    if (sm.contains(n)){
-                        if (!numbers.contains(result.getContents())) {
-                            numbers.add(result.getContents());
-                            boxids.add(getIdBoxtype(typ));
-                            //boxnumbers.add(result.getContents());
-                            invids.add(tbox);
-                            //gen.addTempBoxDist(dist.getTrans(), getIdBoxtype(typ), tbox, result.getContents(), "0");
-                            minStat(tbox);
-                            ad.notifyDataSetChanged();
-                            //updateWarehouseInv(result.getContents(), "1");
-                            warehousespin.setSelection(selid);
-                            boxinventory();
-                            //listTempBox();
-                            customlists();
-                            Log.e("boxtype", "" + getIdBoxtype(typ));
-                        }else{
-                            String x = "Box number has been scanned, please try another boxnumber.";
-                            customToast(x);
+                IntentResult result = IntentIntegrator.parseActivityResult(requestCode, resultCode, data);
+                if (result.getContents() != null) {
+                    if (checkBnumFromInv(result.getContents())) {
+                        String n = "with boxnumber";
+                        if (sm.contains(n)) {
+                            if (checkBnum(result.getContents())) {
+                                if (!numbers.contains(result.getContents())) {
+                                    numbers.add(result.getContents());
+                                    boxids.add(getIdBoxtype(typ));
+                                    invids.add(tbox);
+                                    minStatBnum(result.getContents(),"1");
+                                    ad.notifyDataSetChanged();
+                                    warehousespin.setSelection(selid);
+                                    boxinventory();
+                                    customlists();
+                                    Log.e("boxtype", "" + getIdBoxtype(typ));
+                                } else {
+                                    String x = "Box number has been scanned, please try another boxnumber.";
+                                    customToast(x);
+                                }
+                            } else {
+                                String x = "Box number exists, please try another boxnumber.";
+                                customToast(x);
+                            }
+                        } else {
+                            if (!checkBnum(result.getContents())) {
+                                String x = "Box number exists, please try another boxnumber.";
+                                customToast(x);
+                            } else {
+                                if (!numbers.contains(result.getContents())) {
+                                    numbers.add(result.getContents());
+                                    boxids.add(getIdBoxtype(typ));
+                                    invids.add(tbox);
+                                    minStat(tbox);
+                                    minStatBnum(result.getContents(),"1");
+                                    ad.notifyDataSetChanged();
+                                    warehousespin.setSelection(selid);
+                                    boxinventory();
+                                    customlists();
+                                } else {
+                                    String x = "Box number has been scanned, please try another boxnumber.";
+                                    customToast(x);
+                                }
+                            }
                         }
-                    }else {
+                    } else {
                         if (!checkBnum(result.getContents())) {
-                            String x = "Box number exists, please try another boxnumber.";
+                            String x = "Box number exists in distribution records, please try another boxnumber.";
                             customToast(x);
                         } else {
                             if (!numbers.contains(result.getContents())) {
@@ -347,38 +393,16 @@ public class Destination_transactions extends Fragment {
                                 ad.notifyDataSetChanged();
                                 warehousespin.setSelection(selid);
                                 boxinventory();
-                                //listTempBox();
                                 customlists();
-                            }else{
+                            } else {
                                 String x = "Box number has been scanned, please try another boxnumber.";
                                 customToast(x);
                             }
+
                         }
                     }
-                }else{
-                    if (!checkBnum(result.getContents())) {
-                        String x = "Box number exists in distribution records, please try another boxnumber.";
-                        customToast(x);
-                    } else {
-                        if (!numbers.contains(result.getContents())) {
-                            numbers.add(result.getContents());
-                            boxids.add(getIdBoxtype(typ));
-                            //boxnumbers.add(result.getContents());
-                            invids.add(tbox);
-                            //gen.addTempBoxDist(dist.getTrans(), getIdBoxtype(typ), tbox, result.getContents(), "0");
-                            minStat(tbox);
-                            ad.notifyDataSetChanged();
-                            warehousespin.setSelection(selid);
-                            boxinventory();
-                            customlists();
-                        }else{
-                            String x = "Box number has been scanned, please try another boxnumber.";
-                            customToast(x);
-                        }
-                    }
-                }
-            } else
-                super.onActivityResult(requestCode, resultCode, data);
+                } else
+                    super.onActivityResult(requestCode, resultCode, data);
         }catch (Exception e){}
     }
 
@@ -500,6 +524,28 @@ public class Destination_transactions extends Fragment {
         }
     }
 
+    public boolean checkBnumFromInvStat(String bnum){
+        SQLiteDatabase db = gen.getReadableDatabase();
+        Cursor c = db.rawQuery(" SELECT * FROM "+gen.tbname_checker_inventory
+                +" WHERE "+gen.chinv_boxnumber+" = '"+bnum+"' AND "+gen.chinv_stat+" = '0'", null);
+        if (c.getCount() != 0){
+            return true;
+        }else {
+            return false;
+        }
+    }
+
+    public boolean checkFromBarcodeInventory(String bnum){
+        SQLiteDatabase db = rate.getReadableDatabase();
+        Cursor c = db.rawQuery(" SELECT * FROM "+rate.tbname_barcode_inventory
+                +" WHERE "+rate.barcodeinv_boxnumber+" = '"+bnum+"' AND "+rate.barcodeinv_status+" = '0'", null);
+        if (c.getCount() != 0){
+            return true;
+        }else {
+            return false;
+        }
+    }
+
     public void minStat(String id) {
         int finq = 0;
         SQLiteDatabase db = gen.getWritableDatabase();
@@ -510,6 +556,19 @@ public class Destination_transactions extends Fragment {
             String acq = c.getString(c.getColumnIndex(gen.acc_quantity));
             finq = (Integer.parseInt(acq) - 1);
             updateQAcceptance(acid, finq+"");
+        }
+        c.close();
+        db.close();
+    }
+
+    public void minStatBnum(String bn, String stat) {
+        int finq = 0;
+        SQLiteDatabase db = gen.getWritableDatabase();
+        Cursor c = db.rawQuery(" SELECT * FROM " + gen.tbname_checker_inventory
+                + " WHERE " + gen.chinv_boxnumber + " = '" + bn + "' AND "
+                +gen.chinv_stat+" = '0'", null);
+        if (c.getCount() != 0) {
+            updateBxInv(bn, stat);
         }
         c.close();
         db.close();
@@ -555,6 +614,16 @@ public class Destination_transactions extends Fragment {
         db.close();
     }
 
+    public void updateBxInv(String bn, String stat){
+        SQLiteDatabase db = gen.getWritableDatabase();
+        ContentValues cv = new ContentValues();
+        cv.put(gen.chinv_stat, stat);
+        db.update(gen.tbname_checker_inventory, cv,
+                gen.chinv_boxnumber+" = '"+bn+"'", null);
+        Log.e("update_inv",bn);
+        db.close();
+    }
+
     public String getBoxname(String id){
         String name = "";
         SQLiteDatabase db = gen.getReadableDatabase();
@@ -575,6 +644,123 @@ public class Destination_transactions extends Fragment {
                 gen.chinv_boxnumber+" = '"+bn+"'", null);
         Log.e("updateinv", "invent update "+bn);
         db.close();
+    }
+
+    public void viewBulkBranch(){
+        try {
+            final ArrayList<ThreeWayHolder> ware = gen.getBoxInv(helper.logcount() + "");
+            if (ware.size() != 0) {
+                final AlertDialog.Builder views = new AlertDialog.Builder(getContext());
+                LayoutInflater inflater = getLayoutInflater();
+                View d = inflater.inflate(R.layout.tobranch, null);
+                views.setView(d);
+                //initialize variables
+                starting = (EditText) d.findViewById(R.id.ser_start);
+                ending = (EditText) d.findViewById(R.id.ser_end);
+                Button ok = (Button) d.findViewById(R.id.confirm);
+                Button canc = (Button) d.findViewById(R.id.cancel);
+
+                alertd = views.create();
+                alertd.show();
+
+                ok.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        String inpquant = ending.getText().toString();
+                        String inpstart = starting.getText().toString();
+                        int q = Integer.valueOf(quantity);
+                        //check values
+                        if (inpquant.equals("") || inpstart.equals("")){
+                            String x = "Please enter valid values.";
+                            customToast(x);
+                        }else {
+                            int quan = Integer.valueOf(inpquant);
+                            int itemstart = Integer.valueOf(inpstart);
+                            if (quan == 0 || itemstart == 0){
+                                String x = "Please enter valid values.";
+                                customToast(x);
+                            }else {
+                                if (q < quan) {
+                                    String x = "Inventory is less than entered quantity.";
+                                    customToast(x);
+                                } else {
+                                    for (int i = 0; i < quan; i++) {
+                                        //check from inventory
+                                        if (checkFromBarcodeInventory(itemstart + "")) {
+                                            //check the barcode in distribution db
+                                            if (checkBnum(itemstart+"")) {
+                                                //loop barcode series
+                                                if (!numbers.contains(itemstart)) {
+                                                    numbers.add(itemstart + "");
+                                                    boxids.add(getIdBoxtype(typ));
+                                                    invids.add(tbox);
+                                                    minStat(tbox);
+                                                    ad.notifyDataSetChanged();
+                                                    warehousespin.setSelection(selid);
+                                                }
+                                            }else{
+                                                String x = "Series number exist in distribution records.";
+                                                customToast(x);
+                                                break;
+                                            }
+                                        }else if(checkBnumFromInvStat(itemstart+"")){
+                                            //check the barcode in distribution db
+                                            if (checkBnum(itemstart+"")) {
+                                                if (!numbers.contains(itemstart)) {
+                                                    numbers.add(itemstart + "");
+                                                    boxids.add(getIdBoxtype(typ));
+                                                    invids.add(tbox);
+                                                    minStatBnum(itemstart+"", "1");
+                                                    ad.notifyDataSetChanged();
+                                                    warehousespin.setSelection(selid);
+                                                }
+                                            }else{
+                                                String x = "Series number exist in distribution records.";
+                                                customToast(x);
+                                                break;
+                                            }
+                                        } else {
+                                            String x = "Series number is not in inventory.";
+                                            customToast(x);
+                                            break;
+                                        }
+                                        itemstart++;
+                                    }
+                                    boxinventory();
+                                    //listTempBox();
+                                    customlists();
+                                    alertd.dismiss();
+                                }
+                            }
+                        }
+                    }
+                });
+                canc.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        alertd.dismiss();
+                    }
+                });
+                views.setCancelable(true);
+            }else{
+                String x = "You do not have enough inventory.";
+                customToast(x);
+            }
+        }catch (Exception e){
+            Log.e("error", e.getMessage());
+        }
+
+    }
+
+    public int getQuantityInv(String id){
+        int quantity = 0;
+        SQLiteDatabase db = gen.getWritableDatabase();
+        Cursor c = db.rawQuery(" SELECT * FROM " + gen.tb_acceptance
+                + " WHERE " + gen.acc_id + " = '" + id + "'", null);
+        if (c.moveToNext()) {
+            quantity = c.getInt(c.getColumnIndex(gen.acc_quantity));
+        }
+        return quantity;
     }
 
 }

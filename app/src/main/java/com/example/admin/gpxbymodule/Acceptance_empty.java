@@ -217,7 +217,7 @@ public class Acceptance_empty extends Fragment {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 final String selname = names.get(position);
-                final String selq = names.get(position);
+                final String selq = qs.get(position);
                 final AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
                 builder.setTitle("Delete this data ?")
                         .setPositiveButton("Delete", new DialogInterface.OnClickListener() {
@@ -225,6 +225,7 @@ public class Acceptance_empty extends Fragment {
                                 boxnames.remove(selname);
                                 quantities.remove(selq);
                                 acc();
+                                sum();
                                 dialog.dismiss();
                             }
                         });
@@ -232,11 +233,12 @@ public class Acceptance_empty extends Fragment {
                 builder.create().show();
             }
         });
+        total.setText("Total: "+sum());
     }
 
     public String datereturn(){
         Date datetalaga = Calendar.getInstance().getTime();
-        SimpleDateFormat writeDate = new SimpleDateFormat("yyyy-MM-dd");
+        SimpleDateFormat writeDate = new SimpleDateFormat("yyyy-MM-dd hh:mm");
         writeDate.setTimeZone(TimeZone.getTimeZone("GMT+8"));
         String findate = writeDate.format(datetalaga);
 
@@ -276,7 +278,6 @@ public class Acceptance_empty extends Fragment {
                         boxnames.add(type+"");
                         quantities.add(quantity+"");
                         acc();
-                        total.setText("Total: "+sum());
                         quant.setText("");
                     }
                 }catch(Exception e){}
@@ -291,6 +292,7 @@ public class Acceptance_empty extends Fragment {
         String sa = writeDate.format(datetalaga);
 
         String transNo = helper.logcount() + sa;
+
         this.setTrans(transNo);
 
         return transNo;
@@ -300,24 +302,33 @@ public class Acceptance_empty extends Fragment {
         try{
             String name = manname.getSelectedItem().toString();
             //String q = quant.getText().toString();
-            SQLiteDatabase db = gen.getReadableDatabase();
-            Cursor x = db.rawQuery(" SELECT * FROM "+gen.tb_acceptance+" WHERE "+gen.acc_id+
-                    " = '"+trans+"'", null);
-            if (x.getCount() == 0 ) {
+
                 for (int i = 0; i < boxnames.size(); i++){
-                    for (byte[] img : capt_images){
-                        rate.addGenericImage("acceptance_empty", getTrans(), img);
+                    if (checkTrans(getTrans()+(i+""))) {
+                        gen.addAcceptanceEmpty( getTrans()+(i+""), wareid+"",
+                                name, getBoxId(boxnames.get(i))+""
+                                , quantities.get(i), datereturn(), helper.logcount()+"",
+                                "2", "1");
+                        for (byte[] img : capt_images){
+                            rate.addGenericImage("acceptance_empty", getTrans()+(i+""), img);
+                        }
+                        setTrans(null);
+                        transactionNumberNew();
+                    }else{
+                        setTrans(null);
+                        transactionNumberNew();
+                        gen.addAcceptanceEmpty( getTrans()+(i+""), wareid+"",
+                                name, getBoxId(boxnames.get(i))+""
+                                , quantities.get(i), datereturn(), helper.logcount()+"",
+                                "2", "1");
+                        for (byte[] img : capt_images){
+                            rate.addGenericImage("acceptance_empty", getTrans()+(i+""), img);
+                        }
                     }
-                    gen.addAcceptanceEmpty( getTrans(), wareid+"",
-                            name, getBoxId(boxnames.get(i))+""
-                            , quantities.get(i), datereturn(), helper.logcount()+"",
-                            "2", "1");
-                    this.setTrans(null);
-                    transactionNumberNew();
                 }
                 gen.addTransactions("Acceptance", helper.logcount()+"",
                         "Acceptance from "+name, datereturn(), returntime());
-            }
+
             capt_images.clear();
             stored_image.clear();
         }catch (Exception e){}
@@ -430,7 +441,7 @@ public class Acceptance_empty extends Fragment {
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        getActivity().setTitle("Acceptance");
+        getActivity().setTitle("Empty Acceptance");
         setHasOptionsMenu(true);
     }
 
@@ -536,7 +547,7 @@ public class Acceptance_empty extends Fragment {
             getimg.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    if (capt_images.size() >= 3) {
+                    if (capt_images.size() >= 4) {
                         String ty = "Maximum image attachment has been reached.";
                         customToast(ty);
                     } else {
@@ -657,6 +668,19 @@ public class Acceptance_empty extends Fragment {
                 }
             });
         }catch (Exception e){}
+    }
+
+    public boolean checkTrans(String trans){
+        boolean ok = false;
+        SQLiteDatabase db = gen.getReadableDatabase();
+        Cursor x = db.rawQuery(" SELECT * FROM "+gen.tb_acceptance+" WHERE "+gen.acc_id+
+                " = '"+trans+"'", null);
+        if (x.getCount() == 0 ) {
+            ok = true;
+        }else{
+            ok = false;
+        }
+        return ok;
     }
 
 }

@@ -22,6 +22,7 @@ import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
+import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
@@ -94,8 +95,6 @@ public class AddCustomer extends AppCompatActivity
         SimpleDateFormat writeDate = new SimpleDateFormat("dd/MM/yyyy, HH:mm");
         writeDate.setTimeZone(TimeZone.getTimeZone("GMT+8"));
         String s = writeDate.format(datetalaga);
-
-        fab = (FloatingActionButton) findViewById(R.id.fab);
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
@@ -311,6 +310,17 @@ public class AddCustomer extends AppCompatActivity
                 finish();
                 break;
         }
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.newcustomer, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        return super.onOptionsItemSelected(item);
     }
 
     @Override

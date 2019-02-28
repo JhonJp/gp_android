@@ -108,6 +108,7 @@ public class Home extends AppCompatActivity
         queue = Volley.newRequestQueue(getApplicationContext());
 
         try {
+
             toupdid = new ArrayList<>();
             booknums = new ArrayList<>();
             incids = new ArrayList<>();
@@ -116,7 +117,6 @@ public class Home extends AppCompatActivity
             distids = new ArrayList<>();
             if (helper.logcount() != 0) {
                 value = helper.getRole(helper.logcount());
-                //Log.e("role ", value);
             }
 
             if (value.equals("Administrator")){
@@ -267,7 +267,7 @@ public class Home extends AppCompatActivity
                         startActivity(new Intent(this, Remittancetooic.class));
                         finish();
                     }else if (value.equals("Sales Driver")){
-                        startActivity(new Intent(this, Remittancetooic.class));
+                        startActivity(new Intent(this, Remitt.class));
                         finish();
                     }
                     break;
@@ -334,6 +334,23 @@ public class Home extends AppCompatActivity
                     break;
             }
         }catch (Exception e){}
+    }
+
+    public void setNameMail(){
+        String branchname = null;
+        View header = navigationView.getHeaderView(0);
+        TextView user = (TextView)header.findViewById(R.id.yourname);
+        TextView mail = (TextView)header.findViewById(R.id.yourmail);
+        user.setText(helper.getFullname(helper.logcount()+""));
+        SQLiteDatabase db = ratesDB.getReadableDatabase();
+        Cursor x = db.rawQuery(" SELECT * FROM "+ratesDB.tbname_branch
+                +" WHERE "+ratesDB.branch_id+" = '"+helper.getBranch(""+helper.logcount())+"'", null);
+        if (x.moveToNext()){
+            branchname = x.getString(x.getColumnIndex(ratesDB.branch_name));
+        }
+        x.close();
+        mail.setText(helper.getRole(helper.logcount())+" / "+branchname);
+
     }
 
     @Override
@@ -504,8 +521,8 @@ public class Home extends AppCompatActivity
             String driver = "Sales Driver";
 
             helper.addModule("Reservation", drive_final_res, driver);
-            helper.addModule("Booking", drive_final_book, driver);
             helper.addModule("Remittance", drive_final_rem, driver);
+            helper.addModule("Booking", drive_final_book, driver);
             helper.addModule("Inventory", drive_final_inv, driver);
             helper.addModule("Incident Report", drive_final_inc, driver);
             helper.addModule("Transactions", drive_final_tra, driver);
@@ -624,24 +641,41 @@ public class Home extends AppCompatActivity
         thr = new Thread(new Runnable() {
             @Override
             public void run() {
+                if (value.equals("Sales Driver")) {
+                    // start pass data for reservations
+                    threadReservations();
 
+                    // start pass data for Bookings
+                    threadBooking();
+                }
 
-                threadReservations();
-
+                // start pass data for New Customers
                 threadCustomers();
 
-                threadDistribution();
+                if (value.equals("Warehouse Checker") || value.equals("OIC")) {
+                    // start pass data for Distributions
+                    threadDistribution();
 
-                threadBooking();
+                    // start pass data for Warehouse Inventory
+                    threadwarehouseInventory();
 
+                    //start warehouse acceptance data
+                    getAllAcceptedBoxes();
+
+                }
+
+                // start pass data for Incidents
                 threadIncident();
 
+                // start pass data for Loadings
                 threadLoading();
 
-                threadUnloading();
+                if (value.equals("Partner Portal")) {
+                    // start pass data for Unloading
+                    threadUnloading();
+                }
 
-                threadwarehouseInventory();
-
+                // start pass data for Partner Distribution
                 threadDistributionPartner();
 
             }
@@ -652,333 +686,115 @@ public class Home extends AppCompatActivity
 
     //get data
     public void getPost(){
-        final String link = helper.getUrl();
-        thr = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                //thread rate
-                getSubStat();
+        try {
+            thr = new Thread(new Runnable() {
+                @Override
+                public void run() {
 
-                //get box contents
-                getBoxContents();
+                    //get box contents
+                    getBoxContents();
 
-                //get barcode generated
-                getBarCodeInventory();
+                    //get expense types
+                    getExpenseTypes();
 
-                //get nsb rates for calculation
-                getNSBrates();
-
-                //get barcode driver
-                getBarCodeDriverInventory();
-
-                try {
-                    String resp = null;
-                    String link = helper.getUrl();
-                    String urlget = "http://"+link+"/api/boxrate/get.php";
-                    URL url = new URL(urlget);
-                    HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-                    conn.setRequestMethod("GET");
-                    // read the response
-                    InputStream in = new BufferedInputStream(conn.getInputStream());
-                    resp = convertStreamToString(in);
-
-                    if (resp != null) {
-                        Log.e("Rates", "Rates: " + resp);
-                        JSONArray jsonArray = new JSONArray(resp);
-                        for(int i=0; i<jsonArray.length(); i++){
-                            JSONObject json_data = jsonArray.getJSONObject(i);
-                            String btypeid = json_data.getString("boxtype_id");
-                            String cbm = json_data.getString("cbm");
-                            String source = json_data.getString("source_id");
-                            String dest = json_data.getString("destination_id");
-                            String cur = json_data.getString("currency_id");
-                            String am = json_data.getString("amount");
-                            String rec = json_data.getString("recordstatus");
-
-                            ratesDB.addNewRates(btypeid, cbm, source, dest, cur, am, rec);
-
-                        }
-
-                    } else {
-                        Log.e("Error", "Couldn't get data from server.");
-                        runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                String r = "Couldn't get data from server, trying again....";
-                                customToast(r);
-                            }
-                        });
+                    if (!(value.equals("Sales Driver") || value.equals("Partner Portal"))) {
+                        //get barcode generated by user
+                        getBarCodeInventory();
                     }
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-
-                //thread destsource
-                getsource("source");
-                getsource("destination");
-
-                //START THREAD FOR CUSTOMERS
-                if (value.equals("Partner Portal")){
-                    getAllCustomers();
-                }else if (value.equals("Partner Driver")){
-                    getAllCustomers();
-                }else{
-                    getCustomers();
-                }
-                //END THREAD FOR CUSTOMERS
-
-                //START THREAD FOR BOXES and types
-                try {
-                    String resp = null;
-                    String urlget = "http://"+link+"/api/boxtype/get.php";
-                    URL url = new URL(urlget);
-                    HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-                    conn.setRequestMethod("GET");
-                    // read the response
-                    InputStream in = new BufferedInputStream(conn.getInputStream());
-                    resp = convertStreamToString(in);
-
-                    if (resp != null) {
-
-                        Log.e("Boxes", "Boxes: " + resp);
-
-                            JSONArray jsonArray = new JSONArray(resp);
-
-                            for(int i=0; i<jsonArray.length(); i++){
-
-                                JSONObject json_data = jsonArray.getJSONObject(i);
-
-                                String id = json_data.getString("id");
-                                String boxname = json_data.getString("name");
-                                String depoprice = json_data.getString("depositprice");
-                                String l = json_data.getString("size_length");
-                                String w = json_data.getString("size_width");
-                                String h = json_data.getString("size_height");
-                                String nsb = json_data.getString("nsb");
-                                String desc = json_data.getString("description");
-                                String createdby = json_data.getString("createdby");
-                                String recordstatus = json_data.getString("recordstatus");
-
-                                SQLiteDatabase dbcheck = gendata.getReadableDatabase();
-                                Cursor c = dbcheck.rawQuery("SELECT * FROM "+gendata.tbname_boxes
-                                +" WHERE "+gendata.box_id+" = '"+id+"'", null);
-                                if (c.getCount() != 0){
-                                    updateBoxType(id+"",boxname.toUpperCase(), depoprice, l,
-                                            w, h,nsb, desc, createdby, recordstatus);
-                                    updateBoxTypeInRatesTable(id+"",boxname.toUpperCase(), depoprice, l,
-                                            w, h,nsb, desc, createdby, recordstatus);
-                                }else {
-                                    gendata.addBoxes(id + "", boxname.toUpperCase(), depoprice, l,
-                                            w, h,nsb,desc, createdby, recordstatus);
-                                    ratesDB.addBoxes(id, boxname.toUpperCase(), depoprice, l, w, h,nsb,
-                                            desc, createdby, recordstatus);
-                                    Log.e("boxid", id + "");
-                                }
-                                c.close();
-                                dbcheck.close();
-                            }
-
-                    } else {
-                        Log.e("Error", "Couldn't get data from server.");
-                        runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                String r = "Couldn't get data from server, trying again....";
-                                customToast(r);
-                            }
-                        });
+                    if (!(value.equals("Partner Portal"))) {
+                        //get nsb rates for calculation
+                        getNSBrates();
                     }
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-                //END THREAD FOR boxes
 
-                //START THREAD FOR warehouse
-                try {
-                    String resp = null;
-                    String series = "http://"+link+"/api/warehouse/get.php";
-                    URL url = new URL(series);
-                    HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-                    conn.setRequestMethod("GET");
-                    // read the response
-                    InputStream in = new BufferedInputStream(conn.getInputStream());
-                    resp = convertStreamToString(in);
+                    //get barcode driver
+                    getBarCodeDriverInventory();
 
-                    if (resp != null) {
+                    //get boxrates
+                    getBoxRates();
 
-                        Log.e("Warehouses", "warehouse names : " + resp);
+                    //thread destsource
+                    getsource("source");
 
-                            JSONArray jsonArray = new JSONArray(resp);
+                    getsource("destination");
 
-                            for(int i=0; i<jsonArray.length(); i++){
-
-                                JSONObject json_data = jsonArray.getJSONObject(i);
-
-                                String ware_id = json_data.getString("id");
-                                String ware_name = json_data.getString("name");
-                                String ware_branch = json_data.getString("branch_id");
-                                String ware_stat = json_data.getString("recordstatus");
-
-                                ratesDB.addWarehouse(ware_id, ware_name, ware_branch, ware_stat);
-
-                                Log.e("addwarehouse", "id:"+ware_id+", name:"+ware_name+"," +
-                                        " stat:"+ware_stat);
-
-                            }
-
+                    //START THREAD FOR CUSTOMERS
+                    if (value.equals("Partner Portal")) {
+                        getAllCustomers();
+                    } else if (value.equals("Partner Driver")) {
+                        getAllCustomers();
                     } else {
-                        Log.e("Error", "Couldn't get data from server.");
-                        runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                String r = "Couldn't get data from server, trying again....";
-                                customToast(r);
-                            }
-                        });
+                        getCustomers();
                     }
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-                //END THREAD FOR barcode series
+                    //END THREAD FOR CUSTOMERS
 
-                //START THREAD FOR employee
-                try {
-                    String resp = null;
-                    String urlget = "http://"+link+"/api/employee/get.php";
-                    URL url = new URL(urlget);
-                    HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-                    conn.setRequestMethod("GET");
-                    // read the response
-                    InputStream in = new BufferedInputStream(conn.getInputStream());
-                    resp = convertStreamToString(in);
+                    //START THREAD FOR BOXES and types
+                    getBoxtypesData();
+                    //END THREAD FOR boxes
 
-                    if (resp != null) {
+                    //START THREAD FOR employee
+                    getEmployees();
+                    //END THREAD FOR employee
 
-                        Log.e("employee", " : " + resp);
+                    //START DISTRIBUTION BRANCH
+                    getBranchDistribution();
 
-                            JSONArray jsonArray = new JSONArray(resp);
-
-                            for(int i=0; i<jsonArray.length(); i++){
-
-                                JSONObject json_data = jsonArray.getJSONObject(i);
-
-                                String id = json_data.getString("id");
-                                String fname = json_data.getString("firstname");
-                                String mid = json_data.getString("middlename");
-                                String last = json_data.getString("lastname");
-                                String mail = json_data.getString("email");
-                                String mob = json_data.getString("mobile");
-                                String ph = json_data.getString("phone");
-                                String gend = json_data.getString("gender");
-                                String bday = json_data.getString("birthdate");
-                                String post = json_data.getString("role");
-                                String hnum = json_data.getString("house_number_street");
-                                String brgy = json_data.getString("barangay");
-                                String ct = json_data.getString("city");
-                                String branch = json_data.getString("branch");
-
-                                gendata.addEmployee(id, fname, mid, last, mail,
-                                        mob, ph, gend, bday, post, hnum, brgy, ct, branch);
-
-                                ratesDB.addEmployee(id, fname, mid, last, mail,
-                                        mob, ph, gend, bday, post, hnum, brgy, ct, branch);
-                            }
-
-                    } else {
-                        Log.e("Error", "Couldn't get data from server.");
-                        runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                String r = "Couldn't get data from server, trying again....";
-                                customToast(r);
-                            }
-                        });
+                    //get pending reservations
+                    if (value.equals("Sales Driver")) {
+                        getReservations();
                     }
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-                //END THREAD FOR employee
 
-                //START THREAD FOR branch
-                try {
-                    String resp = null;
-                    String urlget = "http://"+link+"/api/branch/get.php";
-                    URL url = new URL(urlget);
-                    HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-                    conn.setRequestMethod("GET");
-                    // read the response
-                    InputStream in = new BufferedInputStream(conn.getInputStream());
-                    resp = convertStreamToString(in);
+                    //get warehouse acceptance FILLED BOX
+                    getWarehouseAcceptance();
 
-                    if (resp != null) {
-
-                        Log.e("branch", ": " + resp);
-
-                            JSONArray jsonArray = new JSONArray(resp);
-
-                            for(int i=0; i<jsonArray.length(); i++){
-
-                                JSONObject json_data = jsonArray.getJSONObject(i);
-
-                                String id = json_data.getString("id");
-                                String name = json_data.getString("name");
-                                String address = json_data.getString("address");
-                                String stat = json_data.getString("recordstatus");
-                                String type = json_data.getString("type");
-
-                                ratesDB.addBranch(id, name, address, type, stat);
-                                gendata.addBranch(id, name, address, type, stat);
-                            }
-                    } else {
-                        Log.e("Error", "Couldn't get data from server.");
-                        runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                String r = "Couldn't get data from server, trying again....";
-                                customToast(r);
-                            }
-                        });
+                    if (value.equals("Sales Driver")) {
+                        //get boxes distributed to driver
+                        getBoxesFromDistribution(helper.getFullname(helper.logcount() + ""));
                     }
-                } catch (Exception e) {
-                    e.printStackTrace();
+
+                    if (value.equals("Warehouse Checker")) {
+                        //get boxes distributed to branch
+                        getBoxesFromDistributionChecker(readBranch());
+                    }
+
+                    //distribution to sales driver
+                    getSalesDriverDistribution();
+
+                    //get barcode distribution to driver
+                    getBarcodesDistributiontoDriver();
+
+                    if (!(value.equals("Partner Portal"))) {
+                        //get warehouse names
+                        getWarehouse();
+                    }
+
+                    // get booking transactions
+                    getBookings();
+
+                    //get loaded boxes
+                    getLoadItems();
+
+                    //get unloaded items or boxes
+                    getUnLoadsItem();
+
+                    //distribution to PARTNER HUB
+                    getHubDistributions();
+
+                    //get Undelivered boxes
+                    getUndeliveredBoxes();
+
+                    //distribution to AREA
+                    getAreaDistributions();
+
+                    //distribution direct
+                    getDirectDistribution();
+
+
                 }
-
-                //END THREAD FOR branch
-
-                //get pending reservations
-                getReservations();
-
-                //distribution to sales driver
-                getSalesDriverDistribution();
-
-                //distribution to GP branch
-                getBranchDistribution();
-
-                //distribution to PARTNER HUB
-                getHubDistributions();
-
-                //get warehouse acceptance FILLED BOX
-                getWarehouseAcceptance();
-
-                //get boxes distributed to driver
-                getBoxesFromDistribution(helper.getFullname(helper.logcount()+""));
-
-                //get boxes distributed to branch
-                getBoxesFromDistributionChecker(helper.getBranch(helper.logcount()+""));
-
-                //get warehouse names
-                getWarehouse();
-
-                // get booking transactions
-                getBookings();
-                //get loaded boxes
-                getLoadItems();
-                //get unloaded items or boxes
-                getUnLoadsItem();
-
-            }
-        });
-        thr.start();
+            });
+            thr.start();
+        }catch(Exception e){
+            progressBar.dismiss();
+        }
     }
 
     //get customers from api per branch
@@ -1048,6 +864,158 @@ public class Home extends AppCompatActivity
                         customToast(r);
                     }
                 });
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    //get box rates
+    public void getBoxRates(){
+        try {
+            String resp = null;
+            String link = helper.getUrl();
+            String urlget = "http://" + link + "/api/boxrate/get.php";
+            URL url = new URL(urlget);
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            conn.setRequestMethod("GET");
+            // read the response
+            InputStream in = new BufferedInputStream(conn.getInputStream());
+            resp = convertStreamToString(in);
+
+            if (resp != null) {
+                Log.e("Rates", "Rates: " + resp);
+                JSONArray jsonArray = new JSONArray(resp);
+                for (int i = 0; i < jsonArray.length(); i++) {
+                    JSONObject json_data = jsonArray.getJSONObject(i);
+                    String btypeid = json_data.getString("boxtype_id");
+                    String cbm = json_data.getString("cbm");
+                    String source = json_data.getString("source_id");
+                    String dest = json_data.getString("destination_id");
+                    String cur = json_data.getString("currency_id");
+                    String am = json_data.getString("amount");
+                    String rec = json_data.getString("recordstatus");
+
+                    ratesDB.addNewRates(btypeid, cbm, source, dest, cur, am, rec);
+
+                }
+
+            } else {
+                Log.e("Error", "Couldn't get data from server.");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    //get boxtypes data
+    public void getBoxtypesData(){
+        try {
+            String resp = null;
+            String link = helper.getUrl();
+            String urlget = "http://" + link + "/api/boxtype/get.php";
+            URL url = new URL(urlget);
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            conn.setRequestMethod("GET");
+            // read the response
+            InputStream in = new BufferedInputStream(conn.getInputStream());
+            resp = convertStreamToString(in);
+
+            if (resp != null) {
+
+                Log.e("Boxes", "" + resp);
+
+                JSONArray jsonArray = new JSONArray(resp);
+
+                for (int i = 0; i < jsonArray.length(); i++) {
+
+                    JSONObject json_data = jsonArray.getJSONObject(i);
+
+                    String id = json_data.getString("id");
+                    String boxname = json_data.getString("name");
+                    String depoprice = json_data.getString("depositprice");
+                    String l = json_data.getString("size_length");
+                    String w = json_data.getString("size_width");
+                    String h = json_data.getString("size_height");
+                    String nsb = json_data.getString("nsb");
+                    String desc = json_data.getString("description");
+                    String createdby = json_data.getString("createdby");
+                    String recordstatus = json_data.getString("recordstatus");
+
+                    SQLiteDatabase dbcheck = gendata.getReadableDatabase();
+                    Cursor c = dbcheck.rawQuery("SELECT * FROM " + gendata.tbname_boxes
+                            + " WHERE " + gendata.box_id + " = '" + id + "'", null);
+                    if (c.getCount() != 0) {
+                        updateBoxType(id + "", boxname.toUpperCase(), depoprice, l,
+                                w, h, nsb, desc, createdby, recordstatus);
+                        updateBoxTypeInRatesTable(id + "", boxname.toUpperCase(), depoprice, l,
+                                w, h, nsb, desc, createdby, recordstatus);
+                    } else {
+                        gendata.addBoxes(id + "", boxname.toUpperCase(), depoprice, l,
+                                w, h, nsb, desc, createdby, recordstatus);
+                        ratesDB.addBoxes(id, boxname.toUpperCase(), depoprice, l, w, h, nsb,
+                                desc, createdby, recordstatus);
+                        Log.e("boxid", id + "");
+                    }
+                    c.close();
+                    dbcheck.close();
+                }
+
+            } else {
+                Log.e("Error", "Couldn't get data from server.");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    // get employee
+    public void getEmployees(){
+        try {
+            String resp = null;
+            String link = helper.getUrl();
+            String urlget = "http://" + link + "/api/employee/get.php";
+            URL url = new URL(urlget);
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            conn.setRequestMethod("GET");
+            // read the response
+            InputStream in = new BufferedInputStream(conn.getInputStream());
+            resp = convertStreamToString(in);
+
+            if (resp != null) {
+
+                Log.e("employee", " : " + resp);
+
+                JSONArray jsonArray = new JSONArray(resp);
+
+                for (int i = 0; i < jsonArray.length(); i++) {
+
+                    JSONObject json_data = jsonArray.getJSONObject(i);
+
+                    String id = json_data.getString("id");
+                    String fname = json_data.getString("firstname");
+                    String mid = json_data.getString("middlename");
+                    String last = json_data.getString("lastname");
+                    String mail = json_data.getString("email");
+                    String mob = json_data.getString("mobile");
+                    String ph = json_data.getString("phone");
+                    String gend = json_data.getString("gender");
+                    String bday = json_data.getString("birthdate");
+                    String post = json_data.getString("role");
+                    String hnum = json_data.getString("house_number_street");
+                    String brgy = json_data.getString("barangay");
+                    String ct = json_data.getString("city");
+                    String branch = json_data.getString("branch");
+
+                    gendata.addEmployee(id, fname, mid, last, mail,
+                            mob, ph, gend, bday, post, hnum, brgy, ct, branch);
+
+                    ratesDB.addEmployee(id, fname, mid, last, mail,
+                            mob, ph, gend, bday, post, hnum, brgy, ct, branch);
+                }
+
+            } else {
+                Log.e("Error", "Couldn't get data from server.");
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -1124,6 +1092,114 @@ public class Home extends AppCompatActivity
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    public void getAllAcceptedBoxes(){
+        db = gendata.getReadableDatabase();
+        String query = " SELECT * FROM "+gendata.tbname_check_acceptance
+                +" WHERE "+gendata.accept_uploadstat+" = '1' AND "
+                +gendata.accept_createdby+" = '"+helper.logcount()+"'";
+        Cursor cx = db.rawQuery(query, null);
+        if (cx.getCount() != 0) {
+            //THREAD FOR incident API
+            try {
+                String link = helper.getUrl();
+                URL url = new URL("http://" + link + "/api/warehouseacceptance/save.php");
+                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                conn.setRequestMethod("POST");
+                conn.setRequestProperty("Content-Type", "application/json;charset=UTF-8");
+                conn.setRequestProperty("Accept", "application/json");
+                conn.setDoOutput(true);
+                conn.setDoInput(true);
+
+                JSONObject jsonParam = new JSONObject();
+                jsonParam.accumulate("data", getAcceptanceList());
+
+                Log.e("JSON", jsonParam.toString());
+                DataOutputStream os = new DataOutputStream(conn.getOutputStream());
+                os.writeBytes(jsonParam.toString());
+                os.flush();
+                os.close();
+                Log.i("STATUS", String.valueOf(conn.getResponseCode()));
+                Log.i("MSG", conn.getResponseMessage());
+
+                conn.disconnect();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }else{
+            Log.e("no_data", "NO data acceptance");
+        }
+        //END THREAD incident API
+    }
+
+    public JSONArray getAcceptanceList() {
+        SQLiteDatabase myDataBase = gendata.getReadableDatabase();
+        String raw = "SELECT * FROM " + gendata.tbname_check_acceptance
+                +" WHERE "+gendata.accept_uploadstat+" = '1' AND "
+                +gendata.accept_createdby+" = '"+helper.logcount()+"'";
+        Cursor c = myDataBase.rawQuery(raw, null);
+        JSONArray resultSet = new JSONArray();
+        c.moveToFirst();
+        try {
+            while (!c.isAfterLast()) {
+                JSONObject js = new JSONObject();
+                String id = c.getString(c.getColumnIndex(gendata.accept_id));
+                String trans = c.getString(c.getColumnIndex(gendata.accept_transactionid));
+                String driver = c.getString(c.getColumnIndex(gendata.accept_drivername));
+                String wareh = c.getString(c.getColumnIndex(gendata.accept_warehouseid));
+                String tru = c.getString(c.getColumnIndex(gendata.accept_container));
+                String date = c.getString(c.getColumnIndex(gendata.accept_date));
+                String by = c.getString(c.getColumnIndex(gendata.accept_createdby));
+
+                js.put("id", id);
+                js.put("transaction_no", trans);
+                js.put("salesdriver_id", driver);
+                js.put("warehouse_id", wareh);
+                js.put("truck_no", tru);
+                js.put("createddate", date);
+                js.put("createdby", by);
+                js.put("acceptance_box", getAcceptedBox(trans));
+                resultSet.put(js);
+                c.moveToNext();
+            }
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        c.close();
+        //Log.e("result set", resultSet.toString());
+        return resultSet;
+    }
+
+    public JSONArray getAcceptedBox(String tr) {
+        SQLiteDatabase myDataBase = gendata.getReadableDatabase();
+        String raw = " SELECT * FROM " + gendata.tbname_accept_boxes + " WHERE "
+                + gendata.acc_box_transactionno + " = '" + tr + "'";
+        Cursor cursor = myDataBase.rawQuery(raw, null);
+        JSONArray resultSet = new JSONArray();
+        cursor.moveToFirst();
+        while (!cursor.isAfterLast()) {
+            int totalColumn = cursor.getColumnCount();
+            JSONObject rowObject = new JSONObject();
+            for (int i = 0; i < totalColumn; i++) {
+                if (cursor.getColumnName(i) != null) {
+                    try {
+                        if (cursor.getString(i) != null) {
+                            Log.d("TAG_NAME", cursor.getString(i));
+                            rowObject.put(cursor.getColumnName(i), cursor.getString(i));
+                        } else {
+                            rowObject.put(cursor.getColumnName(i), "");
+                        }
+                    } catch (Exception e) {
+                        Log.d("TAG_NAME", e.getMessage());
+                    }
+                }
+            }
+            resultSet.put(rowObject);
+            cursor.moveToNext();
+        }
+        cursor.close();
+        return resultSet;
     }
 
     private String convertStreamToString(InputStream is) {
@@ -1230,23 +1306,6 @@ public class Home extends AppCompatActivity
         return accnt;
     }
 
-    public void setNameMail(){
-        String branchname = null;
-        View header = navigationView.getHeaderView(0);
-        TextView user = (TextView)header.findViewById(R.id.yourname);
-        TextView mail = (TextView)header.findViewById(R.id.yourmail);
-        user.setText(helper.getFullname(helper.logcount()+""));
-        SQLiteDatabase db = ratesDB.getReadableDatabase();
-        Cursor x = db.rawQuery(" SELECT * FROM "+ratesDB.tbname_branch
-        +" WHERE "+ratesDB.branch_id+" = '"+helper.getBranch(""+helper.logcount())+"'", null);
-        if (x.moveToNext()){
-           branchname = x.getString(x.getColumnIndex(ratesDB.branch_name));
-        }
-        x.close();
-        mail.setText(helper.getRole(helper.logcount())+" / "+branchname);
-
-    }
-
     public void threadDistribution(){
         //THREAD FOR distribution API
         try {
@@ -1294,6 +1353,7 @@ public class Home extends AppCompatActivity
                     json.put("driver_name", "");
                     json.put("truck_no", truck);
                     json.put("eta", "");
+                    json.put("etd", "");
                     json.put("remarks", remarks);
                     json.put("created_date", d);
                     json.put("created_by", by);
@@ -1359,6 +1419,7 @@ public class Home extends AppCompatActivity
                     String type = c.getString(c.getColumnIndex(ratesDB.partdist_type));
                     String typename = c.getString(c.getColumnIndex(ratesDB.partdist_typename));
                     String eta = c.getString(c.getColumnIndex(ratesDB.partdist_eta));
+                    String etd = c.getString(c.getColumnIndex(ratesDB.partdist_etd));
                     String driver = c.getString(c.getColumnIndex(ratesDB.partdist_drivername));
                     String truck = c.getString(c.getColumnIndex(ratesDB.partdist_trucknum));
                     String remarks = c.getString(c.getColumnIndex(ratesDB.partdist_remarks));
@@ -1372,6 +1433,7 @@ public class Home extends AppCompatActivity
                     json.put("driver_name", driver);
                     json.put("truck_no", truck);
                     json.put("eta", eta);
+                    json.put("etd", etd);
                     json.put("remarks", remarks);
                     json.put("created_date", d);
                     json.put("created_by", by);
@@ -1507,23 +1569,29 @@ public class Home extends AppCompatActivity
         return resultSet;
     }
 
-    public JSONArray getDistributionImage(String id){
+    public JSONArray getDistributionImage(String id) {
         SQLiteDatabase myDataBase = ratesDB.getReadableDatabase();
-        String raw = "SELECT * FROM " + ratesDB.tbname_dstimages
-                + " WHERE "+ratesDB.distimage_trans+" = '"+id+"'";
+        String raw = "SELECT * FROM " + ratesDB.tbname_generic_imagedb
+                + " WHERE "+ratesDB.gen_trans+" = '"+id+"' AND "+ratesDB.gen_module+" = 'distribution'";
         Cursor c = myDataBase.rawQuery(raw, null);
         JSONArray resultSet = new JSONArray();
         c.moveToFirst();
         try {
             while (!c.isAfterLast()) {
                 JSONObject js = new JSONObject();
-                String ids = c.getString(c.getColumnIndex(ratesDB.distimage_id));
-                String tr = c.getString(c.getColumnIndex(ratesDB.distimage_trans));
-                byte[] im = c.getBlob(c.getColumnIndex(ratesDB.distimage_image));
+                String ids = c.getString(c.getColumnIndex(ratesDB.gen_id));
+                String tr = c.getString(c.getColumnIndex(ratesDB.gen_trans));
+                String module = c.getString(c.getColumnIndex(ratesDB.gen_module));
+                byte[] im = c.getBlob(c.getColumnIndex(ratesDB.gen_image));
+                Bitmap bitmap = BitmapFactory.decodeByteArray(im, 0, im.length);
+                byte[] bitmapdata = getBytesFromBitmap(bitmap);
+                // get the base 64 string
+                String imgString = Base64.encodeToString(bitmapdata, Base64.NO_WRAP);
 
                 js.put("id", ids);
                 js.put("distribution_id", tr);
-                js.put("image", im);
+                js.put("module", module);
+                js.put("image", imgString);
 
                 resultSet.put(js);
                 c.moveToNext();
@@ -1708,6 +1776,7 @@ public class Home extends AppCompatActivity
         //END THREAD WAREHOUSE API
     }
 
+    //json data of inventory
     public JSONArray getWarehouseInventory(String x) {
         SQLiteDatabase myDataBase = gendata.getReadableDatabase();
         String raw = "SELECT "+gendata.tb_acceptance+"."+gendata.acc_id+", "
@@ -1745,6 +1814,7 @@ public class Home extends AppCompatActivity
                 json.put("createddate", date);
                 json.put("createdby", by);
                 json.put("status", stat);
+                json.put("price", boxPrice(bty, Double.valueOf(q))+"");
                 json.put("purchase_order", getEmptyAcceptanceImage(id));
                 resultSet.put(json);
 
@@ -2010,20 +2080,23 @@ public class Home extends AppCompatActivity
 
     public JSONArray getBookingImage(String id) {
         SQLiteDatabase myDataBase = ratesDB.getReadableDatabase();
-        String raw = "SELECT * FROM " + ratesDB.tbname_reserve_image
-                + " WHERE "+ratesDB.res_img_trans+" = '"+id+"'";
+        String raw = "SELECT * FROM " + ratesDB.tbname_generic_imagedb
+                + " WHERE "+ratesDB.gen_trans+" = '"+id+"' AND "+ratesDB.gen_module+" = 'booking'";
         Cursor c = myDataBase.rawQuery(raw, null);
         JSONArray resultSet = new JSONArray();
         c.moveToFirst();
         try {
             while (!c.isAfterLast()) {
                 JSONObject js = new JSONObject();
-                byte[] image = c.getBlob(c.getColumnIndex(ratesDB.res_img_image));
+                String module = c.getString(c.getColumnIndex(ratesDB.gen_module));
+                String trans = c.getString(c.getColumnIndex(ratesDB.gen_trans));
+                byte[] image = c.getBlob(c.getColumnIndex(ratesDB.gen_image));
                 Bitmap bitmap = BitmapFactory.decodeByteArray(image, 0, image.length);
                 byte[] bitmapdata = getBytesFromBitmap(bitmap);
 
                 // get the base 64 string
                 String imgString = Base64.encodeToString(bitmapdata, Base64.NO_WRAP);
+                js.put("module", module);
                 js.put("image", imgString);
                 resultSet.put(js);
                 c.moveToNext();
@@ -2602,24 +2675,19 @@ public class Home extends AppCompatActivity
                             ratesDB.addFinalload(id, loaddate, ship, cont, eta, etd, by, "1", "2");
                             for (String x : boxnum){
                                 ratesDB.addload( id, x, "2");
+                                updateBnCheckInv(x);
                             }
                         }else{
                             ratesDB.updFinalload(id, loaddate, ship, cont, eta, etd, by, "1", "2");
                             for (String x : boxnum){
                                 ratesDB.updload( id, x, "2");
+                                updateBnCheckInv(x);
                             }
                         }
                     }
 
             } else {
                 Log.e("Error", "Couldn't get data from server.");
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        String t = "Couldn't get data from server.";
-                        customToast(t);
-                    }
-                });
             }
         } catch (Exception e) {
             Log.e("Error", "error: " + e.getMessage());
@@ -2663,62 +2731,22 @@ public class Home extends AppCompatActivity
                                     arrival_time, createdby, "1", "2");
                             for (String x : boxnum){
                                 gendata.addUnload( id, x, "2");
-                                saveInventoryPartner(x);
+                                if (createdby.equals(helper.logcount()+"")) {
+                                    saveInventoryPartner(x);
+                                }
                             }
                         }else{
                             gendata.updFinalUnloaded(id, unload_date, container_no,
                                     forwarder_name, time_start, time_end, plate, driver, arrival_time, createdby, "1", "2");
                             for (String x : boxnum){
                                 gendata.updUnloadedBox( id, x, "2");
-                                saveInventoryPartner(x);
+                                if (createdby.equals(helper.logcount()+"")) {
+                                    saveInventoryPartner(x);
+                                }
                             }
 
                         }
                     }
-                if (conn.getResponseMessage().equals("OK")){
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            progressBar.dismiss();
-                            final AlertDialog.Builder builder = new AlertDialog.Builder(Home.this);
-                            builder.setTitle("Information confirmation")
-                                    .setMessage("Data has been updated, thank you.")
-                                    .setPositiveButton("Ok", new DialogInterface.OnClickListener() {
-                                        public void onClick(DialogInterface dialog, int id) {
-                                            dialog.dismiss();
-                                        }
-                                    })
-                                    .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-                                        public void onClick(DialogInterface dialog, int id) {
-                                            dialog.dismiss();
-                                        }
-                                    });
-                            builder.create();
-                            builder.setCancelable(false);
-                            builder.show();
-                        }
-                    });
-                }else{
-                    conn.disconnect();
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            progressBar.dismiss();
-                            final AlertDialog.Builder builder = new AlertDialog.Builder(getApplicationContext());
-                            builder.setTitle("Information confirmation")
-                                    .setMessage("Data download has failed, please try again later. thank you.")
-                                    .setPositiveButton("Ok", new DialogInterface.OnClickListener() {
-                                        public void onClick(DialogInterface dialog, int id) {
-                                            dialog.dismiss();
-                                        }
-                                    });
-                            // Create the AlertDialog object and show it
-                            builder.create();
-                            builder.setCancelable(false);
-                            builder.show();
-                        }
-                    });
-                }
             } else {
                 Log.e("Error", "Couldn't get data from server.");
                 runOnUiThread(new Runnable() {
@@ -2729,30 +2757,7 @@ public class Home extends AppCompatActivity
                     }
                 });
             }
-        } catch (Exception e) {
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    progressBar.dismiss();
-                    final AlertDialog.Builder builder = new AlertDialog.Builder(Home.this);
-                    builder.setTitle("Information confirmation")
-                            .setMessage("Data has been updated, thank you.")
-                            .setPositiveButton("Ok", new DialogInterface.OnClickListener() {
-                                public void onClick(DialogInterface dialog, int id) {
-                                    dialog.dismiss();
-                                }
-                            })
-                            .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-                                public void onClick(DialogInterface dialog, int id) {
-                                    dialog.dismiss();
-                                }
-                            });
-                    builder.create();
-                    builder.setCancelable(false);
-                    builder.show();
-                }
-            });
-        }
+        } catch (Exception e) {}
         //END THREAD FOR barcode series
     }
 
@@ -2854,14 +2859,19 @@ public class Home extends AppCompatActivity
 
     //checking for loading ids
     public boolean checkLoadId(String id){
+        boolean ok = false;
         SQLiteDatabase db = ratesDB.getReadableDatabase();
         Cursor x = db.rawQuery(" SELECT * FROM "+ratesDB.tb_loading
         +" WHERE "+ratesDB.load_id+" = '"+id+"'", null);
         if (x.getCount() == 0){
-            return true;
+            ok = true;
+
         }else{
-            return false;
+            ok = false;
         }
+
+        db.close();
+        return ok;
     }
 
     //checking for unloading id
@@ -2914,6 +2924,38 @@ public class Home extends AppCompatActivity
             Log.e("Error", " error: " + e.getMessage());
         }
         //END THREAD FOR booking
+    }
+
+    //get expense types
+    public void getExpenseTypes(){
+        //START THREAD FOR expense type data
+        try {
+            String resp = null;
+            String link = helper.getUrl();
+            String series = "http://"+link+"/api/source/getexpensetypes.php";
+            URL url = new URL(series);
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            conn.setRequestMethod("GET");
+            // read the response
+            InputStream in = new BufferedInputStream(conn.getInputStream());
+            resp = convertStreamToString(in);
+            Log.e("expensetypes", ""+resp);
+            if (resp != null) {
+                JSONArray jsonArray = new JSONArray(resp);
+                for(int i=0; i<jsonArray.length(); i++){
+                    JSONObject json_data = jsonArray.getJSONObject(i);
+                    String id = json_data.getString("id");
+                    String description = json_data.getString("name");
+                    addItemsExpenseTodb(description);
+                }
+
+            } else {
+                Log.e("Error", "Couldn't get data from server.");
+            }
+        } catch (Exception e) {
+            Log.e("Error", " " + e.getMessage());
+        }
+        //END THREAD FOR expense type
     }
 
     public void getNSBrates(){
@@ -3187,27 +3229,39 @@ public class Home extends AppCompatActivity
                     String truck_no = json_data.getString("truck_no");
                     String trans = json_data.getString("id");
                     String deliver_by = json_data.getString("deliver_by");
+                    String driver_id = json_data.getString("driver_id");
                     String accepted_by = json_data.getString("accepted_by");
                     String accepted_date = json_data.getString("accepted_date");
                     String[] box_number = json_data.getString("box_number").split(",");
 
                     if (checkAcceptance(trans)){
-                        gendata.updAcceptanceExist(trans, deliver_by, warehouse_name, truck_no, accepted_date,
+                        Log.e("error","error");
+                        String username = helper.getFullname(helper.logcount()+"");
+                        if (compareNames(accepted_by, username)){
+                            accepted_by = helper.logcount()+"";
+                        }
+                        gendata.updAcceptanceExist(trans, driver_id, warehouse_name, truck_no, accepted_date,
                                 accepted_by, "2" , "2");
 
                         Log.e("warehousename", warehouse_name);
                         for (String x : box_number){
                             gendata.updAcceptanceBoxnumber( trans, getBoxtypeFromDist(x), x,"2");
                             Log.e("box_acceptance", getBoxtypeFromDist(x)+", "+x);
+                            updateBxInv(x);
                         }
                     }else{
-                        gendata.addNewAcceptance(trans, deliver_by, warehouse_name, truck_no, accepted_date,
+                        String username = helper.getFullname(helper.logcount()+"");
+                        if (compareNames(accepted_by, username)){
+                            accepted_by = helper.logcount()+"";
+                        }
+                        gendata.addNewAcceptance(trans, driver_id, warehouse_name, truck_no, accepted_date,
                                 accepted_by, "2" , "2");
 
                         Log.e("warehousename", warehouse_name);
                         for (String x : box_number){
                             gendata.addAcceptanceBoxnumber( trans, getBoxtypeFromDist(x), x,"2");
                             Log.e("box_acceptance", getBoxtypeFromDist(x)+", "+x);
+                            updateBxInv(x);
                         }
                     }
                 }
@@ -3226,6 +3280,50 @@ public class Home extends AppCompatActivity
         }
     }
 
+    public void updateBxInv(String bn){
+        SQLiteDatabase db = gendata.getWritableDatabase();
+        ContentValues cv = new ContentValues();
+        cv.put(gendata.chinv_stat, "1");
+        db.update(gendata.tbname_checker_inventory, cv,
+                gendata.chinv_boxnumber+" = '"+bn+"'", null);
+        Log.e("update_inv",bn);
+        db.close();
+    }
+
+    public boolean compareNames(String full, String other){
+        if (full.toLowerCase().equals(other.toLowerCase())){
+            return true;
+        }else{
+            return false;
+        }
+    }
+
+    public String getBoxtypeFromBooking(String bn){
+        String id = null;
+        SQLiteDatabase db = gendata.getReadableDatabase();
+        Cursor c = db.rawQuery(" SELECT * FROM "+gendata.tbname_booking_consignee_box
+        +" WHERE "+gendata.book_con_box_number+" = '"+bn+"'", null);
+        if (c.moveToNext()){
+            id = c.getString(c.getColumnIndex(gendata.book_con_boxtype));
+        }
+        c.close();
+        db.close();
+        return id;
+    }
+
+    public String getBoxtypeIdFromBooking(String name){
+        String id = null;
+        SQLiteDatabase db = gendata.getReadableDatabase();
+        Cursor c = db.rawQuery(" SELECT * FROM "+gendata.tbname_boxes
+        +" WHERE "+gendata.box_name+" = '"+name+"'", null);
+        if (c.moveToNext()){
+            id = c.getString(c.getColumnIndex(gendata.box_id));
+        }
+        c.close();
+        db.close();
+        return id;
+    }
+
     //get the sales driver distributed box
     public void getSalesDriverDistribution(){
         try {
@@ -3240,7 +3338,7 @@ public class Home extends AppCompatActivity
             resp = convertStreamToString(in);
 
             if (resp != null) {
-                Log.e("Distributions", "distributions: " + resp);
+                Log.e("DistributionsDriver", ": " + resp);
                 JSONArray jsonArray = new JSONArray(resp);
                 for(int i=0; i<jsonArray.length(); i++){
                     JSONObject json_data = jsonArray.getJSONObject(i);
@@ -3254,25 +3352,210 @@ public class Home extends AppCompatActivity
                     String[] box_number = json_data.getString("box_number").split(",");
                     String[] boxtypeid = json_data.getString("boxtype_id").split(",");
 
-                    gendata.addDistribution(id,distribution_type, destination_name,truck_number,
-                            remarks, "1", "2", createddate, createdby,1, null);
-                    for (int ix = 0; ix < boxtypeid.length; ix++){
-                        gendata.addTempBoxDist( id, boxtypeid[ix],"", box_number[ix], "2");
-                        Log.e("boxesdist","boxtype: "+boxtypeid[ix]+"" +
-                                ", boxnumber: "+box_number[ix]);
+                    if (!checkDist(id)) {
+                        gendata.addDistribution(id, distribution_type, destination_name, truck_number,
+                                remarks, "1", "2", createddate, createdby, 1, null);
+                        for (int ix = 0; ix < box_number.length; ix++) {
+                            gendata.addTempBoxDist(id, boxtypeid[ix], "", box_number[ix], "2");
+                            if (checkBarcodeBnum(box_number[ix])){
+                                updateBarcodeInv(box_number[ix]);
+                            }else if(checkYourInv(box_number[ix])){
+                                updateBxInv(box_number[ix]);
+                            }
+                            Log.e("boxnumber",box_number[ix]);
+                        }
+                    }else{
+                        gendata.updDist(id, distribution_type, destination_name,truck_number,
+                                remarks, "1", "2", createddate, createdby);
+                        for (int ix = 0; ix < box_number.length; ix++){
+                            gendata.updDistBoxDist( id, boxtypeid[ix],"", box_number[ix], "2");
+                            if (checkBarcodeBnum(box_number[ix])){
+                                updateBarcodeInv(box_number[ix]);
+                            }else if(checkYourInv(box_number[ix])){
+                                updateBxInv(box_number[ix]);
+                            }
+
+                            Log.e("boxnumber",box_number[ix]);
+                        }
                     }
                 }
 
             } else {
                 Log.e("Error", "Couldn't get data from server.");
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        Toast.makeText(getApplicationContext(),
-                                "Couldn't get data from server.",
-                                Toast.LENGTH_LONG).show();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+    }
+
+    public void getDirectDistribution(){
+        try {
+            String resp = null;
+            String link = helper.getUrl();
+            String urlget = "http://"+link+"/api/distribution/getdirect.php";
+            URL url = new URL(urlget);
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            conn.setRequestMethod("GET");
+            // read the response
+            InputStream in = new BufferedInputStream(conn.getInputStream());
+            resp = convertStreamToString(in);
+
+            if (resp != null) {
+                Log.e("Direct", ": " + resp);
+                JSONArray jsonArray = new JSONArray(resp);
+                for(int i=0; i<jsonArray.length(); i++){
+                    JSONObject json_data = jsonArray.getJSONObject(i);
+                    String id = json_data.getString("id");
+                    String distribution_type = json_data.getString("distribution_type");
+                    String destination_name = json_data.getString("destination_name");
+                    String mode = json_data.getString("mode_of_shipment");
+                    String driver_name = json_data.getString("driver_name");
+                    String truck_number = json_data.getString("truck_number");
+                    String remarks = json_data.getString("remarks");
+                    String createddate = json_data.getString("createddate");
+                    String eta = json_data.getString("eta");
+                    String etd = json_data.getString("etd");
+                    String createdby = json_data.getString("createdby");
+                    String[] box_number = json_data.getString("box_number").split(",");
+                    String[] boxtypeid = json_data.getString("boxtype_id").split(",");
+
+                    if (!checkDist(id)) {
+                        gendata.addDistribution(id, distribution_type, destination_name, truck_number,
+                                remarks, "1", "2", createddate, createdby, 1, null);
+                        ratesDB.addDistribution(id, distribution_type, mode, destination_name, driver_name, truck_number,
+                                remarks, etd, eta,"1", "2", createddate,
+                                createdby, "2", 1, null);
+                        for (int ix = 0; ix < box_number.length; ix++) {
+                            gendata.addTempBoxDist(id, boxtypeid[ix], "", box_number[ix], "2");
+                            ratesDB.addPartDistributionBox(id,
+                                    getBoxtypeFromXX(box_number[ix]),
+                                    box_number[ix], "1");
+                            deleteBoxnumberInventory(box_number[ix]);
+                        }
+                    }else{
+                        gendata.updDist(id, distribution_type, destination_name,truck_number,
+                                remarks, "1", "2", createddate, createdby);
+                        for (int ix = 0; ix < box_number.length; ix++){
+                            gendata.updDistBoxDist( id, boxtypeid[ix],"", box_number[ix], "2");
+
+                            Log.e("boxnumber",box_number[ix]);
+                        }
                     }
-                });
+                }
+
+                if (conn.getResponseMessage().equals("OK")){
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            progressBar.dismiss();
+                            final AlertDialog.Builder builder = new AlertDialog.Builder(Home.this);
+                            builder.setTitle("Information confirmation")
+                                    .setMessage("Data has been updated, thank you.")
+                                    .setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+                                        public void onClick(DialogInterface dialog, int id) {
+                                            dialog.dismiss();
+                                        }
+                                    })
+                                    .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                                        public void onClick(DialogInterface dialog, int id) {
+                                            dialog.dismiss();
+                                        }
+                                    });
+                            builder.create();
+                            builder.setCancelable(false);
+                            builder.show();
+                        }
+                    });
+                }else{
+                    conn.disconnect();
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            progressBar.dismiss();
+                            final AlertDialog.Builder builder = new AlertDialog.Builder(getApplicationContext());
+                            builder.setTitle("Information confirmation")
+                                    .setMessage("Data download has failed, please try again later. thank you.")
+                                    .setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+                                        public void onClick(DialogInterface dialog, int id) {
+                                            dialog.dismiss();
+                                        }
+                                    });
+                            // Create the AlertDialog object and show it
+                            builder.create();
+                            builder.setCancelable(false);
+                            builder.show();
+                        }
+                    });
+                }
+
+            } else {
+                Log.e("Error", "Couldn't get data from server.");
+            }
+        } catch (Exception e) {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    progressBar.dismiss();
+                    final AlertDialog.Builder builder = new AlertDialog.Builder(Home.this);
+                    builder.setTitle("Information confirmation")
+                            .setMessage("Data has been updated, thank you.")
+                            .setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+                                public void onClick(DialogInterface dialog, int id) {
+                                    dialog.dismiss();
+                                }
+                            })
+                            .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                                public void onClick(DialogInterface dialog, int id) {
+                                    dialog.dismiss();
+                                }
+                            });
+                    builder.create();
+                    builder.setCancelable(false);
+                    builder.show();
+                }
+            });
+        }
+
+    }
+
+    //get barcodes distributed to driver
+    public void getBarcodesDistributiontoDriver(){
+        try {
+            String resp = null;
+            String link = helper.getUrl();
+            String urlget = "http://"+link+"/api/boxnumberseries/getdistributedtodriver.php?id="+helper.logcount();
+            URL url = new URL(urlget);
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            conn.setRequestMethod("GET");
+            // read the response
+            InputStream in = new BufferedInputStream(conn.getInputStream());
+            resp = convertStreamToString(in);
+
+            if (resp != null) {
+                Log.e("BarcodesToDriver", ":" + resp);
+                JSONArray jsonArray = new JSONArray(resp);
+                for(int i=0; i<jsonArray.length(); i++){
+                    JSONObject json_data = jsonArray.getJSONObject(i);
+                    String id = json_data.getString("id");
+                    String transaction_no = json_data.getString("transaction_no");
+                    String driver_id = json_data.getString("driver_id");
+                    String status = json_data.getString("status");
+                    String createddate = json_data.getString("createddate");
+                    String createdby = json_data.getString("createdby");
+                    String[] box_number = json_data.getString("box_number").split(",");
+
+                    for (int ix = 0; ix < box_number.length; ix++) {
+                        ratesDB.addBarcodeDistributionBoxnumber(transaction_no,
+                                box_number[ix], "1");
+                        updateBarcodeInv(box_number[ix]);
+                    }
+                    ratesDB.addBarcodeDistribution(transaction_no, driver_id, createddate, createdby, "2", status);
+
+                }
+
+            } else {
+                Log.e("Error", "Couldn't get data from server.");
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -3527,148 +3810,281 @@ public class Home extends AppCompatActivity
     }
 
     public void getBranchDistribution(){
-        Thread thread = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    String resp = null;
-                    String link = helper.getUrl();
-                    String urlget = "http://"+link+"/api/distribution/get_branch.php";
-                    URL url = new URL(urlget);
-                    HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-                    conn.setRequestMethod("GET");
-                    // read the response
-                    InputStream in = new BufferedInputStream(conn.getInputStream());
-                    resp = convertStreamToString(in);
+        //START BRANCH DISTRIBUTION THREAD
+        try {
+            String resp = null;
+            String link = helper.getUrl();
+            String urlget = "http://"+link+"/api/distribution/get_branch.php";
+            URL url = new URL(urlget);
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            conn.setRequestMethod("GET");
+            // read the response
+            InputStream in = new BufferedInputStream(conn.getInputStream());
+            resp = convertStreamToString(in);
 
-                    if (resp != null) {
-                        Log.e("DistributionsBranch", " : " + resp);
-                        JSONArray jsonArray = new JSONArray(resp);
-                        for(int i=0; i<jsonArray.length(); i++){
-                            JSONObject json_data = jsonArray.getJSONObject(i);
-                            String id = json_data.getString("id");
-                            String distribution_type = json_data.getString("distribution_type");
-                            String destination_name = json_data.getString("destination_name");
-                            String truck_number = json_data.getString("truck_number");
-                            String remarks = json_data.getString("remarks");
-                            String createddate = json_data.getString("createddate");
-                            String createdby = json_data.getString("createdby");
-                            String[] box_number = json_data.getString("box_number").split(",");
-                            String[] boxtypeid = json_data.getString("boxtype_id").split(",");
-                            if (checkDist(id)){
-                                gendata.updDist(id,distribution_type, destination_name,truck_number,
-                                        remarks, "1", "2", createddate, createdby);
+            if (resp != null) {
+                Log.e("DistributionsBranch", " : " + resp);
+                JSONArray jsonArray = new JSONArray(resp);
+                for(int i=0; i<jsonArray.length(); i++){
+                    JSONObject json_data = jsonArray.getJSONObject(i);
+                    String id = json_data.getString("id");
+                    String distribution_type = json_data.getString("distribution_type");
+                    String destination_name = json_data.getString("destination_name");
+                    String truck_number = json_data.getString("truck_number");
+                    String remarks = json_data.getString("remarks");
+                    String createddate = json_data.getString("createddate");
+                    String createdby = json_data.getString("createdby");
+                    String[] box_number = json_data.getString("box_number").split(",");
+                    String[] boxtypeid = json_data.getString("boxtype_id").split(",");
+                    if (checkDist(id)){
+                        gendata.updDist(id, distribution_type, destination_name,truck_number,
+                                remarks, "1", "2", createddate, createdby);
+                        Log.e("distribution", id);
 
-                                for (int ix = 0; ix < boxtypeid.length; ix++){
-                                    gendata.updDistBoxDist( id, boxtypeid[ix],"", box_number[ix], "2");
-                                }
-
-                            }else{
-                                gendata.addDistribution(id,distribution_type, destination_name,truck_number,
-                                        remarks, "1", "2", createddate, createdby, 0, null);
-                                for (int ix = 0; ix < boxtypeid.length; ix++){
-                                    gendata.addTempBoxDist( id, boxtypeid[ix],"", box_number[ix], "2");
-                                }
+                        for (int ix = 0; ix < boxtypeid.length; ix++){
+                            gendata.updDistBoxDist( id, boxtypeid[ix],"", box_number[ix], "2");
+                            if (checkBarcodeBnum(box_number[ix])){
+                                updateBarcodeInv(box_number[ix]);
+                            }else if(checkYourInv(box_number[ix])){
+                                updateBxInv(box_number[ix]);
                             }
-
                         }
 
-                    } else {
-                        Log.e("Error", "Couldn't get data from server.");
-                        runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                Toast.makeText(getApplicationContext(),
-                                        "Couldn't get data from server.",
-                                        Toast.LENGTH_LONG).show();
+                    }else{
+                        gendata.addDistribution(id, distribution_type, destination_name,truck_number,
+                                remarks, "1", "2", createddate, createdby, 1, null);
+                        Log.e("distribution", id);
+                        for (int ix = 0; ix < boxtypeid.length; ix++){
+                            gendata.addTempBoxDist( id, boxtypeid[ix],"", box_number[ix], "2");
+                            if (checkBarcodeBnum(box_number[ix])){
+                                updateBarcodeInv(box_number[ix]);
+                            }else if(checkYourInv(box_number[ix])){
+                                updateBxInv(box_number[ix]);
                             }
-                        });
+                        }
                     }
-                } catch (Exception e) {
-                    e.printStackTrace();
+
                 }
+            } else {
+                Log.e("Error", "Couldn't get data from server.");
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        Toast.makeText(getApplicationContext(),
+                                "Couldn't get data from server.",
+                                Toast.LENGTH_LONG).show();
+                    }
+                });
             }
-        });
-        thread.start();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        //END THREAD FOR branch
     }
 
     public void getHubDistributions(){
-        Thread thread = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    String resp = null;
-                    String link = helper.getUrl();
-                    String urlget = "http://"+link+"/api/distribution/get.php";
-                    URL url = new URL(urlget);
-                    HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-                    conn.setRequestMethod("GET");
-                    // read the response
-                    InputStream in = new BufferedInputStream(conn.getInputStream());
-                    resp = convertStreamToString(in);
+        try {
+            String resp = null;
+            String link = helper.getUrl();
+            String urlget = "http://"+link+"/api/distribution/get.php";
+            URL url = new URL(urlget);
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            conn.setRequestMethod("GET");
+            // read the response
+            InputStream in = new BufferedInputStream(conn.getInputStream());
+            resp = convertStreamToString(in);
 
-                    if (resp != null) {
-                        Log.e("DistributionsHub", ":" + resp);
-                        JSONArray jsonArray = new JSONArray(resp);
-                        for(int i=0; i<jsonArray.length(); i++){
-                            JSONObject json_data = jsonArray.getJSONObject(i);
-                            String id = json_data.getString("id");
-                            String distribution_type = json_data.getString("distribution_type");
-                            String destination_name = json_data.getString("destination_name");
-                            String truck_number = json_data.getString("truck_number");
-                            String remarks = json_data.getString("remarks");
-                            String createddate = json_data.getString("createddate");
-                            String createdby = json_data.getString("createdby");
-                            String[] box_number = json_data.getString("box_number").split(",");
-                            String[] boxtypeid = json_data.getString("boxtype_id").split(",");
+            if (resp != null) {
+                Log.e("DistributionsHub", ":" + resp);
+                JSONArray jsonArray = new JSONArray(resp);
+                for(int i=0; i<jsonArray.length(); i++){
+                    JSONObject json_data = jsonArray.getJSONObject(i);
 
-                            if (checkDist(id)){
-                                gendata.updDist(id,distribution_type, destination_name,truck_number,
-                                        remarks, "1", "2", createddate, createdby);
+                    String id = json_data.getString("id");
+                    String distribution_type = json_data.getString("distribution_type");
+                    String destination_name = json_data.getString("destination_name");
+                    String mode = json_data.getString("mode_of_shipment");
+                    String driver_name = json_data.getString("driver_name");
+                    String truck_number = json_data.getString("truck_number");
+                    String remarks = json_data.getString("remarks");
+                    String createddate = json_data.getString("createddate");
+                    String eta = json_data.getString("eta");
+                    String etd = json_data.getString("etd");
+                    String createdby = json_data.getString("createdby");
+                    String[] box_number = json_data.getString("box_number").split(",");
+                    String[] boxtypeid = json_data.getString("boxtype_id").split(",");
 
-                                for (int ix = 0; ix < boxtypeid.length; ix++){
-                                    gendata.updDistBoxDist( id, boxtypeid[ix],"", box_number[ix], "2");
-                                }
+                    if (checkDist(id)){
+                        gendata.updDist(id,distribution_type, destination_name,truck_number,
+                                remarks, "1", "2", createddate, createdby);
 
-                            }else{
-                                gendata.addDistribution(id,distribution_type, destination_name,truck_number,
-                                        remarks, "1", "2", createddate, createdby, 0, null);
-                                for (int ix = 0; ix < boxtypeid.length; ix++){
-                                    gendata.addTempBoxDist( id, boxtypeid[ix],"", box_number[ix], "2");
-                                }
-                            }
+                        for (int ix = 0; ix < boxtypeid.length; ix++){
+                            gendata.updDistBoxDist( id, boxtypeid[ix],"", box_number[ix], "2");
                         }
 
-                    } else {
-                        Log.e("Error", "Couldn't get data from server.");
-                        runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                Toast.makeText(getApplicationContext(),
-                                        "Couldn't get data from server.",
-                                        Toast.LENGTH_LONG).show();
-                            }
-                        });
+                    }else{
+                        gendata.addDistribution(id,distribution_type, destination_name,truck_number,
+                                remarks, "1", "2", createddate, createdby, 0, null);
+                        ratesDB.addDistribution(id, distribution_type, mode, destination_name, driver_name, truck_number,
+                                remarks, etd, eta,"1", "2", createddate,
+                                createdby, "2", 1, null);
+                        for (int ix = 0; ix < box_number.length; ix++) {
+                            gendata.addTempBoxDist(id, boxtypeid[ix], "", box_number[ix], "2");
+                            ratesDB.addPartDistributionBox(id,
+                                    getBoxtypeFromXX(box_number[ix]),
+                                    box_number[ix], "1");
+                            deleteBoxnumberInventory(box_number[ix]);
+                            Log.e("boxnumber",box_number[ix]);
+                        }
                     }
-                } catch (Exception e) {
-                    e.printStackTrace();
                 }
+
+            } else {
+                Log.e("Error", "Couldn't get data from server.");
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        Toast.makeText(getApplicationContext(),
+                                "Couldn't get data from server.",
+                                Toast.LENGTH_LONG).show();
+                    }
+                });
             }
-        });
-        thread.start();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void getAreaDistributions(){
+        try {
+            String resp = null;
+            String link = helper.getUrl();
+            String urlget = "http://"+link+"/api/distribution/getbyarea.php";
+            URL url = new URL(urlget);
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            conn.setRequestMethod("GET");
+            // read the response
+            InputStream in = new BufferedInputStream(conn.getInputStream());
+            resp = convertStreamToString(in);
+
+            if (resp != null) {
+                Log.e("DistributionsArea", ":" + resp);
+                JSONArray jsonArray = new JSONArray(resp);
+                for(int i=0; i<jsonArray.length(); i++){
+                    JSONObject json_data = jsonArray.getJSONObject(i);
+
+                    String id = json_data.getString("id");
+                    String distribution_type = json_data.getString("distribution_type");
+                    String destination_name = json_data.getString("destination_name");
+                    String mode = json_data.getString("mode_of_shipment");
+                    String driver_name = json_data.getString("driver_name");
+                    String truck_number = json_data.getString("truck_number");
+                    String remarks = json_data.getString("remarks");
+                    String createddate = json_data.getString("createddate");
+                    String eta = json_data.getString("eta");
+                    String etd = json_data.getString("etd");
+                    String createdby = json_data.getString("createdby");
+                    String[] box_number = json_data.getString("box_number").split(",");
+                    String[] boxtypeid = json_data.getString("boxtype_id").split(",");
+
+                    if (checkDist(id)){
+                        gendata.updDist(id,distribution_type, destination_name,truck_number,
+                                remarks, "1", "2", createddate, createdby);
+
+                        for (int ix = 0; ix < boxtypeid.length; ix++){
+                            gendata.updDistBoxDist( id, boxtypeid[ix],"", box_number[ix], "2");
+                        }
+
+                    }else{
+                        gendata.addDistribution(id,distribution_type, destination_name,truck_number,
+                                remarks, "1", "2", createddate, createdby, 0, null);
+                        ratesDB.addDistribution(id, distribution_type, mode, destination_name, driver_name, truck_number,
+                                remarks, etd, eta,"1", "2", createddate,
+                                createdby, "2", 1, null);
+                        for (int ix = 0; ix < box_number.length; ix++) {
+                            gendata.addTempBoxDist(id, boxtypeid[ix], "", box_number[ix], "2");
+                            ratesDB.addPartDistributionBox(id,
+                                    getBoxtypeFromXX(box_number[ix]),
+                                    box_number[ix], "1");
+                            deleteBoxnumberInventory(box_number[ix]);
+                            Log.e("boxnumber",box_number[ix]);
+                        }
+                    }
+                }
+
+            } else {
+                Log.e("Error", "Couldn't get data from server.");
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        Toast.makeText(getApplicationContext(),
+                                "Couldn't get data from server.",
+                                Toast.LENGTH_LONG).show();
+                    }
+                });
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void getUndeliveredBoxes(){
+        try {
+            String resp = null;
+            String link = helper.getUrl();
+            String urlget = "http://"+link+"/api/delivery/getundelivered.php";
+            URL url = new URL(urlget);
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            conn.setRequestMethod("GET");
+            // read the response
+            InputStream in = new BufferedInputStream(conn.getInputStream());
+            resp = convertStreamToString(in);
+
+            if (resp != null) {
+                Log.e("Undelivered", ":" + resp);
+                JSONArray jsonArray = new JSONArray(resp);
+                for(int i=0; i<jsonArray.length(); i++){
+
+                    JSONObject json_data = jsonArray.getJSONObject(i);
+
+                    String[] box_number = json_data.getString("box_number").split(",");
+                    for (int ib = 0; ib < box_number.length; ib++){
+                        gendata.addUndelivered(box_number[ib]);
+                    }
+
+                }
+
+            } else {
+                Log.e("Error", "Couldn't get data from server.");
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        Toast.makeText(getApplicationContext(),
+                                "Couldn't get data from server.",
+                                Toast.LENGTH_LONG).show();
+                    }
+                });
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     public void getBoxesFromDistributionChecker(String x){
         SQLiteDatabase db = gendata.getReadableDatabase();
-        Cursor c = db.rawQuery(" SELECT * FROM " + gendata.tbname_tempboxes
-                + " JOIN " + gendata.tbname_tempDist
-                + " WHERE " + gendata.tbname_tempDist + "."
-                + gendata.temp_typename + " = '" + x + "'", null);
+        Cursor c = db.rawQuery(" SELECT gt.* FROM " + gendata.tbname_tempboxes+" gt "
+                + " LEFT JOIN " + gendata.tbname_tempDist+" gtt ON gtt."+gendata.temp_transactionnumber
+                +" = gt."+gendata.dboxtemp_distributionid
+                + " WHERE gtt."+ gendata.temp_typename + " = '" + x + "'", null);
         c.moveToFirst();
         while (!c.isAfterLast()) {
             String topitem = c.getString(c.getColumnIndex(gendata.dboxtemp_boxid));
             String bnum = c.getString(c.getColumnIndex(gendata.dboxtemp_boxnumber));
-            gendata.addtoCheckerInv(topitem, bnum, "1", "0");
+            if (!checkAcceptance(bnum)) {
+                gendata.addtoCheckerInv(topitem, bnum, "1", "0");
+            }else{
+                gendata.addtoCheckerInv(topitem, bnum, "1", "1");
+            }
             Log.e("boxtoinv", "type:" + topitem + ", boxnum: " + bnum);
             c.moveToNext();
         }
@@ -3676,10 +4092,21 @@ public class Home extends AppCompatActivity
         db.close();
     }
 
+    public String readBranch(){
+        String branchname = "";
+        SQLiteDatabase db = ratesDB.getReadableDatabase();
+        Cursor x = db.rawQuery(" SELECT * FROM "+ratesDB.tbname_branch
+                +" WHERE "+ratesDB.branch_id+" = '"+helper.getBranch(""+helper.logcount())+"'", null);
+        if (x.moveToNext()){
+            branchname = x.getString(x.getColumnIndex(ratesDB.branch_name));
+        }
+        return branchname;
+    }
+
     // convert from bitmap to byte array
     public byte[] getBytesFromBitmap(Bitmap bitmap) {
         ByteArrayOutputStream stream = new ByteArrayOutputStream();
-        bitmap.compress(Bitmap.CompressFormat.JPEG, 80, stream);
+        bitmap.compress(Bitmap.CompressFormat.JPEG, 90, stream);
         return stream.toByteArray();
     }
 
@@ -3878,7 +4305,7 @@ public class Home extends AppCompatActivity
     public boolean checkDist(String id){
         SQLiteDatabase db = gendata.getReadableDatabase();
         Cursor c = db.rawQuery(" SELECT * FROM "+gendata.tbname_tempDist
-        +" WHERE "+gendata.temp_transactionnumber+" = '"+id+"'", null);
+                +" WHERE "+gendata.temp_transactionnumber+" = '"+id+"'", null);
         if (c.getCount() != 0){
             return true;
         }else{
@@ -3887,10 +4314,50 @@ public class Home extends AppCompatActivity
     }
 
     public boolean checkAcceptance(String id){
+        boolean ok = false;
         SQLiteDatabase db = gendata.getReadableDatabase();
         Cursor c = db.rawQuery(" SELECT * FROM "+gendata.tbname_check_acceptance
         +" WHERE "+gendata.accept_transactionid+" = '"+id+"'", null);
         if (c.getCount() != 0){
+            ok = true;
+        }else{
+            ok = false;
+        }
+        db.close();
+        return ok;
+
+    }
+
+    public boolean checkBarcodeBnum(String bn){
+        SQLiteDatabase db = ratesDB.getReadableDatabase();
+        String x = " SELECT * FROM "+ratesDB.tbname_barcode_inventory
+                +" WHERE "+ratesDB.barcodeinv_boxnumber+" = '"+bn+"'";
+        Cursor c = db.rawQuery(x, null);
+        if (c.getCount() != 0 ){
+            return true;
+        }else{
+            return false;
+        }
+    }
+
+    public boolean checkBarcodeDistDriver(String trans){
+        SQLiteDatabase db = ratesDB.getReadableDatabase();
+        String x = " SELECT * FROM "+ratesDB.tbname_barcode_dist
+                +" WHERE "+ratesDB.bardist_trans+" = '"+trans+"'";
+        Cursor c = db.rawQuery(x, null);
+        if (c.getCount() != 0 ){
+            return true;
+        }else{
+            return false;
+        }
+    }
+
+    public boolean checkYourInv(String bn){
+        SQLiteDatabase db = gendata.getReadableDatabase();
+        String x = " SELECT * FROM "+gendata.tbname_checker_inventory
+                +" WHERE "+gendata.chinv_boxnumber+" = '"+bn+"'";
+        Cursor c = db.rawQuery(x, null);
+        if (c.getCount() != 0 ){
             return true;
         }else{
             return false;
@@ -3898,27 +4365,132 @@ public class Home extends AppCompatActivity
     }
 
     public boolean checkBookingExist(String id){
+        boolean ok = false;
         SQLiteDatabase db = gendata.getReadableDatabase();
         Cursor c = db.rawQuery(" SELECT * FROM "+gendata.tbname_booking
         +" WHERE "+gendata.book_transaction_no+" = '"+id+"'", null);
         if (c.getCount() != 0){
-            return true;
+            ok = true;
         }else{
-            return false;
+            ok = false;
         }
+        db.close();
+        return ok;
     }
 
     public boolean checkNSBrate(String boxid, String source, String des, String rate){
+        boolean ok = false;
         SQLiteDatabase db = gendata.getReadableDatabase();
         Cursor c = db.rawQuery(" SELECT * FROM "+gendata.tbname_nsbrate
         +" WHERE "+gendata.nsbr_boxid+" = '"+boxid+"' AND "+gendata.nsbr_sourceid+" = '"+source+"'"
                 +" AND "+gendata.nsbr_destid+" = '"+des+"' AND "+gendata.nsbr_rate+" = '"+rate+"'", null);
         if (c.getCount() != 0){
+            ok = true;
+        }else{
+            ok = false;
+        }
+        db.close();
+        return ok;
+    }
+
+    public void updateBarcodeInv(String bn){
+        SQLiteDatabase db = ratesDB.getWritableDatabase();
+        ContentValues cv = new ContentValues();
+        cv.put(ratesDB.barcodeinv_status, "1");
+        db.update(ratesDB.tbname_barcode_inventory, cv,
+                ratesDB.barcodeinv_boxnumber+" = '"+bn+"'", null);
+        Log.e("update_barcode_inv",bn);
+        db.close();
+    }
+
+    public double boxPrice(String boxid, double quant){
+        double pr = 0;
+        SQLiteDatabase db = gendata.getReadableDatabase();
+        String x = " SELECT "+gendata.box_depositprice+" FROM "+gendata.tbname_boxes
+                +" WHERE "+gendata.box_id+" = '"+boxid+"'";
+        Cursor c = db.rawQuery(x, null);
+        if (c.moveToNext()){
+            double tr = Double.valueOf(c.getString(c.getColumnIndex(gendata.box_depositprice)));
+            pr = (tr * quant);
+        }
+        c.close();
+        return pr;
+    }
+
+    public void addItemsExpenseTodb(String name){
+        SQLiteDatabase db = ratesDB.getWritableDatabase();
+        ContentValues cv = new ContentValues();
+        cv.put(ratesDB.expit_name, name);
+        cv.put(ratesDB.expit_type, "0");
+        db.insert(ratesDB.tbname_exp_item, null, cv);
+        db.close();
+    }
+
+    public void updateDistBarcode(String trans){
+        SQLiteDatabase db = ratesDB.getWritableDatabase();
+        ContentValues cv = new ContentValues();
+        cv.put(ratesDB.bardist_accptstat, "1");
+        db.update(ratesDB.tbname_barcode_dist,cv, ratesDB.bardist_trans+" = '"+trans+"'", null);
+        Log.e("upd_dist", trans);
+        db.close();
+    }
+
+    public void updateBnCheckInv(String bn){
+        SQLiteDatabase db = gendata.getWritableDatabase();
+        ContentValues cv = new ContentValues();
+        cv.put(gendata.acc_box_stat, "10");
+        db.update(gendata.tbname_accept_boxes, cv,
+                gendata.acc_box_boxnumber+" = '"+bn+"'", null);
+        Log.e("update", bn);
+        db.close();
+    }
+
+    public String getBoxtypeFromXX(String barcode){
+        String name = null;
+        SQLiteDatabase db = gendata.getReadableDatabase();
+        String query = "SELECT * FROM "+gendata.tbname_booking_consignee_box+" LEFT JOIN "
+                +gendata.tbname_boxes
+                +" ON "+gendata.tbname_boxes+"."+gendata.box_name+" = "
+                +gendata.tbname_booking_consignee_box+"."+gendata.book_con_boxtype
+                +" WHERE "+gendata.book_con_box_number+" = '"+barcode+"'";
+        Cursor c = db.rawQuery(query, null);
+        if (c.getCount() != 0){
+            c.moveToNext();
+            name = c.getString(c.getColumnIndex(gendata.book_con_box_id));
+            Log.e("boxname", name);
+        }
+        return name;
+    }
+
+    public void deleteBoxnumberInventory(String bn){
+        SQLiteDatabase db = gendata.getWritableDatabase();
+        db.delete(gendata.tbname_partner_inventory,
+                gendata.partinv_boxnumber + " = '"+bn+"'", null);
+        Log.e("part_inv_delte", bn);
+        db.close();
+    }
+
+    public boolean checkInDistributionPartner(String bn){
+        SQLiteDatabase db = ratesDB.getReadableDatabase();
+        Cursor c = db.rawQuery(" SELECT * FROM "+ratesDB.tbname_part_distribution_box
+                +" WHERE "+ratesDB.partdist_box_boxnumber+" = '"+bn+"'", null);
+        if (c.getCount() != 0){
+            deleteBoxnumberInventory(bn);
             return true;
         }else{
             return false;
         }
+
     }
 
+    public void updatePartnerInv(String bn){
+        SQLiteDatabase db = gendata.getWritableDatabase();
+        ContentValues cv = new ContentValues();
+        cv.put(gendata.partinv_stat, "10");
+        db.update(gendata.tbname_partner_inventory,cv,
+                gendata.partinv_boxnumber + " = '"+bn+"'", null);
+        Log.e("part_inv_updte", bn);
+        db.close();
+    }
 
 }

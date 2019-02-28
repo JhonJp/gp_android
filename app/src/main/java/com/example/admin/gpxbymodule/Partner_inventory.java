@@ -266,8 +266,6 @@ public class Partner_inventory extends AppCompatActivity
                     returnViewItems( topi,"1", "0");
                 }
             });
-            to.setText(Html.fromHtml("<small>Overall total: </small>" +
-                    "<b>" + countAll("1", "0") + " box(s) </b>"));
         }catch (Exception e){}
     }
 
@@ -331,24 +329,31 @@ public class Partner_inventory extends AppCompatActivity
             SQLiteDatabase db = gen.getReadableDatabase();
             String r = " SELECT " + gen.tbname_boxes + "." + gen.box_name + ", "
                     + gen.tbname_partner_inventory + "." + gen.partinv_id + ", "
+                    + gen.tbname_partner_inventory + "." + gen.partinv_boxnumber + ", "
                     + " COUNT (" + gen.tbname_partner_inventory + "." + gen.partinv_boxtype + ")"
                     + " FROM " + gen.tbname_partner_inventory
                     + " LEFT JOIN " + gen.tbname_boxes + " ON "
                     + gen.tbname_boxes + "." + gen.box_id + " = " + gen.tbname_partner_inventory
                     + "." + gen.partinv_boxtype
                     + " WHERE " + gen.partinv_boxtype_fillempty + " = '" + type + "' AND "
-                    + gen.partinv_stat + " = '" + stat + "' GROUP BY " + gen.partinv_boxtype;
+                    + gen.partinv_stat + " = '" + stat + "' AND "
+                    + gen.tbname_partner_inventory + "." + gen.partinv_boxtype
+                    + " IS NOT NULL "
+                    +" GROUP BY " + gen.partinv_boxtype;
             Cursor c = db.rawQuery(r, null);
             c.moveToFirst();
             while (!c.isAfterLast()) {
                 String id = c.getString(1);
                 String topitem = c.getString(c.getColumnIndex(gen.box_name));
-                String subitem = c.getString(2);
+                String subitem = c.getString(3);
+                String bn = c.getString(2);
                 ListItem list = new ListItem(id, topitem, subitem, null);
                 results.add(list);
                 c.moveToNext();
             }
         }catch (Exception e){}
+        to.setText(Html.fromHtml("<small>Overall total: </small>" +
+                "<b>" + countAll("1", "0") + " box(s) </b>"));
         return results;
     }
 
@@ -356,7 +361,8 @@ public class Partner_inventory extends AppCompatActivity
         SQLiteDatabase db = gen.getReadableDatabase();
         String que = " SELECT * FROM "+gen.tbname_partner_inventory
                 +" WHERE "+gen.partinv_boxtype_fillempty+" = '"+type+"' AND "
-                +gen.partinv_stat+" = '"+stat+"'";
+                +gen.partinv_stat+" = '"+stat+"' AND "
+                + gen.partinv_boxtype + " IS NOT NULL ";
         Cursor c = db.rawQuery(que, null);
         return c.getCount()+"";
     }
@@ -399,13 +405,14 @@ public class Partner_inventory extends AppCompatActivity
                 +"."+gen.partinv_boxtype_fillempty+" = '"+type+"'";
         Cursor f = db.rawQuery(get, null);
         f.moveToFirst();
+        int i = 1;
         while (!f.isAfterLast()){
             String bid = f.getString(f.getColumnIndex(gen.partinv_id));
             String bname = f.getString(f.getColumnIndex(gen.box_name));
             String bnum = f.getString(f.getColumnIndex(gen.partinv_boxnumber));
-            ListItem item = new ListItem(bid, bname, bnum, "");
+            ListItem item = new ListItem(bid, i+"", bnum, "");
             result.add(item);
-
+            i++;
             f.moveToNext();
         }
         return result;

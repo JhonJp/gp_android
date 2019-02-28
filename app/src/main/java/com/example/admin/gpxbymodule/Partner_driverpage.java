@@ -51,6 +51,7 @@ import java.io.InputStreamReader;
 import java.lang.reflect.Array;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 
 public class Partner_driverpage extends AppCompatActivity {
@@ -78,7 +79,7 @@ public class Partner_driverpage extends AppCompatActivity {
         delids = new ArrayList<>();
         incids = new ArrayList<>();
         drivername = helper.getFullname(helper.logcount()+"").replace("  "," ");
-
+        Log.e("drivername", drivername);
         //
         loadFragment(new Partner_DeliveryPending());
         nav();
@@ -327,7 +328,7 @@ public class Partner_driverpage extends AppCompatActivity {
         //END THREAD FOR booking
     }
 
-    public void getPost() {
+    public void getPost(){
         Thread thread = new Thread(new Runnable() {
             @Override
             public void run() {
@@ -343,8 +344,10 @@ public class Partner_driverpage extends AppCompatActivity {
 
                 //get delivered data
                 getDeliveredData();
+
                 //get delivery images
                 getProof();
+
                 //get delivery boxes
                 getDeliveredBox();
 
@@ -405,8 +408,10 @@ public class Partner_driverpage extends AppCompatActivity {
         try {
             String resp = null;
             String link = helper.getUrl();
-            String urlget = "http://"+link+"/api/distribution/getbydrivername.php?name="+name;
+            String encodedUrl = URLEncoder.encode(name);
+            String urlget = "http://"+link+"/api/distribution/getbydrivername.php?name="+encodedUrl;
             URL url = new URL(urlget);
+            //Log.e("url",urlget);
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
             conn.setRequestMethod("GET");
             // read the response
@@ -433,6 +438,7 @@ public class Partner_driverpage extends AppCompatActivity {
                 });
             }
         } catch (Exception e) {
+            Log.e("error", e.getMessage());
             e.printStackTrace();
         }
     }
@@ -470,7 +476,7 @@ public class Partner_driverpage extends AppCompatActivity {
                     Log.e("base64tobyte", decodedString+"");
                     if (!checkDelId(id)) {
                         gen.addDelivery(id, transaction_no, customer,
-                                createddate, decodedString, helper.logcount() + "", "1", "", remarks, receivedby, relationship);
+                                createddate, decodedString, helper.logcount() + "", "1", "", remarks, receivedby, relationship, "1");
                     }
                 }
 
@@ -758,9 +764,6 @@ public class Partner_driverpage extends AppCompatActivity {
         }
     }
 
-//    syncing data reservations
-//    connecting to internet
-
     public void loadingPost(final View v){
         // prepare for a progress bar dialog
         int max = 100;
@@ -779,136 +782,139 @@ public class Partner_driverpage extends AppCompatActivity {
     }
 
     public void threadDelivery(){
-        SQLiteDatabase db = gen.getReadableDatabase();
-        String q = " SELECT * FROM "+gen.tbname_delivery
-                +" WHERE "+gen.del_createdby+" = '"+helper.logcount()+"' AND "+gen.del_upds+" = '1'";
-        Cursor cx = db.rawQuery(q, null);
-        if (cx.getCount() != 0) {
-            try {
-                String link = helper.getUrl();
-                URL url = new URL("http://" + link + "/api/delivery/save.php");
-                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-                conn.setRequestMethod("POST");
-                conn.setRequestProperty("Content-Type", "application/json;charset=UTF-8");
-                conn.setRequestProperty("Accept", "application/json");
-                conn.setDoOutput(true);
-                conn.setDoInput(true);
-                JSONObject jsonParam = new JSONObject();
-                db = gen.getReadableDatabase();
-                JSONArray finalarray = new JSONArray();
+        try {
+            SQLiteDatabase db = gen.getReadableDatabase();
+            String q = " SELECT * FROM "+gen.tbname_delivery
+                    +" WHERE "+gen.del_createdby+" = '"+helper.logcount()+"' AND "+gen.del_upds+" = '1'";
+            Cursor cx = db.rawQuery(q, null);
+            if (cx.getCount() != 0) {
+                    String link = helper.getUrl();
+                    URL url = new URL("http://" + link + "/api/delivery/save.php");
+                    HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                    conn.setRequestMethod("POST");
+                    conn.setRequestProperty("Content-Type", "application/json;charset=UTF-8");
+                    conn.setRequestProperty("Accept", "application/json");
+                    conn.setDoOutput(true);
+                    conn.setDoInput(true);
+                    JSONObject jsonParam = new JSONObject();
+                    db = gen.getReadableDatabase();
+                    JSONArray finalarray = new JSONArray();
 
-                String query = " SELECT * FROM " +gen.tbname_delivery
-                        +" WHERE "+gen.del_createdby+" = '"+helper.logcount()+"' AND "+gen.del_upds+" = '1'";
-                Cursor c = db.rawQuery(query, null);
-                c.moveToFirst();
+                    String query = " SELECT * FROM " +gen.tbname_delivery
+                            +" WHERE "+gen.del_createdby+" = '"+helper.logcount()+"' AND "+gen.del_upds+" = '1'";
+                    Cursor c = db.rawQuery(query, null);
+                    c.moveToFirst();
 
-                while (!c.isAfterLast()) {
-                    JSONObject json = new JSONObject();
-                    String id = c.getString(c.getColumnIndex(gen.del_id));
-                    String trans = c.getString(c.getColumnIndex(gen.del_booking_no));
-                    String cust = c.getString(c.getColumnIndex(gen.del_customer));
-                    String date = c.getString(c.getColumnIndex(gen.del_createddate));
-                    String recby = c.getString(c.getColumnIndex(gen.del_receivedby));
-                    String relation = c.getString(c.getColumnIndex(gen.del_relationship));
-                    byte[] sign = c.getBlob(c.getColumnIndex(gen.del_sign));
-                    String by = c.getString(c.getColumnIndex(gen.del_createdby));
-                    String remar = c.getString(c.getColumnIndex(gen.del_notes));
-                    Bitmap bitmap = BitmapFactory.decodeByteArray(sign, 0, sign.length);
-                    byte[] bitmapdata = getBytesFromBitmap(bitmap);
+                    while (!c.isAfterLast()) {
+                        JSONObject json = new JSONObject();
+                        String id = c.getString(c.getColumnIndex(gen.del_id));
+                        String trans = c.getString(c.getColumnIndex(gen.del_booking_no));
+                        String cust = c.getString(c.getColumnIndex(gen.del_customer));
+                        String date = c.getString(c.getColumnIndex(gen.del_createddate));
+                        String recby = c.getString(c.getColumnIndex(gen.del_receivedby));
+                        String relation = c.getString(c.getColumnIndex(gen.del_relationship));
+                        byte[] sign = c.getBlob(c.getColumnIndex(gen.del_sign));
+                        String by = c.getString(c.getColumnIndex(gen.del_createdby));
+                        String remar = c.getString(c.getColumnIndex(gen.del_notes));
+                        String status = c.getString(c.getColumnIndex(gen.del_mainstat));
+                        Bitmap bitmap = BitmapFactory.decodeByteArray(sign, 0, sign.length);
+                        byte[] bitmapdata = getBytesFromBitmap(bitmap);
 
-                    // get the base 64 string
-                    String imgString = Base64.encodeToString(bitmapdata, Base64.NO_WRAP);
-                    json.put("id", id);
-                    json.put("transaction_no", trans);
-                    json.put("customer", cust);
-                    json.put("createddate", date);
-                    json.put("signature", imgString);
-                    json.put("receivedby", recby);
-                    json.put("relationship", relation);
-                    json.put("createdby", by);
-                    json.put("remarks", remar);
-                    json.put("delivery_box", getDeliveryBox(id));
-                    json.put("delivery_image", getImage(id));
-                    delids.add(id);
-                    finalarray.put(json);
-                    c.moveToNext();
-                }
-                c.close();
-                jsonParam.accumulate("data", finalarray);
-                Log.e("JSON_data", jsonParam.toString());
-                DataOutputStream os = new DataOutputStream(conn.getOutputStream());
-                os.writeBytes(jsonParam.toString());
-                os.flush();
-                os.close();
+                        // get the base 64 string
+                        String imgString = Base64.encodeToString(bitmapdata, Base64.NO_WRAP);
+                        json.put("id", id);
+                        json.put("transaction_no", trans);
+                        json.put("customer", cust);
+                        json.put("createddate", date);
+                        json.put("receivedby", recby);
+                        json.put("relationship", relation);
+                        json.put("createdby", by);
+                        json.put("remarks", remar);
+                        json.put("mainstatus", status);
+                        json.put("signature", imgString);
+                        json.put("delivery_box", getDeliveryBox(id));
+                        json.put("delivery_image", getImage(id));
+                        delids.add(id);
+                        finalarray.put(json);
+                        c.moveToNext();
+                    }
+                    c.close();
+                    jsonParam.accumulate("data", finalarray);
+                    Log.e("JSON_data", jsonParam.toString());
+                    DataOutputStream os = new DataOutputStream(conn.getOutputStream());
+                    os.writeBytes(jsonParam.toString());
+                    os.flush();
+                    os.close();
 
-                Log.i("STATUS", String.valueOf(conn.getResponseCode()));
-                Log.i("MSG", conn.getResponseMessage());
-                if (!conn.getResponseMessage().equals("OK")){
+                    Log.i("STATUS", String.valueOf(conn.getResponseCode()));
+                    Log.i("MSG", conn.getResponseMessage());
+                    if (!conn.getResponseMessage().equals("OK")){
+                        conn.disconnect();
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                progressBar.dismiss();
+                                final AlertDialog.Builder builder
+                                        = new AlertDialog.Builder(Partner_driverpage.this);
+                                builder.setTitle("Upload failed")
+                                        .setMessage("Data sync has failed, please try again later. thank you.")
+                                        .setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+                                            public void onClick(DialogInterface dialog, int id) {
+                                                dialog.dismiss();
+                                            }
+                                        });
+                                // Create the AlertDialog object and show it
+                                builder.create().show();
+                            }
+                        });
+                    }else{
+                        conn.disconnect();
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                progressBar.dismiss();
+                                final AlertDialog.Builder builder
+                                        = new AlertDialog.Builder(Partner_driverpage.this);
+                                builder.setTitle("Information confirmation")
+                                        .setMessage("Data upload has been successful, thank you.")
+                                        .setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+                                            public void onClick(DialogInterface dialog, int id) {
+                                                updateIncStat(incids);
+                                                updateDel(delids);
+                                                deleteUndelivered();
+                                                dialog.dismiss();
+                                            }
+                                        });
+                                // Create the AlertDialog object and show it
+                                builder.create();
+                                builder.setCancelable(false);
+                                builder.show();
+                            }
+                        });
+                    }
                     conn.disconnect();
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            progressBar.dismiss();
-                            final AlertDialog.Builder builder
-                                    = new AlertDialog.Builder(Partner_driverpage.this);
-                            builder.setTitle("Upload failed")
-                                    .setMessage("Data sync has failed, please try again later. thank you.")
-                                    .setPositiveButton("Ok", new DialogInterface.OnClickListener() {
-                                        public void onClick(DialogInterface dialog, int id) {
-                                            dialog.dismiss();
-                                        }
-                                    });
-                            // Create the AlertDialog object and show it
-                            builder.create().show();
-                        }
-                    });
-                }else{
-                    conn.disconnect();
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            progressBar.dismiss();
-                            final AlertDialog.Builder builder
-                                    = new AlertDialog.Builder(Partner_driverpage.this);
-                            builder.setTitle("Information confirmation")
-                                    .setMessage("Data upload has been successful, thank you.")
-                                    .setPositiveButton("Ok", new DialogInterface.OnClickListener() {
-                                        public void onClick(DialogInterface dialog, int id) {
-                                            updateIncStat(incids);
-                                            updateDel(delids);
-                                            dialog.dismiss();
-                                        }
-                                    });
-                            // Create the AlertDialog object and show it
-                            builder.create();
-                            builder.setCancelable(false);
-                            builder.show();
-                        }
-                    });
-                }
-                conn.disconnect();
-            } catch (Exception e) {
-                e.printStackTrace();
+            }else{
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        progressBar.dismiss();
+                        final AlertDialog.Builder builder
+                                = new AlertDialog.Builder(Partner_driverpage.this);
+                        builder.setTitle("Information confirmation")
+                                .setMessage("You dont have data to be uploaded yet, please add new transactions. Thank you.")
+                                .setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+                                    public void onClick(DialogInterface dialog, int id) {
+                                        dialog.dismiss();
+                                    }
+                                });
+                        builder.create();
+                        builder.setCancelable(false);
+                        builder.show();
+                    }
+                });
             }
-        }else{
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    progressBar.dismiss();
-                    final AlertDialog.Builder builder
-                            = new AlertDialog.Builder(Partner_driverpage.this);
-                    builder.setTitle("Information confirmation")
-                            .setMessage("You dont have data to be uploaded yet, please add new transactions. Thank you.")
-                            .setPositiveButton("Ok", new DialogInterface.OnClickListener() {
-                                public void onClick(DialogInterface dialog, int id) {
-                                    dialog.dismiss();
-                                }
-                            });
-                    builder.create();
-                    builder.setCancelable(false);
-                    builder.show();
-                }
-            });
+        } catch (Exception e) {
+            Log.e("error",e.getMessage());
         }
     }
 
@@ -952,15 +958,16 @@ public class Partner_driverpage extends AppCompatActivity {
 
     public JSONArray getImage(String id) {
         SQLiteDatabase myDataBase = rates.getReadableDatabase();
-        String raw = "SELECT "+rates.res_img_image+" FROM " + rates.tbname_reserve_image
-                + " WHERE "+rates.res_img_trans+" = '"+id+"'";
+        String raw = "SELECT * FROM " + rates.tbname_generic_imagedb
+                + " WHERE "+rates.gen_trans+" = '"+id+"' AND "+rates.gen_module+" = 'delivery'";
         Cursor c = myDataBase.rawQuery(raw, null);
         JSONArray resultSet = new JSONArray();
         c.moveToFirst();
         try {
             while (!c.isAfterLast()) {
                 JSONObject js = new JSONObject();
-                byte[] image = c.getBlob(c.getColumnIndex(rates.res_img_image));
+                String module = c.getString(c.getColumnIndex(rates.gen_module));
+                byte[] image = c.getBlob(c.getColumnIndex(rates.gen_image));
                 Bitmap bitmap = BitmapFactory.decodeByteArray(image, 0, image.length);
                 byte[] bitmapdata = getBytesFromBitmap(bitmap);
 
@@ -968,6 +975,7 @@ public class Partner_driverpage extends AppCompatActivity {
                 String imgString = Base64.encodeToString(bitmapdata, Base64.NO_WRAP);
 
                 js.put("image", imgString);
+                js.put("module", module);
 
                 resultSet.put(js);
                 c.moveToNext();
@@ -983,7 +991,7 @@ public class Partner_driverpage extends AppCompatActivity {
     // convert from bitmap to byte array
     public byte[] getBytesFromBitmap(Bitmap bitmap) {
         ByteArrayOutputStream stream = new ByteArrayOutputStream();
-        bitmap.compress(Bitmap.CompressFormat.JPEG, 80, stream);
+        bitmap.compress(Bitmap.CompressFormat.JPEG, 90, stream);
         return stream.toByteArray();
     }
 
@@ -1165,6 +1173,17 @@ public class Partner_driverpage extends AppCompatActivity {
                 db.close();
             }
         }
+    }
+
+    //delete all undelivered
+    public void deleteUndelivered(){
+        SQLiteDatabase db = gen.getWritableDatabase();
+        db.delete(gen.tbname_delivery,
+                gen.del_mainstat + " = '2'", null);
+        db.delete(gen.tbname_delivery_box,
+                gen.del_box_status+" = '2'", null);
+        Log.e("upload", "delete undelivered");
+        db.close();
     }
 
 }

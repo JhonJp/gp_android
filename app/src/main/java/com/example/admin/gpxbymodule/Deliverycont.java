@@ -19,6 +19,7 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.RectF;
+import android.net.Uri;
 import android.os.Environment;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
@@ -69,6 +70,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.List;
 import java.util.TimeZone;
 
 public class Deliverycont extends AppCompatActivity {
@@ -110,6 +112,10 @@ public class Deliverycont extends AppCompatActivity {
     FrameLayout framsign;
     String ig;
 
+    //image
+    ArrayList<HomeList> stored_image;
+    ArrayList<byte[]> capt_images;
+
     @Override
     protected void onCreate(Bundle savedInstanceState){
         super.onCreate(savedInstanceState);
@@ -132,6 +138,8 @@ public class Deliverycont extends AppCompatActivity {
         lvbox = (ListView)findViewById(R.id.lv);
         capt = (FloatingActionButton)findViewById(R.id.camera);
         sig = (ImageView)findViewById(R.id.signat);
+        stored_image = new ArrayList<>();
+        capt_images = new ArrayList<>();
 
         if (getTransid() == null) {
             setTransid(generateTransNo());
@@ -217,10 +225,10 @@ public class Deliverycont extends AppCompatActivity {
 
     public void viewgrid(){
         try {
-            final ArrayList<HomeList> listitem = getDeliveryImages(getTransid());
-            ImageAdapter myAdapter = new ImageAdapter(this, listitem);
+            final ArrayList<HomeList> listitem = stored_image;
+            ImageAdapter myAdapter = new ImageAdapter(getApplicationContext(), listitem);
             grimg.setAdapter(myAdapter);
-            if (grimg.getAdapter().getCount() > 0) {
+            if (capt_images.size() > 0) {
                 hint.setVisibility(View.INVISIBLE);
             } else {
                 hint.setVisibility(View.VISIBLE);
@@ -229,9 +237,7 @@ public class Deliverycont extends AppCompatActivity {
                 @Override
                 public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                     byte[] getitem = listitem.get(position).getTopitem();
-                    String iditem = listitem.get(position).getSubitem();
-
-                    alertImage(getitem, iditem, "0");
+                    alertImage(getitem, position,"0");
                 }
             });
         }catch (Exception e){}
@@ -251,15 +257,14 @@ public class Deliverycont extends AppCompatActivity {
                 @Override
                 public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                     byte[] getitem = listitem.get(position).getTopitem();
-                    String iditem = listitem.get(position).getSubitem();
 
-                    alertImage(getitem, iditem, "1");
+                    alertImage(getitem, position, "1");
                 }
             });
         }catch (Exception e){}
     }
 
-    public void alertImage(byte[] image, final String idt, String stat){
+    public void alertImage(final byte[] image, final int idt, String stat){
         try {
             AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(Deliverycont.this);
             LayoutInflater inflater = this.getLayoutInflater();
@@ -283,7 +288,8 @@ public class Deliverycont extends AppCompatActivity {
                 del.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-                        deleteImage(idt);
+                        capt_images.remove(image);
+                        stored_image.remove(idt);
                         viewgrid();
                         alertDialog.dismiss();
                     }
@@ -352,12 +358,21 @@ public class Deliverycont extends AppCompatActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
         if (id == R.id.actiondelivered) {
-            final ArrayList<HomeList> listitems = getDeliveryImages(getTransid());
-            if ((listitems.size() <= 3) && (listitems.size() == 0)){
-                String y = "Picture is required, please add atleast one (1).";
-                customToast(y);
+            if(!(bundle.getString("status").equals("1"))){
+                if (capt_images.size() == 0){
+                    String y = "Picture is required, please add atleast one (1).";
+                    customToast(y);
+                }else{
+                    viewRatings();
+                }
             }else {
-                viewRatings();
+                final ArrayList<HomeList> listitems = getDeliveryImages(getTransid());
+                if ((listitems.size() == 0)) {
+                    String y = "Picture is required, please add atleast one (1).";
+                    customToast(y);
+                } else {
+                    viewRatings();
+                }
             }
         }
         return super.onOptionsItemSelected(item);
@@ -467,7 +482,7 @@ public class Deliverycont extends AppCompatActivity {
         denom.setTitle("Remarks");
         final String[] statusnames = getAllStatus();
         ArrayAdapter<String> adapt = new ArrayAdapter<String>
-                (getApplicationContext(), android.R.layout.select_dialog_item, statusnames);
+                (getApplicationContext(), R.layout.spinneritem, statusnames);
         stat.setAdapter(adapt);
         stat.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
@@ -502,6 +517,8 @@ public class Deliverycont extends AppCompatActivity {
                         customToast(h);
                     }else{
                         del_rem = remarks.getText().toString();
+                        dial.dismiss();
+                        saveFinal();
                     }
                 }else {
                     del_rem = remarks.getText().toString();
@@ -522,7 +539,7 @@ public class Deliverycont extends AppCompatActivity {
                 substat.setEnabled(true);
                 final String[] substatusnames = getAllSubStat();
                 ArrayAdapter<String> subadapt = new ArrayAdapter<String>
-                        (getApplicationContext(), android.R.layout.select_dialog_item, substatusnames);
+                        (getApplicationContext(), R.layout.spinneritem, substatusnames);
                 substat.setAdapter(subadapt);
                 substat.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
                     @Override
@@ -566,9 +583,24 @@ public class Deliverycont extends AppCompatActivity {
         denom.setTitle("Receiver information");
         final AlertDialog dial = denom.show();
         final String[] rel = {"Receiver","Father","Mother","Brother","Sister","Friend","Neighbor"};
-        ArrayAdapter<String> rela = new ArrayAdapter<String>
-                (getApplicationContext(), android.R.layout.select_dialog_item, rel);
+        final ArrayAdapter<String> rela = new ArrayAdapter<String>
+                (getApplicationContext(), R.layout.spinneritem, rel);
         relationship.setAdapter(rela);
+        relationship.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                String c = rela.getItem(position);
+                if (c.equals("Receiver")){
+                    receivedby.setText(receivername.getText().toString());
+                }else{
+                    receivedby.setText("");
+                }
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+            }
+        });
         rate.setOnRatingBarChangeListener(new RatingBar.OnRatingBarChangeListener() {
             @Override
             public void onRatingChanged(RatingBar ratingBar, float rating, boolean fromUser) {
@@ -875,8 +907,7 @@ public class Deliverycont extends AppCompatActivity {
         } catch (Exception e)
         {
             e.printStackTrace();
-            Toast.makeText(getApplicationContext(), "Could not initiate File System.. Is Sdcard mounted properly?",
-                    Toast.LENGTH_LONG).show();
+
             return false;
         }
     }
@@ -892,8 +923,7 @@ public class Deliverycont extends AppCompatActivity {
         return trans;
     }
 
-    private boolean makedirs()
-    {
+    private boolean makedirs() {
         File tempdir = new File(tempDir);
         if (!tempdir.exists())
             tempdir.mkdirs();
@@ -915,6 +945,14 @@ public class Deliverycont extends AppCompatActivity {
     public String datereturn(){
         Date datetalaga = Calendar.getInstance().getTime();
         SimpleDateFormat writeDate = new SimpleDateFormat("yyyy-MM-dd");
+        writeDate.setTimeZone(TimeZone.getTimeZone("GMT+8"));
+        String findate = writeDate.format(datetalaga);
+        return findate;
+    }
+
+    public String timereturn(){
+        Date datetalaga = Calendar.getInstance().getTime();
+        SimpleDateFormat writeDate = new SimpleDateFormat("hh:mm a");
         writeDate.setTimeZone(TimeZone.getTimeZone("GMT+8"));
         String findate = writeDate.format(datetalaga);
         return findate;
@@ -1030,15 +1068,10 @@ public class Deliverycont extends AppCompatActivity {
                     ByteArrayOutputStream stream = new ByteArrayOutputStream();
                     photo.compress(Bitmap.CompressFormat.PNG, 100, stream);
                     byte[] bytimg = stream.toByteArray();
-                    if(rate.addReserveImage(getTransid(), bytimg)){
-                        String x = "Image has been saved.";
-                        customToast(x);
-                        viewgrid();
-                    }else{
-                        String x = "Image save failed.";
-                        customToast(x);
-                        viewgrid();
-                    }
+                    HomeList list = new HomeList(bytimg, capt_images.size()+"");
+                    capt_images.add(bytimg);
+                    stored_image.add(list);
+                    viewgrid();
                     Log.e("camera", "success " + bytimg + " / " + getTransid());
                 }
             }else
@@ -1133,15 +1166,20 @@ public class Deliverycont extends AppCompatActivity {
     public void saveFinal(){
         String del_rating = rateval.getText().toString();
         gen.addDelivery(getTransid(), booknum, getCustomer(booknum),
-                datereturn(), off, helper.logcount()+"", "1", del_rating, del_rem, recby, relationshipstring);
+                datereturn()+" "+timereturn(), off, helper.logcount()+"", "1", del_rating, del_rem, recby, relationshipstring, del_stat);
         gen.addTransactions("Delivery", helper.logcount()+"",
                 "Add new delivery with number "+getTransid(), datereturn(), getCurrentTime());
 
         for (String i : getYourBoxes(account, booknum)) {
             gen.addDeliveryBox( i, booknum, getReceiver(booknum, i), getOrigin(booknum, i),
-                    getDest(booknum, i), getTransid(), del_stat, substatid, datereturn());
+                    getDest(booknum, i), getTransid(), del_stat, substatid, datereturn()+" "+timereturn());
             //updateInvBoxnumber(i);
             rate.updateDirectBox(i);
+        }
+
+        for (byte[] img : capt_images){
+            rate.addGenericImage("delivery", getTransid(), img);
+            rate.addReserveImage(getTransid(), img);
         }
 
         startActivity(new Intent(getApplicationContext(), Partner_driverpage.class));
@@ -1171,16 +1209,50 @@ public class Deliverycont extends AppCompatActivity {
             thisview.setView(d);
             TextView name = (TextView) d.findViewById(R.id.yourname);
             TextView mail = (TextView) d.findViewById(R.id.youremail);
-            TextView prim = (TextView) d.findViewById(R.id.yourprimenum);
-            TextView secd = (TextView) d.findViewById(R.id.yoursecnum);
-            TextView thrd = (TextView) d.findViewById(R.id.yourthirdnum);
+            final TextView prim = (TextView) d.findViewById(R.id.yourprimenum);
+            final TextView secd = (TextView) d.findViewById(R.id.yoursecnum);
+            final TextView thrd = (TextView) d.findViewById(R.id.yourthirdnum);
             TextView fullad = (TextView) d.findViewById(R.id.yourfulladdress);
 
             name.setText(receivername(account));
             mail.setText(getmail(account));
-            prim.setText(getPrimNum(account));
-            secd.setText(getSecNum(account));
-            thrd.setText(getOtherNum(account));
+            if (getPrimNum(account).equals(null)){
+                prim.setText("");
+            }else{
+                prim.setText(getPrimNum(account));
+            }
+            if (getSecNum(account).equals(null)){
+                secd.setText("");
+            }else{
+                secd.setText(getSecNum(account));
+            }
+
+            if (getOtherNum(account).equals(null)){
+                thrd.setText("");
+            }else{
+                thrd.setText(getOtherNum(account));
+            }
+
+            prim.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                   viewcallMess("+"+prim.getText().toString());
+                }
+            });
+            secd.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    viewcallMess("+"+secd.getText().toString());
+                }
+            });
+            thrd.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    viewcallMess("+"+thrd.getText().toString());
+                }
+            });
+
+
             fullad.setText(fulladd(account));
 
             thisview.setPositiveButton("Close", new DialogInterface.OnClickListener() {
@@ -1190,6 +1262,47 @@ public class Deliverycont extends AppCompatActivity {
                 }
             });
             thisview.setTitle("Receiver Information");
+            thisview.show();
+        }catch (Exception e){
+            Log.e("error", e.getMessage());
+        }
+    }
+
+    public void viewcallMess(final String num){
+        try {
+            final AlertDialog.Builder thisview = new AlertDialog.Builder(Deliverycont.this);
+            LayoutInflater inflater = getLayoutInflater();
+            View d = inflater.inflate(R.layout.callmess, null);
+            thisview.setView(d);
+            ListView list = (ListView)d.findViewById(R.id.calllist);
+            String[] choice = new String[]{"Call","Message"};
+            final ArrayAdapter<String> adpt =
+                    new ArrayAdapter<>(getApplicationContext(), R.layout.spinneritem,
+                            choice);
+            list.setAdapter(adpt);
+            list.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                @Override
+                public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                    String clicked = adpt.getItem(position);
+                    Log.e("clicked", clicked);
+                    switch(clicked){
+                        case "Call":
+                            Intent intent = new Intent(Intent.ACTION_DIAL);
+                            intent.setData(Uri.parse("tel:"+num));
+                            startActivity(intent);
+                            break;
+                        case "Message":
+                            Intent smsIntent = new Intent(Intent.ACTION_SENDTO);
+                            smsIntent.addCategory(Intent.CATEGORY_DEFAULT);
+                            smsIntent.setType("vnd.android-dir/mms-sms");
+                            smsIntent.setData(Uri.parse("sms:" + num));
+                            startActivity(smsIntent);
+                            break;
+                    }
+                }
+            });
+
+            thisview.setTitle(num);
             thisview.show();
         }catch (Exception e){
             Log.e("error", e.getMessage());

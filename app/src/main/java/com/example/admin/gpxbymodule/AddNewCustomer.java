@@ -13,6 +13,8 @@ import android.text.TextWatcher;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.Animation;
@@ -39,7 +41,6 @@ public class AddNewCustomer extends Fragment {
     RatesDB rates;
     HomeDatabase helper;
     GenDatabase generaldb;
-    AddCustomer cust;
     Spinner selectgender;
     DatePickerFragment date;
     ImageButton bdate;
@@ -54,15 +55,6 @@ public class AddNewCustomer extends Fragment {
         rates = new RatesDB(getContext());
         helper = new HomeDatabase(getContext());
         generaldb = new GenDatabase(getContext());
-
-        cust = (AddCustomer)getActivity();
-        cust.fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                checking();
-                Log.e("fragment", "new customer");
-            }
-        });
         selectgender = (Spinner)view.findViewById(R.id.gender);
         fname = (EditText)view.findViewById(R.id.customerfirstnameinput);
         midname = (EditText)view.findViewById(R.id.customermiddlenameinput);
@@ -92,7 +84,7 @@ public class AddNewCustomer extends Fragment {
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         getActivity().setTitle("New Customer");
-        setHasOptionsMenu(false);
+        setHasOptionsMenu(true);
     }
 
     public void spinnerGender(){
@@ -104,8 +96,7 @@ public class AddNewCustomer extends Fragment {
     }
 
     public void checking(){
-        try {
-            String variable = cust.customtype.getSelectedItem().toString();
+            String variable = "customer";
             String first = fname.getText().toString();
             String mname = midname.getText().toString();
             String last = lname.getText().toString();
@@ -131,9 +122,8 @@ public class AddNewCustomer extends Fragment {
             }else{
                 mail = email.getText().toString();
             }
-
-            if (first.equals("") || mname.equals("") || last.equals("")) {
-                String x = "Please fill up the name fields.";
+            if (first.equals("") ||(mname.equals("")) || (last.equals(""))) {
+                String x = "Please complete name fields.";
                 customToast(x);
             } else if (vill.equals("") || cty.equals("") || getunit.equals("")) {
                 String x = "Please complete your address.";
@@ -162,7 +152,6 @@ public class AddNewCustomer extends Fragment {
 
                 alert();
             }
-        }catch (Exception e){}
     }
 
     public String datereturn(){
@@ -255,6 +244,25 @@ public class AddNewCustomer extends Fragment {
             });
 
         }catch (Exception e){}
+    }
+
+    @Override
+    public void onPrepareOptionsMenu(Menu menu) {
+        menu.findItem(R.id.savereceiver).setVisible(false);
+        menu.findItem(R.id.savecustomer).setVisible(true);
+        super.onPrepareOptionsMenu(menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        int id = item.getItemId();
+        if (id == R.id.savecustomer) {
+            try {
+                checking();
+            }catch (Exception e){}
+            Log.e("customer", "new customer");
+        }
+        return super.onOptionsItemSelected(item);
     }
 
 }

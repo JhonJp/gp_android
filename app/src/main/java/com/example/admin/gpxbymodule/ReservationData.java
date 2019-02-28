@@ -684,7 +684,7 @@ public class ReservationData extends AppCompatActivity
                 if (requestCode == camera_request && resultCode == Activity.RESULT_OK) {
                     Bitmap photo = (Bitmap) data.getExtras().get("data");
                     ByteArrayOutputStream stream = new ByteArrayOutputStream();
-                    photo.compress(Bitmap.CompressFormat.PNG, 100, stream);
+                    photo.compress(Bitmap.CompressFormat.JPEG, 80, stream);
                     byte[] bytimg = stream.toByteArray();
                     HomeList list = new HomeList(bytimg,"");
                     capt_images.add(bytimg);
@@ -1302,8 +1302,7 @@ public class ReservationData extends AppCompatActivity
         } catch (Exception e)
         {
             e.printStackTrace();
-            Toast.makeText(getApplicationContext(), "Could not initiate File System.. Is Sdcard mounted properly?",
-                    Toast.LENGTH_LONG).show();
+
             return false;
         }
     }
@@ -1358,7 +1357,7 @@ public class ReservationData extends AppCompatActivity
             getimg.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    if (capt_images.size() >= 3){
+                    if (capt_images.size() >= 5){
                         String ty = "Maximum image attachment has been reached.";
                         customToast(ty);
                     }else {

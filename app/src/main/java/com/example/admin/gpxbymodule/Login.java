@@ -277,7 +277,7 @@ public class Login extends AppCompatActivity {
             @Override
             public void run() {
                 //get employees
-                threadEmployee();
+                //threadEmployee();
                 //get thread branch
                 threadBranch();
                 //thread delivery status
@@ -588,6 +588,9 @@ public class Login extends AppCompatActivity {
                     String branch = json_data.getString("branch");
 
                     gen.addEmployee(id, fname, mid, last, mail,
+                            mob, ph, gend, bday, post, hnum, brgy, ct, branch);
+
+                    rates.addEmployee(id, fname, mid, last, mail,
                             mob, ph, gend, bday, post, hnum, brgy, ct, branch);
                 }
 

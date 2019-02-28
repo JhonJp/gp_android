@@ -548,7 +548,7 @@ public class Booking extends AppCompatActivity
     public void deleteTransactions(String stat){
         SQLiteDatabase db = generaldb.getWritableDatabase();
         db.delete(generaldb.tbname_booking_consignee_box,
-                generaldb.book_con_stat+" = '1'",null);
+                generaldb.book_con_stat+" = '0'",null);
         Log.e("delete_book_con", stat);
         db.close();
     }

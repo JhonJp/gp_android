@@ -282,17 +282,17 @@ public class Load_home extends AppCompatActivity
     @Override
     public void onBackPressed() {
         if (getLoadtrans() != null){
-            warn("loading");
+            warn();
         }
         else if (getUnloadtrans() != null){
-            warn("unloading");
+            warn();
         }
     }
 
-    public void warn(String x){
+    public void warn(){
         final AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("Cancel transaction?");
-        builder.setMessage("Please confirm if you want to cancel your "+x+" transactions.")
+        builder.setMessage("Please confirm if you want to cancel your transaction.")
                 .setPositiveButton("Ok", new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int id) {
                         startActivity(new Intent(getApplicationContext(), Home.class));
