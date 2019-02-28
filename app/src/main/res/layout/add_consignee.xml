@@ -72,13 +72,6 @@
                             android:inputType="text" />
                     </android.support.design.widget.TextInputLayout>
 
-                    <ImageButton
-                        android:id="@+id/add_cust"
-                        android:layout_width="120dp"
-                        android:layout_height="match_parent"
-                        android:layout_weight="1"
-                        android:src="@drawable/addplus" />
-
                 </LinearLayout>
 
             </FrameLayout>
@@ -173,7 +166,6 @@
 
                 </LinearLayout>
             </FrameLayout>
-
         </LinearLayout>
     </ScrollView>
 

@@ -184,10 +184,10 @@ public class Oic_Transactions extends AppCompatActivity
                 break;
             case "Remittance":
                 if (role.equals("OIC")){
-                    startActivity(new Intent(this, Remittancetooic.class));
+                    startActivity(new Intent(this, Remitt.class));
                     finish();
                 }else if (role.equals("Sales Driver")){
-                    startActivity(new Intent(this, Remittancetooic.class));
+                    startActivity(new Intent(this, Remitt.class));
                     finish();
                 }
                 break;

@@ -27,14 +27,16 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.TimeZone;
 
-public class CustomerFragment extends Fragment{
+import static com.example.admin.gpxbymodule.R.layout.add_consignee;
+import static com.example.admin.gpxbymodule.R.layout.add_customer;
+
+public class ConsigneeFragment extends Fragment{
 
     EditText address, phonenum, mobilenum, email,amount;
     String s_account, s_customer, s_address, s_phone, s_mobile, s_email,s_amount;
 
     AutoCompleteTextView accntnumber,customername;
     SQLiteDatabase db;
-    ImageButton add;
     Date datetalaga;
     TextView date;
     GenDatabase helper;
@@ -45,13 +47,12 @@ public class CustomerFragment extends Fragment{
     @Override
     public View onCreateView(LayoutInflater inflater,  ViewGroup container,
                              Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.customer_fragment, null);
+        View view = inflater.inflate(add_consignee, null);
 
-        add = (ImageButton) view.findViewById(R.id.add_cust);
         date = (TextView)view.findViewById(R.id.date);
         helper = new GenDatabase(getContext());
         reserve = (Reserve)getActivity();
-        reserve.customtype.setEnabled(true);
+
         datetalaga = Calendar.getInstance().getTime();
 
         SimpleDateFormat writeDate = new SimpleDateFormat("dd/MM/yyyy");
@@ -66,26 +67,16 @@ public class CustomerFragment extends Fragment{
         phonenum = (EditText)view.findViewById(R.id.cust_phone);
         mobilenum = (EditText)view.findViewById(R.id.cust_mobilenum);
         email = (EditText)view.findViewById(R.id.cust_enter_email);
+
         auto();
         autoFullname();
 
         try {
 
-            add.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                        Intent mIntent = new Intent(getContext(), AddCustomer.class);
-                        mIntent.putExtra("key", "reservation");
-                        startActivity(mIntent);
-                        getActivity().finish();
-                }
-            });
-
             if (reserve.getAccnt() != null) {
                 autoaccount();
                 Log.e("accountnum", reserve.getAccnt());
             }
-
         }catch (Exception e){}
 
         return  view;
@@ -108,6 +99,7 @@ public class CustomerFragment extends Fragment{
             if (reserve.getClienttype() != null){
                 reserve.setClienttype(reserve.customtype.getSelectedItem().toString());
             }
+
             String name = customername.getText().toString();
             if (name.equals("") || accntnumber.getText().toString().equals("")) {
                 String t = "Customer name or account number is empty.";
@@ -124,7 +116,7 @@ public class CustomerFragment extends Fragment{
 
     public void auto(){
         try {
-            String[] numbers = helper.getAccountNumber();
+            String[] numbers = helper.getAccountNumberConsignment();
             ArrayAdapter<String> adapter = new ArrayAdapter<String>
                     (getContext(), android.R.layout.select_dialog_item, numbers);
 
@@ -139,7 +131,7 @@ public class CustomerFragment extends Fragment{
                         db = helper.getReadableDatabase();
                         Cursor cursor = db.rawQuery(" SELECT * FROM " + helper.tbname_customers
                                 + " WHERE " + helper.cust_accountnumber + " = '" + val + "' AND "
-                                +helper.cust_type+" = 'customer'", null);
+                                +helper.cust_type+" = 'consignment'", null);
                         if (cursor.moveToNext()) {
                             accntnumber.setText(cursor.getString(cursor.getColumnIndex(helper.cust_accountnumber)));
                             String fullname = cursor.getString(cursor.getColumnIndex(helper.cust_firstname)) + " "
@@ -172,7 +164,7 @@ public class CustomerFragment extends Fragment{
                 db = helper.getReadableDatabase();
                 Cursor cursor = db.rawQuery(" SELECT * FROM " + helper.tbname_customers
                         + " WHERE " + helper.cust_accountnumber + " = '" + reserve.getAccnt() + "' AND "
-                        +helper.cust_type+" = 'customer'", null);
+                        +helper.cust_type+" = 'consignment'", null);
                 if (cursor.moveToNext()) {
                     accntnumber.setText(cursor.getString(cursor.getColumnIndex(helper.cust_accountnumber)));
                     String fullname = cursor.getString(cursor.getColumnIndex(helper.cust_firstname)) + " "
@@ -196,7 +188,7 @@ public class CustomerFragment extends Fragment{
 
     public void autoFullname(){
         try {
-            String[] names = helper.getFullnames();
+            String[] names = helper.getConsignees();
             ArrayAdapter<String> adapter = new ArrayAdapter<String>
                     (getContext(), android.R.layout.select_dialog_item, names);
             customername.setThreshold(1);
@@ -210,7 +202,7 @@ public class CustomerFragment extends Fragment{
                         db = helper.getReadableDatabase();
                         Cursor cursor = db.rawQuery(" SELECT * FROM " + helper.tbname_customers
                                 + " WHERE " + helper.cust_fullname + " = '" + val + "' AND "
-                                +helper.cust_type+" = 'customer'", null);
+                                +helper.cust_type+" = 'consignment'", null);
                         if (cursor.moveToNext()) {
                             accntnumber.setText(cursor.getString(cursor.getColumnIndex(helper.cust_accountnumber)));
                             String fullname = cursor.getString(cursor.getColumnIndex(helper.cust_firstname)) + " "

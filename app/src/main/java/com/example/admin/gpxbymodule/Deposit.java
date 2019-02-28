@@ -65,6 +65,7 @@ public class Deposit extends Fragment {
         gen = new GenDatabase(getContext());
         helper = new HomeDatabase(getContext());
         rate = new RatesDB(getContext());
+        reserve.customtype.setEnabled(false);
 
         try {
             if (reserve.getAccnt() != null) {

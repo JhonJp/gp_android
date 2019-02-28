@@ -37,6 +37,7 @@ import android.widget.AdapterView;
 import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.GridView;
+import android.widget.ImageButton;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -215,10 +216,10 @@ public class Remittancelist extends AppCompatActivity
                 break;
             case "Remittance":
                 if (value.equals("OIC")){
-                    startActivity(new Intent(this, Remittancetooic.class));
+                    startActivity(new Intent(this, Remitt.class));
                     finish();
                 }else if (value.equals("Sales Driver")){
-                    startActivity(new Intent(this, Remittancetooic.class));
+                    startActivity(new Intent(this, Remitt.class));
                     finish();
                 }
                 break;
@@ -317,7 +318,7 @@ public class Remittancelist extends AppCompatActivity
             } else {
                 ty = "OIC";
             }
-            final ArrayList<LinearItem> result = gen.getAllRemittance(ty);
+            final ArrayList<LinearItem> result = gen.getAllRemittance(ty, helper.logcount()+"");
             adapter = new LinearList(getApplicationContext(), result);
             lvi.setAdapter(adapter);
             //delete remittance
@@ -346,11 +347,10 @@ public class Remittancelist extends AppCompatActivity
                 public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                     TextView textname = (TextView) view.findViewById(R.id.c_account);
                     idget = (TextView) view.findViewById(R.id.dataid);
-
                     Log.e("mtop", idget.getText().toString());
                     final Dialog dialog = new Dialog(Remittancelist.this);
                     dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
-                    dialog.setCancelable(false);
+                    dialog.setCancelable(true);
                     dialog.setContentView(R.layout.remitinflate);
                     TextView type = (TextView) dialog.findViewById(R.id.remtype);
                     TextView reason = (TextView) dialog.findViewById(R.id.remamount);
@@ -367,7 +367,6 @@ public class Remittancelist extends AppCompatActivity
                             dialog.dismiss();
                         }
                     });
-
                     dialog.show();
                 }
             });
@@ -411,18 +410,18 @@ public class Remittancelist extends AppCompatActivity
             drawer.closeDrawer(GravityCompat.START);
             super.onBackPressed();
             if (value.equals("OIC")){
-                startActivity(new Intent(this, Remittancetooic.class));
+                startActivity(new Intent(this, Remitt.class));
                 finish();
             }else if (value.equals("Sales Driver")){
-                startActivity(new Intent(this, Remittancetooic.class));
+                startActivity(new Intent(this, Remitt.class));
                 finish();
             }
         } else {
             if (value.equals("OIC")){
-                startActivity(new Intent(this, Remittancetooic.class));
+                startActivity(new Intent(this, Remitt.class));
                 finish();
             }else if (value.equals("Sales Driver")){
-                startActivity(new Intent(this, Remittancetooic.class));
+                startActivity(new Intent(this, Remitt.class));
                 finish();
             }
         }
@@ -432,6 +431,11 @@ public class Remittancelist extends AppCompatActivity
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.incidentlist, menu);
         return true;
+    }
+
+    @Override
+    public boolean onPrepareOptionsMenu(Menu menu) {
+        return super.onPrepareOptionsMenu(menu);
     }
 
     @Override
@@ -533,98 +537,89 @@ public class Remittancelist extends AppCompatActivity
         thread.start();
     }
 
-    public void sendRemittanceOIC(){
-        Thread thread = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                db = gen.getReadableDatabase();
-                String query = " SELECT * FROM "+gen.tbname_remittance+" WHERE "+gen.remit_createdby
-                        +" = '"+helper.logcount()+"' AND "+gen.remit_upds+" = '1'";
-                Cursor cx = db.rawQuery(query, null);
-                if (cx.getCount() != 0) {
-                    //THREAD FOR incident API
-                    try {
-                        String link = helper.getUrl();
-                        URL url = new URL("http://" + link + "/api/remittance/save.php");
-                        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-                        conn.setRequestMethod("POST");
-                        conn.setRequestProperty("Content-Type", "application/json;charset=UTF-8");
-                        conn.setRequestProperty("Accept", "application/json");
-                        conn.setDoOutput(true);
-                        conn.setDoInput(true);
+    public void sendRemittanceOIC() {
+        //THREAD FOR
+        try {
+            db = gen.getReadableDatabase();
+            String query = " SELECT * FROM " + gen.tbname_remittance + " WHERE " + gen.remit_createdby
+                    + " = '" + helper.logcount() + "' AND " + gen.remit_upds + " = '1'";
+            Cursor cx = db.rawQuery(query, null);
+            if (cx.getCount() != 0) {
+                String link = helper.getUrl();
+                URL url = new URL("http://" + link + "/api/remittance/save.php");
+                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                conn.setRequestMethod("POST");
+                conn.setRequestProperty("Content-Type", "application/json;charset=UTF-8");
+                conn.setRequestProperty("Accept", "application/json");
+                conn.setDoOutput(true);
+                conn.setDoInput(true);
 
-                        JSONObject jsonParam = new JSONObject();
-                        jsonParam.accumulate("data", getRemittance("BANK"));
+                JSONObject jsonParam = new JSONObject();
+                jsonParam.accumulate("data", getRemittance("BANK"));
 
-                        Log.e("JSON", jsonParam.toString());
-                        DataOutputStream os = new DataOutputStream(conn.getOutputStream());
-                        os.writeBytes(jsonParam.toString());
+                Log.e("JSON", jsonParam.toString());
+                DataOutputStream os = new DataOutputStream(conn.getOutputStream());
+                os.writeBytes(jsonParam.toString());
 
-                        os.flush();
-                        os.close();
+                os.flush();
+                os.close();
 
-                        Log.i("STATUS", String.valueOf(conn.getResponseCode()));
-                        Log.i("MSG", conn.getResponseMessage());
-                        if (!conn.getResponseMessage().equals("OK")){
-                            conn.disconnect();
-                            runOnUiThread(new Runnable() {
-                                @Override
-                                public void run() {
-                                    progressBar.dismiss();
-                                    final AlertDialog.Builder builder = new AlertDialog.Builder(getApplicationContext());
-                                    builder.setTitle("Upload failed")
-                                            .setMessage("Data sync has failed, please try again later. thank you.")
-                                            .setPositiveButton("Ok", new DialogInterface.OnClickListener() {
-                                                public void onClick(DialogInterface dialog, int id) {
-                                                    dialog.dismiss();
-                                                }
-                                            });
-                                    // Create the AlertDialog object and show it
-                                    builder.create().show();
-                                }
-                            });
-                        }
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-                }else{
+                Log.i("STATUS", String.valueOf(conn.getResponseCode()));
+                Log.i("MSG", conn.getResponseMessage());
+                if (!conn.getResponseMessage().equals("OK")) {
+                    conn.disconnect();
                     runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
                             progressBar.dismiss();
-                            final AlertDialog.Builder builder
-                                    = new AlertDialog.Builder(Remittancelist.this);
-                            builder.setTitle("Information confirmation")
-                                    .setMessage("You dont have data to be uploaded yet, please add new transactions. Thank you.")
+                            final AlertDialog.Builder builder = new AlertDialog.Builder(getApplicationContext());
+                            builder.setTitle("Upload failed")
+                                    .setMessage("Data sync has failed, please try again later. thank you.")
                                     .setPositiveButton("Ok", new DialogInterface.OnClickListener() {
                                         public void onClick(DialogInterface dialog, int id) {
                                             dialog.dismiss();
                                         }
                                     });
-                            builder.create();
-                            builder.setCancelable(false);
-                            builder.show();
+                            // Create the AlertDialog object and show it
+                            builder.create().show();
                         }
                     });
                 }
-                //END THREAD remittance API
-            }
-        });
-        thread.start();
+        }else{
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    progressBar.dismiss();
+                    final AlertDialog.Builder builder
+                            = new AlertDialog.Builder(Remittancelist.this);
+                    builder.setTitle("Information confirmation")
+                            .setMessage("You dont have data to be uploaded yet, please add new transactions. Thank you.")
+                            .setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+                                public void onClick(DialogInterface dialog, int id) {
+                                    dialog.dismiss();
+                                }
+                            });
+                    builder.create();
+                    builder.setCancelable(false);
+                    builder.show();
+                }
+            });
+        }
+        //END THREAD remittance API
+        } catch(Exception e){
+            e.printStackTrace();
+        }
     }
 
     public void sendExpenses(){
-        Thread thread = new Thread(new Runnable() {
-            @Override
-            public void run() {
+        //THREAD FOR incident API
+        try {
                 db = gen.getReadableDatabase();
                 String query = "SELECT * FROM " + gen.tbname_remittance_trans+ " WHERE "
                         +gen.rem_trans_type+" = 'expense' AND "
                         +gen.rem_trans_stat+" = '2'";
                 Cursor cx = db.rawQuery(query, null);
                 if (cx.getCount() != 0) {
-                    //THREAD FOR incident API
-                    try {
                         String link = helper.getUrl();
                         URL url = new URL("http://" + link + "/api/remittance/expense.php");
                         HttpURLConnection conn = (HttpURLConnection) url.openConnection();
@@ -665,9 +660,6 @@ public class Remittancelist extends AppCompatActivity
                                 }
                             });
                         }
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
                 }else{
                     runOnUiThread(new Runnable() {
                         @Override
@@ -689,9 +681,9 @@ public class Remittancelist extends AppCompatActivity
                     });
                 }
                 //END THREAD remittance API
-            }
-        });
-        thread.start();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     public JSONArray getRemittance(String type) {
@@ -786,7 +778,7 @@ public class Remittancelist extends AppCompatActivity
                 js.put("id", "");
                 js.put("employee_id", helper.logcount());
                 js.put("amount", am);
-                js.put("chart_accounts", "3");
+                js.put("chart_accounts", "2");
                 js.put("description", desc);
                 js.put("status", "Approved");
                 js.put("due_date", datereturn());
@@ -847,38 +839,33 @@ public class Remittancelist extends AppCompatActivity
                     if (value.equals("OIC")){
                         sendPost();
                     }else{
-                        threadRemittanceDriver();
+                        sendPost();
                     }
-                    Thread.sleep(10000);
+                    Thread.sleep(5000);
                 }
                 catch (Exception e) { } // Just catch the InterruptedException
 
                 handler.post(new Runnable() {
                     public void run() {
-                        if (ids.size() == 0){
-                            String g = "You do not have enough data to upload.";
-                            customToast(g);
-                        }else {
-                            progressBar.dismiss();
-                            final AlertDialog.Builder builder
-                                    = new AlertDialog.Builder(Remittancelist.this);
-                            builder.setTitle("Information confirmation")
-                                    .setMessage("Data upload has been successful, thank you.")
-                                    .setPositiveButton("Ok", new DialogInterface.OnClickListener() {
-                                        public void onClick(DialogInterface dialog, int id) {
-                                            updateRemittance(ids);
-                                            updateExpense(expids);
-                                            expids.clear();
-                                            ids.clear();
-                                            dialog.dismiss();
-                                            recreate();
-                                        }
-                                    });
-                            // Create the AlertDialog object and show it
-                            builder.create();
-                            builder.setCancelable(false);
-                            builder.show();
-                        }
+                        progressBar.dismiss();
+                        final AlertDialog.Builder builder
+                                = new AlertDialog.Builder(Remittancelist.this);
+                        builder.setTitle("Information confirmation")
+                                .setMessage("Data upload has been successful, thank you.")
+                                .setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+                                    public void onClick(DialogInterface dialog, int id) {
+                                        updateRemittance(ids);
+                                        updateExpense(expids);
+                                        expids.clear();
+                                        ids.clear();
+                                        dialog.dismiss();
+                                        recreate();
+                                    }
+                                });
+                        // Create the AlertDialog object and show it
+                        builder.create();
+                        builder.setCancelable(false);
+                        builder.show();
                     }
                 });
             }
@@ -939,10 +926,14 @@ public class Remittancelist extends AppCompatActivity
             @Override
             public void run() {
 
-                sendRemittanceOIC();
+                if (value.equals("OIC")) {
 
-                sendExpenses();
+                    sendRemittanceOIC();
 
+                }else {
+
+                    sendExpenses();
+                }
             }
         });
 

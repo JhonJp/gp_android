@@ -186,10 +186,10 @@ public class Driver_Transactions extends AppCompatActivity
                 break;
             case "Remittance":
                 if (value.equals("OIC")){
-                    startActivity(new Intent(this, Remittancetooic.class));
+                    startActivity(new Intent(this, Remitt.class));
                     finish();
                 }else if (value.equals("Sales Driver")){
-                    startActivity(new Intent(this, Remittancetooic.class));
+                    startActivity(new Intent(this, Remitt.class));
                     finish();
                 }
                 break;

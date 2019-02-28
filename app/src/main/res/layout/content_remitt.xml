@@ -70,11 +70,11 @@
             </FrameLayout>
 
             <TextView
-                android:id="@+id/textView35"
+                android:id="@+id/txttop"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:gravity="center"
-                android:text="Expenses breakdown" />
+                android:text="Items Breakdown" />
 
             <FrameLayout
                 android:layout_width="match_parent"
@@ -105,7 +105,7 @@
                         android:background="@drawable/linebottom">
 
                         <TextView
-                            android:id="@+id/toptype4"
+                            android:id="@+id/toptypeexp"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:layout_gravity="left"

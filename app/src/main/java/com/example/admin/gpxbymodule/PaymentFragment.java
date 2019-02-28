@@ -85,7 +85,7 @@ public class PaymentFragment extends Fragment {
         gen = new GenDatabase(getContext());
         rate = new RatesDB(getContext());
         helper = new HomeDatabase(getContext());
-
+        reserve.customtype.setEnabled(false);
         try{
             if (reserve.getAccnt() != null) {
                 accnt = reserve.getAccnt();

@@ -8,16 +8,46 @@
     tools:showIn="@layout/app_bar_reserve">
 
     <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:layout_marginBottom="10dp"
+        android:layout_marginEnd="10dp"
+        android:layout_marginStart="10dp"
+        android:layout_marginTop="60dp"
+        android:background="@drawable/droplayout"
+        android:orientation="horizontal">
+
+        <Spinner
+            android:id="@+id/customertype"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_centerVertical="true"
+            android:layout_gravity="center"
+            android:layout_marginEnd="5dp"
+            android:layout_marginStart="5dp"
+            android:background="@android:color/transparent"
+            android:gravity="center"
+            android:spinnerMode="dropdown" />
+
+        <ImageView
+            android:layout_width="65dp"
+            android:layout_height="wrap_content"
+            android:layout_alignParentRight="true"
+            android:layout_gravity="right"
+            android:src="@drawable/drop" />
+    </FrameLayout>
+
+    <FrameLayout
         android:id="@+id/fragment_base"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_alignParentStart="true"
-        android:layout_alignParentTop="true">
+        android:layout_alignParentTop="true"
+        android:layout_marginTop="115dp">
 
     </FrameLayout>
 
-    <android.support.design.widget.BottomNavigationView
-        xmlns:android="http://schemas.android.com/apk/res/android"
+    <android.support.design.widget.BottomNavigationView xmlns:android="http://schemas.android.com/apk/res/android"
         xmlns:app="http://schemas.android.com/apk/res-auto"
         android:id="@+id/bottom_navigation"
         android:layout_width="match_parent"
@@ -25,8 +55,8 @@
         android:layout_alignParentBottom="true"
         android:background="@color/bottomNav"
         app:itemBackground="@color/bottomNav"
-        app:menu="@menu/bottomnav"
+        app:itemIconTint="@drawable/selector"
         app:itemTextColor="@drawable/selector"
-        app:itemIconTint="@drawable/selector"/>
+        app:menu="@menu/bottomnav" />
 
 </RelativeLayout>

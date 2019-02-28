@@ -24,7 +24,9 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.ListView;
+import android.widget.Spinner;
 import android.widget.TextView;
 
 import java.text.SimpleDateFormat;
@@ -45,6 +47,8 @@ public class Reserve extends AppCompatActivity
     String accnt;
     String name;
     NavigationView navigationView;
+    Spinner customtype;
+    String clienttype;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -57,6 +61,7 @@ public class Reserve extends AppCompatActivity
 
         helper = new HomeDatabase(this);
         gen = new GenDatabase(getApplicationContext());
+        customtype = (Spinner)findViewById(R.id.customertype);
 
         try {
             if (helper.logcount() != 0) {
@@ -65,7 +70,12 @@ public class Reserve extends AppCompatActivity
             }
 
             //loading the default fragment
-            loadFragment(new CustomerFragment());
+            if (this.getClienttype() != null){
+                String sel = this.getClienttype();
+                this.customtype.setSelection(((ArrayAdapter<String>)this.customtype.getAdapter()).getPosition(sel));
+            }
+            spinnerCustomertype();
+
             String frompending = bundle.getString("reservationno");
             if (frompending.equals("")) {
                 setReservationnum(reservenum());
@@ -242,10 +252,10 @@ public class Reserve extends AppCompatActivity
                 break;
             case "Remittance":
                 if (value.equals("OIC")){
-                    startActivity(new Intent(this, Remittancetooic.class));
+                    startActivity(new Intent(this, Remitt.class));
                     finish();
                 }else if (value.equals("Sales Driver")){
-                    startActivity(new Intent(this, Remittancetooic.class));
+                    startActivity(new Intent(this, Remitt.class));
                     finish();
                 }
                 break;
@@ -451,6 +461,49 @@ public class Reserve extends AppCompatActivity
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public void spinnerCustomertype(){
+        try {
+            String[] items = new String[]{"Client", "Consignment"};
+            ArrayAdapter<String> adapter =
+                    new ArrayAdapter<>(getApplicationContext(), R.layout.spinneritem, items);
+            customtype.setAdapter(adapter);
+            adapter.setDropDownViewResource(android.R.layout.select_dialog_singlechoice);
+            customtype.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+                @Override
+                public void onItemSelected(AdapterView<?> parent, View view,
+                                           int position, long id) {
+                    String selected = customtype.getSelectedItem().toString();
+                    switch (selected) {
+                        case "Client":
+                            loadFragment(new CustomerFragment());
+                            setClienttype("Client");
+                            break;
+                        case "Consignment":
+                            loadFragment(new ConsigneeFragment());
+                            setClienttype("Consignment");
+                            break;
+                        default:
+                            loadFragment(new CustomerFragment());
+                            setClienttype("Client");
+                            break;
+                    }
+                }
+
+                @Override
+                public void onNothingSelected(AdapterView<?> parent) {
+                }
+            });
+        }catch (Exception e){}
+    }
+
+    public String getClienttype() {
+        return clienttype;
+    }
+
+    public void setClienttype(String clienttype) {
+        this.clienttype = clienttype;
     }
 
 

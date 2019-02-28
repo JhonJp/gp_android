@@ -264,7 +264,7 @@ public class Home extends AppCompatActivity
                     break;
                 case "Remittance":
                     if (value.equals("OIC")){
-                        startActivity(new Intent(this, Remittancetooic.class));
+                        startActivity(new Intent(this, Remitt.class));
                         finish();
                     }else if (value.equals("Sales Driver")){
                         startActivity(new Intent(this, Remitt.class));
@@ -725,15 +725,11 @@ public class Home extends AppCompatActivity
                     } else {
                         getCustomers();
                     }
-                    //END THREAD FOR CUSTOMERS
-
-                    //START THREAD FOR BOXES and types
+                    //get boxtypes dta
                     getBoxtypesData();
-                    //END THREAD FOR boxes
 
-                    //START THREAD FOR employee
+                    //get employee records
                     getEmployees();
-                    //END THREAD FOR employee
 
                     //START DISTRIBUTION BRANCH
                     getBranchDistribution();
@@ -3248,6 +3244,7 @@ public class Home extends AppCompatActivity
                             gendata.updAcceptanceBoxnumber( trans, getBoxtypeFromDist(x), x,"2");
                             Log.e("box_acceptance", getBoxtypeFromDist(x)+", "+x);
                             updateBxInv(x);
+                            deleteDriverInv(x);
                         }
                     }else{
                         String username = helper.getFullname(helper.logcount()+"");
@@ -3262,6 +3259,7 @@ public class Home extends AppCompatActivity
                             gendata.addAcceptanceBoxnumber( trans, getBoxtypeFromDist(x), x,"2");
                             Log.e("box_acceptance", getBoxtypeFromDist(x)+", "+x);
                             updateBxInv(x);
+                            deleteDriverInv(x);
                         }
                     }
                 }
@@ -3287,6 +3285,14 @@ public class Home extends AppCompatActivity
         db.update(gendata.tbname_checker_inventory, cv,
                 gendata.chinv_boxnumber+" = '"+bn+"'", null);
         Log.e("update_inv",bn);
+        db.close();
+    }
+
+    public void deleteDriverInv(String bn){
+        SQLiteDatabase db = gendata.getWritableDatabase();
+        db.delete(gendata.tbname_driver_inventory,
+                gendata.sdinv_boxnumber+" = '"+bn+"'", null);
+        Log.e("delete-sdinv", bn);
         db.close();
     }
 
@@ -4299,6 +4305,12 @@ public class Home extends AppCompatActivity
         updateReserveStat(toupdid);
         updateLoadsStat(loadids);
         updateunLoadsStat(unloadids);
+        distids.clear();
+        booknums.clear();
+        incids.clear();
+        toupdid.clear();
+        loadids.clear();
+        unloadids.clear();
         //updateDistpart("2");
     }
 

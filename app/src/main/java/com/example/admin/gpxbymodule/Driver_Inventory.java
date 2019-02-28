@@ -203,10 +203,10 @@ public class Driver_Inventory extends AppCompatActivity
                 break;
             case "Remittance":
                 if (value.equals("OIC")){
-                    startActivity(new Intent(this, Remittancetooic.class));
+                    startActivity(new Intent(this, Remitt.class));
                     finish();
                 }else if (value.equals("Sales Driver")){
-                    startActivity(new Intent(this, Remittancetooic.class));
+                    startActivity(new Intent(this, Remitt.class));
                     finish();
                 }
                 break;
@@ -516,13 +516,18 @@ public class Driver_Inventory extends AppCompatActivity
                     +gendata.tbname_tempDist+"."+gendata.temp_transactionnumber
                     +" = "+gendata.tbname_tempboxes+"."+gendata.dboxtemp_distributionid
                     + " WHERE " + gendata.tbname_tempDist + "." + gendata.temp_typename
-                    + " LIKE '%" + x + "%'", null);
+                    + " = '" + x + "'", null);
             c.moveToFirst();
             while (!c.isAfterLast()) {
                 String topitem = c.getString(c.getColumnIndex(gendata.dboxtemp_boxid));
                 String bnum = c.getString(c.getColumnIndex(gendata.dboxtemp_boxnumber));
-                gendata.addtoDriverInv(topitem, bnum, "0", "0");
-                Log.e("boxtoinv", "type:" + topitem + ", boxnum: " + bnum);
+                Log.e("error", checkAcceptance(bnum)+"");
+                if (!checkAcceptance(bnum)) {
+                   gendata.addtoDriverInv(topitem, bnum, "0", "0");
+                    Log.e("boxtoinv", "type:" + topitem + ", boxnum: " + bnum);
+                }else{
+                    deleteDriverInv(bnum);
+                }
                 c.moveToNext();
             }
         }catch (Exception e){}
@@ -620,8 +625,8 @@ public class Driver_Inventory extends AppCompatActivity
                 String topitem = c.getString(c.getColumnIndex(gendata.box_name));
                 String numb = c.getString(c.getColumnIndex(gendata.sdinv_boxnumber));
                 if (!checkAcceptance(numb)) {
-                    ListItem list = new ListItem(id, topitem+"",
-                            Html.fromHtml("<b><i><u>view</u></i></b>")+"",null);
+                    ListItem list = new ListItem(id, topitem + "",
+                            Html.fromHtml("<b><i><u>view</u></i></b>") + "", null);
                     results.add(list);
                     i++;
                 }
@@ -843,11 +848,31 @@ public class Driver_Inventory extends AppCompatActivity
         String x = " SELECT * FROM "+gendata.tbname_accept_boxes
                 +" WHERE "+gendata.acc_box_boxnumber+" = '"+bn+"'";
         Cursor c = db.rawQuery(x, null);
+        if (c.getCount() > 0 ){
+             return true;
+        }else{
+            return false;
+        }
+    }
+
+    public boolean checkCheckerInv(String bn){
+        SQLiteDatabase db = gendata.getReadableDatabase();
+        String x = " SELECT * FROM "+gendata.tbname_checker_inventory
+                +" WHERE "+gendata.chinv_boxnumber+" = '"+bn+"'";
+        Cursor c = db.rawQuery(x, null);
         if (c.getCount() != 0 ){
              return true;
         }else{
             return false;
         }
+    }
+
+    public void deleteDriverInv(String bn){
+        SQLiteDatabase db = gendata.getWritableDatabase();
+        db.delete(gendata.tbname_driver_inventory,
+                gendata.sdinv_boxnumber+" = '"+bn+"'", null);
+        Log.e("delete-sdinv", bn);
+        db.close();
     }
 
     public boolean checkInBooking(String bn){

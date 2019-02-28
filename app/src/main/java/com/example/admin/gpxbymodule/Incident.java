@@ -106,7 +106,6 @@ public class Incident extends AppCompatActivity
         hint = (TextView)findViewById(R.id.imageshint);
         capt = (FrameLayout) findViewById(R.id.imagecapt);
 
-
         capt();
 
         //get data from bundle pass
@@ -289,10 +288,10 @@ public class Incident extends AppCompatActivity
                 break;
             case "Remittance":
                 if (value.equals("OIC")){
-                    startActivity(new Intent(this, Remittancetooic.class));
+                    startActivity(new Intent(this, Remitt.class));
                     finish();
                 }else if (value.equals("Sales Driver")){
-                    startActivity(new Intent(this, Remittancetooic.class));
+                    startActivity(new Intent(this, Remitt.class));
                     finish();
                 }
                 break;

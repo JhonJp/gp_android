@@ -931,9 +931,35 @@ public class GenDatabase extends SQLiteOpenHelper {
         return numbers.toArray(new String[numbers.size()]);
     }
 
+    public String[] getAccountNumberConsignment(){
+        Cursor cursor = getReadableDatabase().rawQuery("SELECT " + cust_accountnumber + " FROM " + tbname_customers
+                + " WHERE " + cust_type + " = 'consignment'", null);
+        cursor.moveToFirst();
+        ArrayList<String> numbers = new ArrayList<String>();
+        while (!cursor.isAfterLast()) {
+            numbers.add(cursor.getString(cursor.getColumnIndex(cust_accountnumber)));
+            cursor.moveToNext();
+        }
+        cursor.close();
+        return numbers.toArray(new String[numbers.size()]);
+    }
+
     public String[] getFullnames() {
         Cursor cursor = getReadableDatabase().rawQuery("SELECT " + cust_fullname + " FROM " + tbname_customers
                 + " WHERE " + cust_type + " = 'customer'", null);
+        cursor.moveToFirst();
+        ArrayList<String> numbers = new ArrayList<String>();
+        while (!cursor.isAfterLast()) {
+            numbers.add(cursor.getString(cursor.getColumnIndex(cust_fullname)));
+            cursor.moveToNext();
+        }
+        cursor.close();
+        return numbers.toArray(new String[numbers.size()]);
+    }
+
+    public String[] getConsignees() {
+        Cursor cursor = getReadableDatabase().rawQuery("SELECT " + cust_fullname + " FROM " + tbname_customers
+                + " WHERE " + cust_type + " = 'consignment'", null);
         cursor.moveToFirst();
         ArrayList<String> numbers = new ArrayList<String>();
         while (!cursor.isAfterLast()) {
@@ -2294,11 +2320,11 @@ public class GenDatabase extends SQLiteOpenHelper {
 
     }
 
-    public ArrayList<LinearItem> getOICname(){
+    public ArrayList<LinearItem> getOICname(String branch){
         SQLiteDatabase db = this.getReadableDatabase();
         ArrayList<LinearItem> numbers = new ArrayList<LinearItem>();
         String q = " SELECT * FROM "+tbname_employee
-                +" WHERE "+emp_post+" = 'OIC'";
+                +" WHERE "+emp_post+" = 'OIC' AND "+emp_branch+" = '"+branch+"'";
         Cursor c = db.rawQuery(q, null);
         c.moveToFirst();
         while (!c.isAfterLast()) {
@@ -2597,29 +2623,24 @@ public class GenDatabase extends SQLiteOpenHelper {
         db.close();
     }
 
-    public ArrayList<LinearItem> getAllRemittance(String type){
+    public ArrayList<LinearItem> getAllRemittance(String type, String by){
         ArrayList<LinearItem> results = new ArrayList<>();
         SQLiteDatabase db = this.getReadableDatabase();
         if (type.equals("OIC")) {
             Cursor res = db.rawQuery(" SELECT " + tbname_remittance + "." + remit_id
-                    + ", " + tbname_remittance + "." + remit_status + ", "
+                    + ", " + tbname_remittance + "." + remit_status + ""
+                    + ", " + tbname_remittance + "." + remit_createddate + ", "
                     + tbname_employee + "." + emp_first
                     + ", " + tbname_employee + "." + emp_last + " FROM " + tbname_remittance
                     + " LEFT JOIN " + tbname_employee + " ON " + tbname_remittance + "." + remit_name
                     + " = " + tbname_employee + "." + emp_id +" WHERE "
-                    +tbname_remittance+"."+remit_type+" = 'OIC'", null);
+                    +tbname_remittance+"."+remit_type+" = 'OIC' AND "+tbname_remittance+"."+remit_createdby+" = '"+by+"'", null);
             res.moveToFirst();
             while (!res.isAfterLast()) {
                 String id = res.getString(0);
                 String fullname = res.getString(res.getColumnIndex(emp_first)) + " " + res.getString(res.getColumnIndex(emp_last));
-                String sub = res.getString(res.getColumnIndex(remit_status));
-                String it = null;
-                if (sub.equals("1")) {
-                    it = "Uploaded";
-                } else {
-                    it = "Pending";
-                }
-                LinearItem list = new LinearItem(id, fullname, it);
+                String sub = res.getString(res.getColumnIndex(remit_createddate));
+                LinearItem list = new LinearItem(id, fullname, sub);
                 results.add(list);
                 res.moveToNext();
             }
@@ -2627,19 +2648,13 @@ public class GenDatabase extends SQLiteOpenHelper {
         }else{
             SQLiteDatabase x = this.getReadableDatabase();
             Cursor res = x.rawQuery(" SELECT * FROM "+tbname_remittance+" WHERE "+remit_type
-                    +" = 'BANK'", null);
+                    +" = 'BANK' AND "+tbname_remittance+"."+remit_createdby+" = '"+by+"'", null);
             res.moveToFirst();
             while (!res.isAfterLast()) {
                 String id = res.getString(res.getColumnIndex(remit_id));
                 String fullname = res.getString(res.getColumnIndex(remit_name));
-                String sub = res.getString(res.getColumnIndex(remit_status));
-                String it = null;
-                if (sub.equals("1")) {
-                    it = "Uploaded";
-                } else {
-                    it = "Pending";
-                }
-                LinearItem list = new LinearItem(id, fullname, it);
+                String sub = res.getString(res.getColumnIndex(remit_createddate));
+                LinearItem list = new LinearItem(id, fullname, sub);
                 results.add(list);
                 res.moveToNext();
             }

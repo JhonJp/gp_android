@@ -55,6 +55,7 @@ import android.widget.EditText;
 import android.widget.ExpandableListView;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.Spinner;
@@ -99,8 +100,9 @@ public class Remittancetooic extends AppCompatActivity
     String getselected;
     int camera_request = 1, exp_request = 0;
     byte[] bytimg, bytexp;
-    TextView img, exptotal, denomt, eximg, amounthold, headoicname;
+    TextView img, exptotal, denomt, amounthold, headoicname;
     String oicname = "";
+    ImageView eximg;
     Button send;
     EditText bankname,accntname,accntnum;
 
@@ -578,8 +580,7 @@ public class Remittancetooic extends AppCompatActivity
         dialogBuilder.setView(d);
         final Spinner itemname = (Spinner)d.findViewById(R.id.items);
         final EditText amount = (EditText)d.findViewById(R.id.amountinput);
-        final EditText description = (EditText)d.findViewById(R.id.descrip);
-        eximg = (TextView) d.findViewById(R.id.expimg);
+        eximg = (ImageView) d.findViewById(R.id.exp_img);
         final String[] result = rate.getAllItems();
         ArrayAdapter<String> adapter =
                 new ArrayAdapter<>(getApplicationContext(), R.layout.spinneritem,
@@ -599,8 +600,7 @@ public class Remittancetooic extends AppCompatActivity
             public void onClick(DialogInterface dialog, int which) {
                 String item = itemname.getSelectedItem().toString();
                 String am = amount.getText().toString();
-                String desc = description.getText().toString();
-                if ((item.equals("")) || (am.equals("")) || (desc.equals(""))){
+                if ((item.equals("")) || (am.equals(""))){
                     String r = "Please fill out the fields correctly.";
                     customAlert(r);
                 }else{
@@ -610,7 +610,7 @@ public class Remittancetooic extends AppCompatActivity
                         customAlert(r);
                     }else {
                         gen.addRemitTrans("" + helper.logcount(), "expense", "", "",
-                                item, am, desc, bytexp, "1");
+                                item, am, "", bytexp, "1");
                         bytexp = null;
                         all_list();
                         dialog.dismiss();
@@ -678,7 +678,7 @@ public class Remittancetooic extends AppCompatActivity
         View d = inflater.inflate(R.layout.remittance_layoutswitch,null);
         builder.setView(d);
         final Spinner types = (Spinner)d.findViewById(R.id.itemtype);
-        ArrayList<LinearItem> name = gen.getOICname();
+        ArrayList<LinearItem> name = gen.getOICname(helper.getBranch(helper.logcount()+""));
         LinearList list = new LinearList(getApplicationContext(), name);
         types.setAdapter(list);
         types.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
@@ -825,7 +825,7 @@ public class Remittancetooic extends AppCompatActivity
                     photo.compress(Bitmap.CompressFormat.PNG, 100, stream);
                     bytimg = stream.toByteArray();
                     if (bytimg != null) {
-                        img.setText("Image : " + bytimg);
+                        //img.setText("Image : " + bytimg);
                     }
                     Log.e("camera", "success " + bytimg );
                 }
@@ -836,7 +836,7 @@ public class Remittancetooic extends AppCompatActivity
                     photo.compress(Bitmap.CompressFormat.PNG, 100, stream);
                     bytexp = stream.toByteArray();
                     if (bytexp != null) {
-                        eximg.setText("Image : " + bytexp);
+                        //eximg.setText("Image : " + bytexp);
                     }
                     Log.e("cameraexp", "success " + bytexp );
             }else
