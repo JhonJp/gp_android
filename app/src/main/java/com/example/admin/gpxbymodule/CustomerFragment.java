@@ -53,7 +53,7 @@ public class CustomerFragment extends Fragment{
         reserve = (Reserve)getActivity();
         reserve.customtype.setEnabled(true);
         datetalaga = Calendar.getInstance().getTime();
-
+        reserve.save.setImageResource(R.drawable.next);
         SimpleDateFormat writeDate = new SimpleDateFormat("dd/MM/yyyy");
         writeDate.setTimeZone(TimeZone.getTimeZone("GMT+8"));
         String s = writeDate.format(datetalaga);
@@ -85,6 +85,13 @@ public class CustomerFragment extends Fragment{
                 autoaccount();
                 Log.e("accountnum", reserve.getAccnt());
             }
+            reserve.save.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    reserve.loadFragment(new PaymentFragment());
+                    reserve.bottomNavigationView.setSelectedItemId(R.id.payment);
+                }
+            });
 
         }catch (Exception e){}
 
@@ -242,7 +249,7 @@ public class CustomerFragment extends Fragment{
         menu.findItem(R.id.savebooking).setVisible(false);
         menu.findItem(R.id.loadprev).setVisible(false);
         menu.findItem(R.id.loadprevpay).setVisible(false);
-        menu.findItem(R.id.btnnext).setVisible(true);
+        menu.findItem(R.id.btnnext).setVisible(false);
         menu.findItem(R.id.btnnextpay).setVisible(false);
 
         super.onPrepareOptionsMenu(menu);

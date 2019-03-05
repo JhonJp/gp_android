@@ -18,4 +18,8 @@
     <color name="lightgrey">#cfd2d6</color>
     <color name="link">#037dc8</color>
     <color name="linkfab">#0981b9</color>
+    <color name="holobluedark">#00749b</color>
+    <color name="themegreen">#00a65a</color>
+    <color name="themegreendark">#027440</color>
+    <color name="textblack">#1d1c1c</color>
 </resources>

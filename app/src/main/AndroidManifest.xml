@@ -31,7 +31,9 @@
         <activity
             android:name=".Login"
             android:label="@string/app_name"
-            android:screenOrientation="portrait" />
+            android:fitsSystemWindows="true"
+            android:screenOrientation="portrait"
+            android:theme="@style/AppTheme.NoActionBar" />
         <activity
             android:name=".DeviceListActivity"
             android:theme="@android:style/Theme.DeviceDefault.Dialog" />
@@ -200,6 +202,16 @@
         <activity
             android:name=".Remitt"
             android:label="@string/title_activity_remitt"
+            android:screenOrientation="portrait"
+            android:theme="@style/AppTheme.NoActionBar" />
+        <activity
+            android:name=".Preferences"
+            android:label="Settings"
+            android:screenOrientation="portrait"
+            android:theme="@style/AppTheme.NoActionBar" />
+        <activity
+            android:name=".PartDriverPreference"
+            android:label="Settings"
             android:screenOrientation="portrait"
             android:theme="@style/AppTheme.NoActionBar" />
     </application>

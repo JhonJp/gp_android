@@ -277,7 +277,7 @@
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
                                 android:hint="Shipping line"
-                                android:inputType="text" />
+                                android:inputType="textCapWords|textMultiLine"/>
                         </android.support.design.widget.TextInputLayout>
 
                         <ImageButton
@@ -311,7 +311,7 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:hint="Container number "
-                            android:inputType="text" />
+                            android:inputType="textCapWords|textCapSentences" />
                     </android.support.design.widget.TextInputLayout>
                 </FrameLayout>
 
@@ -335,7 +335,7 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:hint="Driver Name"
-                            android:inputType="textCapWords" />
+                            android:inputType="textCapWords|textMultiLine" />
                     </android.support.design.widget.TextInputLayout>
                 </FrameLayout>
 

@@ -37,7 +37,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
                         android:hint="Module"
-                        android:inputType="text"
+                        android:inputType="textCapWords|textMultiLine"
                         android:maxLength="50" />
                 </android.support.design.widget.TextInputLayout>
 
@@ -121,7 +121,7 @@
                         android:layout_height="150dp"
                         android:gravity="start"
                         android:hint="Reason or description"
-                        android:inputType="text"
+                        android:inputType="textCapWords|textMultiLine"
                         android:maxLength="200" />
                 </android.support.design.widget.TextInputLayout>
 

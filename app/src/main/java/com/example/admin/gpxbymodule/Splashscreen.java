@@ -4,6 +4,7 @@ import android.Manifest;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
@@ -13,6 +14,7 @@ import android.net.NetworkInfo;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
+import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
@@ -231,9 +233,9 @@ public class Splashscreen extends AppCompatActivity {
 
                 if (name.equals("TUBAJON")) {
                     Log.e("finished", "task finished city");
-                    startActivity(new Intent(this, Login.class));
-                    finish();
-                    //readJsonBrgy(readFromFileBrgy());
+//                    startActivity(new Intent(this, Login.class));
+//                    finish();
+                    readJsonBrgy(readFromFileBrgy());
                 }
             }
 
@@ -468,6 +470,7 @@ public class Splashscreen extends AppCompatActivity {
 
         return sb.toString();
     }
+
 
 }
 

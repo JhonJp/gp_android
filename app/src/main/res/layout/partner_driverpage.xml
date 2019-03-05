@@ -6,23 +6,36 @@
     android:layout_height="match_parent"
     tools:context=".Partner_driverpage">
 
+    <android.support.design.widget.AppBarLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:theme="@style/AppTheme.AppBarOverlay">
+
+        <android.support.v7.widget.Toolbar
+            android:id="@+id/toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            android:background="?attr/colorPrimary"
+            app:popupTheme="@style/AppTheme.PopupOverlay" />
+
+    </android.support.design.widget.AppBarLayout>
+
+    <android.support.design.widget.BottomNavigationView
+        android:id="@+id/bottom_navigation"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:background="?attr/colorPrimary"
+        app:itemBackground="?attr/colorPrimary"
+        app:itemIconTint="@drawable/selector"
+        app:itemTextColor="@drawable/selector"
+        app:menu="@menu/driver_botnav" />
+
     <FrameLayout
         android:id="@+id/deliveryframe"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
     </FrameLayout>
-
-    <android.support.design.widget.BottomNavigationView xmlns:android="http://schemas.android.com/apk/res/android"
-        xmlns:app="http://schemas.android.com/apk/res-auto"
-        android:id="@+id/bottom_navigation"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
-        android:background="@color/bottomNav"
-        app:itemBackground="@color/bottomNav"
-        app:itemIconTint="@drawable/selector"
-        app:itemTextColor="@drawable/selector"
-        app:menu="@menu/driver_botnav" />
 
 </RelativeLayout>

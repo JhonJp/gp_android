@@ -67,6 +67,7 @@ public class Loading extends Fragment {
     TextView loaddate,eta, etd;
     EditText contain;
     AutoCompleteTextView shipper;
+    //EditText forwarder;
     ImageButton addit;
     Calendar calendar;
     ListView lv;
@@ -92,6 +93,7 @@ public class Loading extends Fragment {
         add = (Button)view.findViewById(R.id.add);
         loaddate = (TextView)view.findViewById(R.id.load_dateship_input);
         shipper = (AutoCompleteTextView)view.findViewById(R.id.shipperinput);
+       // forwarder = (EditText) view.findViewById(R.id.forwarder);
         eta = (TextView)view.findViewById(R.id.etainput);
         etd = (TextView)view.findViewById(R.id.etdinput);
         contain = (EditText) view.findViewById(R.id.containernuminput);

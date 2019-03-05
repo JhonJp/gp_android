@@ -5,11 +5,13 @@ import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.annotation.RequiresApi;
 import android.support.design.widget.BottomNavigationView;
@@ -63,9 +65,11 @@ public class Reservelist extends AppCompatActivity
     BottomNavigationView botnav;
     NavigationView navigationView;
     String reservenumber;
+    private int SETTINGS_ACTION = 100;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        preference();
         super.onCreate(savedInstanceState);
         setContentView(R.layout.reserve_list);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
@@ -379,6 +383,32 @@ public class Reservelist extends AppCompatActivity
 
     public void setReservenumber(String reservenumber) {
         this.reservenumber = reservenumber;
+    }
+
+    //shared preference
+    public void preference(){
+        SharedPreferences pref = PreferenceManager
+                .getDefaultSharedPreferences(this);
+        String themeName = pref.getString("theme", "Theme1");
+        if (themeName.equals("Default(Red)")) {
+            setTheme(R.style.AppTheme);
+        } else if (themeName.equals("Light Blue")) {
+            setTheme(R.style.customtheme);
+        }else if (themeName.equals("Green")) {
+            setTheme(R.style.customgreen);
+        }
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode == SETTINGS_ACTION) {
+            if (resultCode == Preferences.RESULT_CODE_THEME_UPDATED) {
+                finish();
+                startActivity(getIntent());
+                return;
+            }
+        }
+        super.onActivityResult(requestCode, resultCode, data);
     }
 
 }

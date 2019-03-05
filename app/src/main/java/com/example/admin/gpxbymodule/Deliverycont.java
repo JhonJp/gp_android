@@ -9,6 +9,7 @@ import android.content.Context;
 import android.content.ContextWrapper;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
@@ -21,6 +22,7 @@ import android.graphics.Path;
 import android.graphics.RectF;
 import android.net.Uri;
 import android.os.Environment;
+import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.NavigationView;
@@ -29,6 +31,7 @@ import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.widget.Toolbar;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.Gravity;
@@ -95,6 +98,7 @@ public class Deliverycont extends AppCompatActivity {
     Spinner relationship;
     String relationshipstring,recby;
     TextView defaultdelivered;
+    private int SETTINGS_ACTION = 100;
 
     //signature variables
     LinearLayout mContent;
@@ -120,7 +124,9 @@ public class Deliverycont extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState){
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_deliverycont);
-
+        Toolbar toolbar = (Toolbar)findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+        this.setTitle("Delivery Info.");
         gen = new GenDatabase(this);
         helper = new HomeDatabase(this);
         rate = new RatesDB(this);
@@ -1062,7 +1068,14 @@ public class Deliverycont extends AppCompatActivity {
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data){
         try{
-            if (requestCode == camera_request){
+            if (requestCode == SETTINGS_ACTION) {
+                if (resultCode == PartDriverPreference.RESULT_CODE_THEME_UPDATED) {
+                    finish();
+                    startActivity(getIntent());
+                    return;
+                }
+            }
+            else if (requestCode == camera_request){
                 if (requestCode == camera_request && resultCode == Activity.RESULT_OK) {
                     Bitmap photo = (Bitmap) data.getExtras().get("data");
                     ByteArrayOutputStream stream = new ByteArrayOutputStream();
@@ -1357,6 +1370,19 @@ public class Deliverycont extends AppCompatActivity {
         return mail;
     }
 
+    //shared preference
+    public void preference(){
+        SharedPreferences pref = PreferenceManager
+                .getDefaultSharedPreferences(this);
+        String themeName = pref.getString("theme", "Theme1");
+        if (themeName.equals("Default(Red)")) {
+            setTheme(R.style.AppTheme);
+        } else if (themeName.equals("Light Blue")) {
+            setTheme(R.style.customtheme);
+        }else if (themeName.equals("Green")) {
+            setTheme(R.style.customgreen);
+        }
+    }
 
 
 }

@@ -126,7 +126,7 @@
                                 android:layout_height="wrap_content"
                                 android:layout_marginEnd="20dp"
                                 android:layout_weight="1"
-                                android:gravity="right|center"
+                                android:gravity="left|right|center"
                                 android:text="Total"
                                 android:textAppearance="@style/TextAppearance.AppCompat.Title" />
 

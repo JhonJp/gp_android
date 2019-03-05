@@ -53,8 +53,8 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
-        android:background="@color/bottomNav"
-        app:itemBackground="@color/bottomNav"
+        android:background="?attr/colorPrimary"
+        app:itemBackground="?attr/colorPrimary"
         app:itemIconTint="@drawable/selector"
         app:itemTextColor="@drawable/selector"
         app:menu="@menu/bottomnav" />

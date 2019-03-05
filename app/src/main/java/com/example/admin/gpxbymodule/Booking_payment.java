@@ -811,7 +811,7 @@ public class Booking_payment extends Fragment implements Runnable {
                 if(!error){
                     mContent.setDrawingCacheEnabled(true);
                     mSignature.save(mView);
-                    //sms();
+                    sms();
                     saveFinalBooking();
                     dialog.dismiss();
                     startActivity(new Intent(getContext(), Bookinglist.class));
@@ -1068,7 +1068,7 @@ public class Booking_payment extends Fragment implements Runnable {
                         startActivity(new Intent(getContext(), Bookinglist.class));
                         getActivity().finish();
                     }else{
-                        String x = "Save booking error, please try again.";
+                        String x = "Message notification for the customer not sent.";
                         customToast(x);
                     }
                 } catch (Exception e) {

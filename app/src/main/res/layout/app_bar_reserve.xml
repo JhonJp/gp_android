@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="com.example.admin.gpexpress.Reserve">
+    tools:context="com.example.admin.gpxbymodule.Reserve">
 
     <android.support.design.widget.AppBarLayout
         android:layout_width="match_parent"
@@ -21,5 +21,15 @@
     </android.support.design.widget.AppBarLayout>
 
     <include layout="@layout/content_reserve" />
+
+    <android.support.design.widget.FloatingActionButton
+        android:id="@+id/savereserve"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|end"
+        android:layout_marginBottom="68dp"
+        android:layout_marginEnd="@dimen/fab_margin"
+        app:backgroundTint="?attr/colorPrimary"
+        app:srcCompat="@android:drawable/ic_menu_save" />
 
 </android.support.design.widget.CoordinatorLayout>

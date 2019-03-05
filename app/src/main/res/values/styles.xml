@@ -4,6 +4,8 @@
         <item name="colorPrimary">@color/colorPrimary</item>
         <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
         <item name="colorAccent">@color/colorAccent</item>
+        <item name="windowActionBar">true</item>
+        <item name="windowNoTitle">true</item>
     </style>
 
     <style name="AppTheme.NoActionBar">
@@ -35,6 +37,20 @@
     <style name="RatingBar" parent="Theme.AppCompat">
         <item name="colorControlNormal">@color/colorAccent</item>
         <item name="colorControlActivated">@color/rateColorGreen</item>
+    </style>
+
+    <style name="customtheme" parent="Theme.AppCompat.Light.NoActionBar">
+        <item name="colorPrimary">@color/holoblue</item>
+        <item name="colorPrimaryDark">@color/holobluedark</item>
+        <item name="colorAccent">@color/colorAccent</item>
+        <item name="android:button">@color/holoblue</item>
+    </style>
+
+    <style name="customgreen" parent="Theme.AppCompat.Light.NoActionBar">
+        <item name="colorPrimary">@color/themegreen</item>
+        <item name="colorPrimaryDark">@color/themegreendark</item>
+        <item name="colorAccent">@color/colorAccent</item>
+        <item name="android:button">@color/themegreen</item>
     </style>
 
 </resources>

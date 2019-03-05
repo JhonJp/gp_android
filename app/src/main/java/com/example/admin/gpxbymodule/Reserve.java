@@ -4,13 +4,16 @@ import android.annotation.TargetApi;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Build;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.annotation.RequiresApi;
 import android.support.design.widget.BottomNavigationView;
+import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.NavigationView;
 import android.support.v4.app.Fragment;
 import android.support.v4.view.GravityCompat;
@@ -49,9 +52,12 @@ public class Reserve extends AppCompatActivity
     NavigationView navigationView;
     Spinner customtype;
     String clienttype;
+    private int SETTINGS_ACTION = 100;
+    FloatingActionButton save;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        preference();
         super.onCreate(savedInstanceState);
         setContentView(R.layout.reserve);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
@@ -62,6 +68,7 @@ public class Reserve extends AppCompatActivity
         helper = new HomeDatabase(this);
         gen = new GenDatabase(getApplicationContext());
         customtype = (Spinner)findViewById(R.id.customertype);
+        save = (FloatingActionButton)findViewById(R.id.savereserve);
 
         try {
             if (helper.logcount() != 0) {
@@ -105,37 +112,37 @@ public class Reserve extends AppCompatActivity
 
     public void nav(){
         try{
-        bottomNavigationView.setOnNavigationItemSelectedListener(
-                new BottomNavigationView.OnNavigationItemSelectedListener() {
-                    @TargetApi(Build.VERSION_CODES.M)
-                    @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
-                    @Override
-                    public boolean onNavigationItemSelected(@NonNull MenuItem item) {
-                        switch (item.getItemId()) {
-                            case R.id.customer_info:
-                                item.setChecked(true);
-                                loadFragment(new CustomerFragment());
+            bottomNavigationView.setOnNavigationItemSelectedListener(
+                    new BottomNavigationView.OnNavigationItemSelectedListener() {
+                        @TargetApi(Build.VERSION_CODES.M)
+                        @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
+                        @Override
+                        public boolean onNavigationItemSelected(@NonNull MenuItem item) {
+                            switch (item.getItemId()) {
+                                case R.id.customer_info:
+                                    item.setChecked(true);
+                                    loadFragment(new CustomerFragment());
 
-                                Log.d("reservation: ","AddNewCustomer fragment loaded");
-                                break;
-                            case R.id.payment:
-                                item.setChecked(true);
-                                loadFragment(new PaymentFragment());
+                                    Log.d("reservation: ","AddNewCustomer fragment loaded");
+                                    break;
+                                case R.id.payment:
+                                    item.setChecked(true);
+                                    loadFragment(new PaymentFragment());
 
-                                Log.d("reservation ","Box info fragment loaded");
-                                break;
-                            case R.id.deposit:
-                                item.setChecked(true);
-                                loadFragment(new Deposit());
+                                    Log.d("reservation ","Box info fragment loaded");
+                                    break;
+                                case R.id.deposit:
+                                    item.setChecked(true);
+                                    loadFragment(new Deposit());
 
-                                Log.d("reservation ","Deposit fragment loaded");
-                                break;
-                            default:
-                                loadFragment(new CustomerFragment());
+                                    Log.d("reservation ","Deposit fragment loaded");
+                                    break;
+                                default:
+                                    loadFragment(new CustomerFragment());
+                            }
+                            return false;
                         }
-                        return false;
-                    }
-                });
+                    });
         }catch (Exception e){}
     }
 
@@ -260,13 +267,13 @@ public class Reserve extends AppCompatActivity
                 }
                 break;
             case "Incident Report":
-                    Intent i = new Intent(this, Incident.class);
-                    Bundle bundle = new Bundle();
-                    bundle.putString("module", "Reservation");
-                    //Add the bundle to the intent
-                    i.putExtras(bundle);
-                    startActivity(i);
-                    finish();
+                Intent i = new Intent(this, Incident.class);
+                Bundle bundle = new Bundle();
+                bundle.putString("module", "Reservation");
+                //Add the bundle to the intent
+                i.putExtras(bundle);
+                startActivity(i);
+                finish();
                 break;
             case "Transactions":
                 if (value.equals("OIC")){
@@ -396,35 +403,33 @@ public class Reserve extends AppCompatActivity
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        int id = item.getItemId();
-        if (id == R.id.btnnext){
-            if (loadFragment(new CustomerFragment())){
-                loadFragment(new PaymentFragment());
-                bottomNavigationView.setSelectedItemId(R.id.payment);
-            }
-        }
-        else if (id == R.id.btnnextpay){
+        try {
+            int id = item.getItemId();
+            if (id == R.id.btnnext) {
+                if (loadFragment(new CustomerFragment())) {
+                    loadFragment(new PaymentFragment());
+                    bottomNavigationView.setSelectedItemId(R.id.payment);
+                }
+            } else if (id == R.id.btnnextpay) {
                 loadFragment(new Deposit());
                 bottomNavigationView.setSelectedItemId(R.id.deposit);
-        }
-        else if (id == R.id.loadprev){
-            loadFragment(new CustomerFragment());
-            bottomNavigationView.setSelectedItemId(R.id.customer_info);
-        }
-        else if (id == R.id.loadprevpay){
-            loadFragment(new PaymentFragment());
-            bottomNavigationView.setSelectedItemId(R.id.payment);
-        }
-        else if (id ==  R.id.passincident){
-            Intent i = new Intent(this, Incident.class);
-            Bundle bundle = new Bundle();
-            bundle.putString("module", "Reservation");
-            //Add the bundle to the intent
-            i.putExtras(bundle);
-            startActivity(i);
-            finish();
-        }
-       return super.onOptionsItemSelected(item);
+            } else if (id == R.id.loadprev) {
+                loadFragment(new CustomerFragment());
+                bottomNavigationView.setSelectedItemId(R.id.customer_info);
+            } else if (id == R.id.loadprevpay) {
+                loadFragment(new PaymentFragment());
+                bottomNavigationView.setSelectedItemId(R.id.payment);
+            } else if (id == R.id.passincident) {
+                Intent i = new Intent(this, Incident.class);
+                Bundle bundle = new Bundle();
+                bundle.putString("module", "Reservation");
+                //Add the bundle to the intent
+                i.putExtras(bundle);
+                startActivity(i);
+                finish();
+            }
+        }catch (Exception e){}
+        return super.onOptionsItemSelected(item);
     }
 
     public String accounted(String res){
@@ -504,6 +509,33 @@ public class Reserve extends AppCompatActivity
 
     public void setClienttype(String clienttype) {
         this.clienttype = clienttype;
+    }
+
+
+    //shared preference
+    public void preference(){
+        SharedPreferences pref = PreferenceManager
+                .getDefaultSharedPreferences(this);
+        String themeName = pref.getString("theme", "Theme1");
+        if (themeName.equals("Default(Red)")) {
+            setTheme(R.style.AppTheme);
+        } else if (themeName.equals("Light Blue")) {
+            setTheme(R.style.customtheme);
+        }else if (themeName.equals("Green")) {
+            setTheme(R.style.customgreen);
+        }
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode == SETTINGS_ACTION) {
+            if (resultCode == Preferences.RESULT_CODE_THEME_UPDATED) {
+                finish();
+                startActivity(getIntent());
+                return;
+            }
+        }
+        super.onActivityResult(requestCode, resultCode, data);
     }
 
 

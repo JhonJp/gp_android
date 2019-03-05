@@ -65,9 +65,11 @@ public class Deposit extends Fragment {
         gen = new GenDatabase(getContext());
         helper = new HomeDatabase(getContext());
         rate = new RatesDB(getContext());
-        reserve.customtype.setEnabled(false);
 
         try {
+
+            reserve.customtype.setEnabled(false);
+            reserve.save.setImageResource(R.drawable.save);
             if (reserve.getAccnt() != null) {
                 accnt = reserve.getAccnt();
             }
@@ -88,7 +90,12 @@ public class Deposit extends Fragment {
                 }
             });
 
-        Log.e("reserve num :", reserve.getReservationnum());
+            reserve.save.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    alert();
+                }
+            });
 
         }catch (Exception e){}
 
@@ -104,9 +111,9 @@ public class Deposit extends Fragment {
 
     @Override
     public void onPrepareOptionsMenu(Menu menu) {
-        menu.findItem(R.id.savebooking).setVisible(true);
+        menu.findItem(R.id.savebooking).setVisible(false);
         menu.findItem(R.id.loadprev).setVisible(false);
-        menu.findItem(R.id.loadprevpay).setVisible(true);
+        menu.findItem(R.id.loadprevpay).setVisible(false);
         menu.findItem(R.id.btnnext).setVisible(false);
         menu.findItem(R.id.btnnextpay).setVisible(false);
 
@@ -123,7 +130,7 @@ public class Deposit extends Fragment {
                 alert();
             }
         }catch (Exception e){}
-            return super.onOptionsItemSelected(item);
+        return super.onOptionsItemSelected(item);
     }
 
     public boolean loadFragment(Fragment fragment) {

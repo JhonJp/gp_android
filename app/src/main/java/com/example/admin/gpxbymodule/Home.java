@@ -6,6 +6,7 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
@@ -18,6 +19,7 @@ import android.net.NetworkInfo;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
+import android.preference.PreferenceManager;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.util.Base64;
@@ -91,11 +93,13 @@ public class Home extends AppCompatActivity
     NavigationView navigationView;
     Runnable r;
     String zeros;
+    private int SETTINGS_ACTION = 1;
     Thread thr;
     ArrayList<String> toupdid, booknums, incids, loadids, unloadids, distids;
 
     @Override
     protected void onCreate(Bundle savedInstanceState){
+        preference();
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_home);
         toolbar = (Toolbar) findViewById(R.id.toolbar);
@@ -413,6 +417,10 @@ public class Home extends AppCompatActivity
                         });
                 // Create the AlertDialog object and show it
                 builder.create().show();
+            }
+            else if (id == R.id.action_settings){
+                startActivityForResult(new Intent(this,
+                        Preferences.class), SETTINGS_ACTION);
             }
         }catch (Exception e){}
         return super.onOptionsItemSelected(item);
@@ -4503,6 +4511,33 @@ public class Home extends AppCompatActivity
                 gendata.partinv_boxnumber + " = '"+bn+"'", null);
         Log.e("part_inv_updte", bn);
         db.close();
+    }
+
+    //shared preference
+    public void preference(){
+        SharedPreferences pref = PreferenceManager
+                .getDefaultSharedPreferences(this);
+        String themeName = pref.getString("theme", "Theme1");
+        if (themeName.equals("Default(Red)")) {
+            setTheme(R.style.AppTheme);
+        } else if (themeName.equals("Light Blue")) {
+            setTheme(R.style.customtheme);
+        }
+        else if (themeName.equals("Green")) {
+            setTheme(R.style.customgreen);
+        }
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode == SETTINGS_ACTION) {
+            if (resultCode == Preferences.RESULT_CODE_THEME_UPDATED) {
+                finish();
+                startActivity(getIntent());
+                return;
+            }
+        }
+        super.onActivityResult(requestCode, resultCode, data);
     }
 
 }

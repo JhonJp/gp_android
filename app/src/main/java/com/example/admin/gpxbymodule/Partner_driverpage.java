@@ -7,6 +7,7 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Bitmap;
@@ -14,12 +15,14 @@ import android.graphics.BitmapFactory;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Build;
+import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.annotation.RequiresApi;
 import android.support.design.widget.BottomNavigationView;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.widget.Toolbar;
 import android.text.Html;
 import android.util.Base64;
 import android.util.Log;
@@ -65,11 +68,15 @@ public class Partner_driverpage extends AppCompatActivity {
     ArrayList<String> delids;
     String drivername;
     ArrayList<String> incids;
+    private int SETTINGS_ACTION = 100;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        preference();
         super.onCreate(savedInstanceState);
         setContentView(R.layout.partner_driverpage);
+        Toolbar toolbar = (Toolbar)findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
         this.setTitle("Delivery");
 
         helper = new HomeDatabase(this);
@@ -165,6 +172,9 @@ public class Partner_driverpage extends AppCompatActivity {
                 loadingGet(getWindow().getDecorView().getRootView());
             } else if (id == R.id.homelogout) {
                 logoutWindow();
+            }else if (id == R.id.action_settings){
+                startActivityForResult(new Intent(this,
+                        PartDriverPreference.class), SETTINGS_ACTION);
             }
         }catch (Exception e){}
         return super.onOptionsItemSelected(item);
@@ -1184,6 +1194,32 @@ public class Partner_driverpage extends AppCompatActivity {
                 gen.del_box_status+" = '2'", null);
         Log.e("upload", "delete undelivered");
         db.close();
+    }
+
+    //shared preference
+    public void preference(){
+        SharedPreferences pref = PreferenceManager
+                .getDefaultSharedPreferences(this);
+        String themeName = pref.getString("theme", "Theme1");
+        if (themeName.equals("Default(Red)")) {
+            setTheme(R.style.AppTheme);
+        } else if (themeName.equals("Light Blue")) {
+            setTheme(R.style.customtheme);
+        }else if (themeName.equals("Green")) {
+            setTheme(R.style.customgreen);
+        }
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode == SETTINGS_ACTION) {
+            if (resultCode == PartDriverPreference.RESULT_CODE_THEME_UPDATED) {
+                finish();
+                startActivity(getIntent());
+                return;
+            }
+        }
+        super.onActivityResult(requestCode, resultCode, data);
     }
 
 }

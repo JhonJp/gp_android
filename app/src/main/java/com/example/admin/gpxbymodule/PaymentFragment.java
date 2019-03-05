@@ -85,8 +85,9 @@ public class PaymentFragment extends Fragment {
         gen = new GenDatabase(getContext());
         rate = new RatesDB(getContext());
         helper = new HomeDatabase(getContext());
-        reserve.customtype.setEnabled(false);
         try{
+            reserve.customtype.setEnabled(false);
+            reserve.save.setImageResource(R.drawable.next);
             if (reserve.getAccnt() != null) {
                 accnt = reserve.getAccnt();
                 Log.e("account",reserve.getAccnt());
@@ -103,39 +104,42 @@ public class PaymentFragment extends Fragment {
                 public void onClick(View v) {
                     String btype = boxtype_selected;
                     String quant = quantity.getText().toString();
-                    Log.e("boxtype_sel", btype);
-                    if(btype.equals("") || quant.equals("")){
-                        String t = "Please fill up correctly.";
-                        customToast(t);
-                    }else if (reserve.getName() == null){
-                        String t ="Customer name or account number is empty.";
-                        customToast(t);
-                    }
-                    else{
-                        SQLiteDatabase db = gen.getReadableDatabase();
-                        Cursor cx = db.rawQuery(" SELECT "+gen.box_depositprice+" FROM "+gen.tbname_boxes
-                                +" WHERE "+gen.box_name+" = '"+btype+"'", null);
-                        String price = null;
-                        if (cx.moveToNext()){
-                            price = cx.getString(cx.getColumnIndex(gen.box_depositprice));
-                        }
-                        if (Integer.parseInt(quant) > 1){
-                            int max = Integer.parseInt(quant);
-                            for (int i = 1; i <= max;i++){
-                                //updateBoxQuantity(getAvailablewarehouse(helper.getBranch(helper.logcount()+"")),getBoxId(btype)+"");
-                                gen.addGPXReservationBoxtype(boxid+"", btype, "1",
-                                        price, reserve.getReservationnum());
-                                Log.e("generate_id", generateId()+"");
-                            }
+                    if (!btype.toLowerCase().equals("select boxtype")) {
+                        if (btype.equals("") || quant.equals("")) {
+                            String t = "Please fill up correctly.";
+                            customToast(t);
+                        } else if (reserve.getName() == null) {
+                            String t = "Customer name or account number is empty.";
+                            customToast(t);
                         } else {
-                            //updateBoxQuantity(getAvailablewarehouse(helper.getBranch(helper.logcount()+"")), btype);
-                            gen.addGPXReservationBoxtype(boxid+"", btype, quant,
-                                    price, reserve.getReservationnum());
-                            Log.e("generate_id", generateId()+"");
-                        }
-                        quantity.setText(null);
+                            SQLiteDatabase db = gen.getReadableDatabase();
+                            Cursor cx = db.rawQuery(" SELECT " + gen.box_depositprice + " FROM " + gen.tbname_boxes
+                                    + " WHERE " + gen.box_name + " = '" + btype + "'", null);
+                            String price = null;
+                            if (cx.moveToNext()) {
+                                price = cx.getString(cx.getColumnIndex(gen.box_depositprice));
+                            }
+                            if (Integer.parseInt(quant) > 1) {
+                                int max = Integer.parseInt(quant);
+                                for (int i = 1; i <= max; i++) {
+                                    //updateBoxQuantity(getAvailablewarehouse(helper.getBranch(helper.logcount()+"")),getBoxId(btype)+"");
+                                    gen.addGPXReservationBoxtype(boxid + "", btype, "1",
+                                            price, reserve.getReservationnum());
+                                    Log.e("generate_id", generateId() + "");
+                                }
+                            } else {
+                                //updateBoxQuantity(getAvailablewarehouse(helper.getBranch(helper.logcount()+"")), btype);
+                                gen.addGPXReservationBoxtype(boxid + "", btype, quant,
+                                        price, reserve.getReservationnum());
+                                Log.e("generate_id", generateId() + "");
+                            }
+                            quantity.setText(null);
 
-                        customtype();
+                            customtype();
+                        }
+                    }else{
+                        String y = "Please select boxtype.";
+                        customToast(y);
                     }
                 }
             });
@@ -146,6 +150,14 @@ public class PaymentFragment extends Fragment {
                 public boolean onTouch(View v, MotionEvent event) {
                     v.getParent().requestDisallowInterceptTouchEvent(true);
                     return false;
+                }
+            });
+
+            reserve.save.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    reserve.loadFragment(new Deposit());
+                    reserve.bottomNavigationView.setSelectedItemId(R.id.deposit);
                 }
             });
 
@@ -166,8 +178,8 @@ public class PaymentFragment extends Fragment {
         menu.findItem(R.id.savebooking).setVisible(false);
         menu.findItem(R.id.btnnext).setVisible(false);
         menu.findItem(R.id.loadprevpay).setVisible(false);
-        menu.findItem(R.id.btnnextpay).setVisible(true);
-        menu.findItem(R.id.loadprev).setVisible(true);
+        menu.findItem(R.id.btnnextpay).setVisible(false);
+        menu.findItem(R.id.loadprev).setVisible(false);
         super.onPrepareOptionsMenu(menu);
     }
 
@@ -219,16 +231,19 @@ public class PaymentFragment extends Fragment {
     public void spinnerlist(){
         try {
             final ArrayList<LinearItem> result = getBoxes();
+            LinearItem li = new LinearItem("0", "Select boxtype","Please select a boxtype to reserve.");
+            result.add(0,li);
             adapter = new LinearList(getContext(), result);
             dropdown.setAdapter(adapter);
             dropdown.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
                 @Override
-                public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                public void onItemSelected(AdapterView<?> parent, View view,
+                                           int position, long id) {
                     hideid = (TextView) view.findViewById(R.id.dataid);
                     selectedboxtype = (TextView) view.findViewById(R.id.c_account);
                     boxid = Integer.valueOf(hideid.getText().toString());
                     boxtype_selected = selectedboxtype.getText().toString();
-                    Log.e("selectedboxid", boxid+"");
+
                 }
 
                 @Override
@@ -240,7 +255,10 @@ public class PaymentFragment extends Fragment {
                     Log.e("selectedboxid", boxid+"");
                 }
             });
-        }catch (Exception e){}
+        }catch (Exception e)
+        {
+
+        }
     }
 
     @Override
@@ -300,13 +318,14 @@ public class PaymentFragment extends Fragment {
     @Override
     public void onPause() {
         try{
+            super.onPause();
             if (reserve.getName() == null){
                 String t = "Customer name or account number is empty.";
                 customToast(t);
             }else{
                 reserve.setName(reserve.getName());
             }
-            super.onPause();
+
         }catch (Exception e){}
     }
 

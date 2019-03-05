@@ -6,11 +6,13 @@ import android.app.ProgressDialog;
 import android.content.ContentValues;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.os.Handler;
+import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.design.widget.BottomNavigationView;
 import android.support.design.widget.FloatingActionButton;
@@ -73,12 +75,14 @@ public class Partner_acceptance extends AppCompatActivity
     IntentIntegrator scanIntegrator;
     TextView tot, ybranch;
     Button add;
+    private int SETTINGS_ACTION = 1;
     ListView lv;
     EditText container, transactionnum;
     LinearLayout dummy;
 
     @Override
     protected void onCreate(Bundle savedInstanceState){
+        preference();
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_partner_acceptance);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
@@ -566,7 +570,15 @@ public class Partner_acceptance extends AppCompatActivity
     public void onActivityResult(int rc, int resultCode, Intent data){
         super.onActivityResult(rc, resultCode, data);
         try {
-            conditionForCheckerAcceptance(rc, resultCode, data);
+            if (rc == SETTINGS_ACTION) {
+                if (resultCode == Preferences.RESULT_CODE_THEME_UPDATED) {
+                    finish();
+                    startActivity(getIntent());
+                    return;
+                }
+            }else {
+                conditionForCheckerAcceptance(rc, resultCode, data);
+            }
         }catch (Exception e){}
     }
 
@@ -980,5 +992,20 @@ public class Partner_acceptance extends AppCompatActivity
         Log.e("delete","undelivered "+bn);
         db.close();
     }
+
+    //shared preference
+    public void preference(){
+        SharedPreferences pref = PreferenceManager
+                .getDefaultSharedPreferences(this);
+        String themeName = pref.getString("theme", "Theme1");
+        if (themeName.equals("Default(Red)")) {
+            setTheme(R.style.AppTheme);
+        } else if (themeName.equals("Light Blue")) {
+            setTheme(R.style.customtheme);
+        }else if (themeName.equals("Green")) {
+            setTheme(R.style.customgreen);
+        }
+    }
+
 
 }

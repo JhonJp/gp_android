@@ -33,7 +33,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
                         android:hint="First Name"
-                        android:inputType="textCapWords|textCapSentences" />
+                        android:inputType="textCapWords|textMultiLine"  />
                 </android.support.design.widget.TextInputLayout>
 
             </FrameLayout>
@@ -63,7 +63,7 @@
                                 android:layout_width="match_parent"
                                 android:layout_height="match_parent"
                                 android:hint="Middle Name"
-                                android:inputType="textCapWords|textCapSentences" />
+                                android:inputType="textCapWords|textMultiLine"  />
                         </android.support.design.widget.TextInputLayout>
 
                     </FrameLayout>
@@ -82,7 +82,7 @@
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
                                 android:hint="Last Name"
-                                android:inputType="textCapWords|textCapSentences" />
+                                android:inputType="textCapWords|textMultiLine"  />
                         </android.support.design.widget.TextInputLayout>
                     </FrameLayout>
 
@@ -286,7 +286,7 @@
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
                                 android:hint="Unit / House no. / Street"
-                                android:inputType="textCapWords|textCapSentences" />
+                                android:inputType="textCapWords|textMultiLine" />
                         </android.support.design.widget.TextInputLayout>
                     </FrameLayout>
 
@@ -306,7 +306,7 @@
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
                                 android:hint="Barangay/Village"
-                                android:inputType="textCapWords|textCapSentences" />
+                                android:inputType="textCapWords|textMultiLine" />
                         </android.support.design.widget.TextInputLayout>
                     </FrameLayout>
 
@@ -326,7 +326,7 @@
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
                                 android:hint="City"
-                                android:inputType="textCapWords|textCapSentences" />
+                                android:inputType="textCapWords|textMultiLine"  />
                         </android.support.design.widget.TextInputLayout>
                     </FrameLayout>
                 </LinearLayout>

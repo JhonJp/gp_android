@@ -7,6 +7,7 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.database.CursorIndexOutOfBoundsException;
@@ -15,16 +16,19 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.AsyncTask;
 import android.os.Handler;
+import android.preference.PreferenceManager;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.WindowManager;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.AdapterView;
@@ -64,13 +68,18 @@ public class Login extends AppCompatActivity {
     PopupWindow pw;
     RatesDB rates;
     ProgressDialog progressBar;
+    private int SETTINGS_ACTION = 1;
     String emp_branch, employee_id,name, email,fullname, role;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        preference();
         super.onCreate(savedInstanceState);
+        getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
+                WindowManager.LayoutParams.FLAG_FULLSCREEN);
         setContentView(R.layout.login);
-
+        Toolbar toolbar = (Toolbar)findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
         username = (EditText) findViewById(R.id.emailusername);
         pass = (EditText) findViewById(R.id.password);
         helper = new HomeDatabase(this);
@@ -195,6 +204,9 @@ public class Login extends AppCompatActivity {
                     alertDialog.dismiss();
                 }
             });
+        }else if (id == R.id.action_settings){
+            startActivityForResult(new Intent(this,
+                    Preferences.class), SETTINGS_ACTION);
         }
 
         return super.onOptionsItemSelected(item);
@@ -397,8 +409,8 @@ public class Login extends AppCompatActivity {
 
     public void insertURLDemo(){
         SQLiteDatabase db = helper.getWritableDatabase();
-        String link = "10.10.1.57/gpxbeta";
-        //String link = "beta.gpexpresscargo.com";
+ String link = "10.10.1.57/gpxbeta";
+     //   String link = "beta.gpexpresscargo.com";
         helper.addLink(link);
         Log.e("link_add", link);
     }
@@ -458,7 +470,7 @@ public class Login extends AppCompatActivity {
         toast.show();
     }
 
-    public void threadBranch(){
+    public void  threadBranch(){
                 //START THREAD FOR branch
                 try {
                     String resp = null;
@@ -653,7 +665,6 @@ public class Login extends AppCompatActivity {
         }
     }
 
-    //filter user sales driver by branch or location
     //prevent sales driver of partner portal to login because the user has no module views
     public boolean checkSalesDriver(String empid, String branch){
         SQLiteDatabase db = gen.getReadableDatabase();
@@ -675,6 +686,32 @@ public class Login extends AppCompatActivity {
             }
         }
         return check;
+    }
+
+    //shared preference
+    public void preference(){
+        SharedPreferences pref = PreferenceManager
+                .getDefaultSharedPreferences(this);
+        String themeName = pref.getString("theme", "Theme1");
+        if (themeName.equals("Default(Red)")) {
+            setTheme(R.style.AppTheme);
+        } else if (themeName.equals("Light Blue")) {
+            setTheme(R.style.customtheme);
+        }else if (themeName.equals("Green")) {
+            setTheme(R.style.customgreen);
+        }
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode == SETTINGS_ACTION) {
+            if (resultCode == Preferences.RESULT_CODE_THEME_UPDATED) {
+                finish();
+                startActivity(getIntent());
+                return;
+            }
+        }
+        super.onActivityResult(requestCode, resultCode, data);
     }
 
 }

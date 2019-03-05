@@ -10,6 +10,7 @@ import android.content.Context;
 import android.content.ContextWrapper;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
@@ -22,6 +23,7 @@ import android.graphics.Path;
 import android.graphics.RectF;
 import android.os.Bundle;
 import android.os.Environment;
+import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
@@ -105,10 +107,12 @@ public class Remitt extends AppCompatActivity
     EditText bankname,accntname,accntnum;
     TextView headoicname;
     String oicname = "",oicfullname = "";
+    private int SETTINGS_ACTION = 100;
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        preference();
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_remitt);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
@@ -692,7 +696,14 @@ public class Remitt extends AppCompatActivity
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data){
         try{
-            if (requestCode == camera_request){
+            if (requestCode == SETTINGS_ACTION) {
+                if (resultCode == Preferences.RESULT_CODE_THEME_UPDATED) {
+                    finish();
+                    startActivity(getIntent());
+                    return;
+                }
+            }
+            else if (requestCode == camera_request){
                 if (requestCode == camera_request && resultCode == Activity.RESULT_OK) {
                     Bitmap photo = (Bitmap) data.getExtras().get("data");
                     ByteArrayOutputStream stream = new ByteArrayOutputStream();
@@ -1281,6 +1292,20 @@ public class Remitt extends AppCompatActivity
         }
         cursor.close();
         return numbers.toArray(new String[numbers.size()]);
+    }
+
+    //shared preference
+    public void preference(){
+        SharedPreferences pref = PreferenceManager
+                .getDefaultSharedPreferences(this);
+        String themeName = pref.getString("theme", "Theme1");
+        if (themeName.equals("Default(Red)")) {
+            setTheme(R.style.AppTheme);
+        } else if (themeName.equals("Light Blue")) {
+            setTheme(R.style.customtheme);
+        }else if (themeName.equals("Green")) {
+            setTheme(R.style.customgreen);
+        }
     }
 
 }

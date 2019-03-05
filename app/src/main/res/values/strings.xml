@@ -83,4 +83,13 @@
     <string name="update_data">Update Data</string>
     <string name="title_activity_remitt">"Remittance "</string>
     <string name="please_sign_below">Personnel who signed shall be responsible for the stated amount.</string>
+    <string name="themesummary"> Select on how the application may looks like.</string>
+    <string name="inventory">Select Box</string>
+
+    <string-array name="themes">
+        <item>Default(Red)</item>
+        <item>Light Blue</item>
+        <item>Green</item>
+    </string-array>
+
 </resources>

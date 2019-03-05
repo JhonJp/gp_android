@@ -67,7 +67,7 @@ public class ConsigneeFragment extends Fragment{
         phonenum = (EditText)view.findViewById(R.id.cust_phone);
         mobilenum = (EditText)view.findViewById(R.id.cust_mobilenum);
         email = (EditText)view.findViewById(R.id.cust_enter_email);
-
+        reserve.save.setImageResource(R.drawable.next);
         auto();
         autoFullname();
 
@@ -77,6 +77,14 @@ public class ConsigneeFragment extends Fragment{
                 autoaccount();
                 Log.e("accountnum", reserve.getAccnt());
             }
+
+            reserve.save.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    reserve.loadFragment(new PaymentFragment());
+                    reserve.bottomNavigationView.setSelectedItemId(R.id.payment);
+                }
+            });
         }catch (Exception e){}
 
         return  view;
@@ -234,7 +242,7 @@ public class ConsigneeFragment extends Fragment{
         menu.findItem(R.id.savebooking).setVisible(false);
         menu.findItem(R.id.loadprev).setVisible(false);
         menu.findItem(R.id.loadprevpay).setVisible(false);
-        menu.findItem(R.id.btnnext).setVisible(true);
+        menu.findItem(R.id.btnnext).setVisible(false);
         menu.findItem(R.id.btnnextpay).setVisible(false);
 
         super.onPrepareOptionsMenu(menu);

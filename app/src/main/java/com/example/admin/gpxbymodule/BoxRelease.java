@@ -6,11 +6,13 @@ import android.app.AlertDialog;
 import android.content.ContentValues;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Bitmap;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
@@ -64,13 +66,15 @@ public class BoxRelease extends AppCompatActivity
     ArrayList<String> barcodes;
     Button add;
     IntentIntegrator scanIntegrator;
-    int scan_code = 100;
+    int scan_code = 1;
     ListView lv;
     TextView tol;
     String dri;
+    private int SETTINGS_ACTION = 100;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        preference();
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_box_release);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
@@ -138,16 +142,17 @@ public class BoxRelease extends AppCompatActivity
                                     customType();
                                     dialog.dismiss();
                                 }
-                            }).setNegativeButton("Cancel",new DialogInterface.OnClickListener() {
+                            }).setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
                         public void onClick(DialogInterface dialog, int id) {
                             dialog.dismiss();
-                        }});
+                        }
+                    });
                     // Create the AlertDialog object and show it
                     builder.create().show();
                 }
             });
         }catch (Exception e){
-            Log.e("error", e.getMessage());
+
         }
     }
 
@@ -466,11 +471,12 @@ public class BoxRelease extends AppCompatActivity
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data){
         try{
-//            if (requestCode == scan_code) {
+            if (requestCode == scan_code) {
+                Log.e("boxnumber", "boxnumber");
                 IntentResult result = IntentIntegrator.parseActivityResult(requestCode, resultCode, data);
                 if (result.getContents() != null){
                     String bn = result.getContents();
-                    if (checkifInventory(bn)) {
+                    //if (checkifInventory(bn)) {
                         if (!barcodes.contains(bn)) {
                             barcodes.add(bn);
                             customType();
@@ -478,13 +484,21 @@ public class BoxRelease extends AppCompatActivity
                             String x = "Barcode has been scanned, please try another.";
                             customToast(x);
                         }
-                    }else{
-                        String x = "Barcode is not in your inventory, please try another.";
-                        customToast(x);
-                    }
+//                    }else{
+//                        String x = "Barcode is not in your inventory, please try another.";
+//                        customToast(x);
+//                    }
                     Log.e("boxnumber", bn);
                 }
-//            }
+            }
+            else if (requestCode == SETTINGS_ACTION) {
+                if (resultCode == Preferences.RESULT_CODE_THEME_UPDATED) {
+                    finish();
+                    startActivity(getIntent());
+                    return;
+                }
+            }else
+                super.onActivityResult(requestCode, resultCode, data);
 
         }catch (Exception e){
             Log.e("error", e.getMessage());}
@@ -562,6 +576,20 @@ public class BoxRelease extends AppCompatActivity
         db.update(rate.tbname_barcode_inventory, cv, rate.barcodeinv_boxnumber+" = '"+bn+"'", null);
         Log.e("upd_barcodeinv", bn);
         db.close();
+    }
+
+    //shared preference
+    public void preference(){
+        SharedPreferences pref = PreferenceManager
+                .getDefaultSharedPreferences(this);
+        String themeName = pref.getString("theme", "Theme1");
+        if (themeName.equals("Default(Red)")) {
+            setTheme(R.style.AppTheme);
+        } else if (themeName.equals("Light Blue")) {
+            setTheme(R.style.customtheme);
+        }else if (themeName.equals("Green")) {
+            setTheme(R.style.customgreen);
+        }
     }
 
 }

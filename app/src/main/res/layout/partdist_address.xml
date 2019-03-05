@@ -171,7 +171,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:hint="Driver name"
-                        android:inputType="text"
+                        android:inputType="textCapWords|textMultiLine"
                         android:maxLength="50" />
                 </android.support.design.widget.TextInputLayout>
 
